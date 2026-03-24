@@ -1,0 +1,50 @@
+{
+  "name": "trustmcp",
+  "version": "0.1.0",
+  "description": "Static risk audit for MCP servers before you run them.",
+  "type": "module",
+  "bin": {
+    "trustmcp": "dist/cli/main.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "smoke": "npm run build && node scripts/smoke.mjs"
+  },
+  "keywords": [
+    "mcp",
+    "security",
+    "audit",
+    "cli",
+    "typescript"
+  ],
+  "author": "ryanba",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Gujiassh/trustmcp.git"
+  },
+  "homepage": "https://github.com/Gujiassh/trustmcp#readme",
+  "bugs": {
+    "url": "https://github.com/Gujiassh/trustmcp/issues"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "adm-zip": "^0.5.16"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.7",
+    "@types/node": "^24.0.0",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.1"
+  }
+}

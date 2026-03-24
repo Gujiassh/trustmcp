@@ -1,0 +1,5 @@
+{
+  "name": "local-clean",
+  "private": true,
+  "type": "module"
+}
