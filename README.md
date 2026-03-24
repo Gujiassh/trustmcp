@@ -164,6 +164,16 @@ Evidence: execSync('node cli.js --help > help.txt');
 
 This is a point-in-time heuristic capability match, not a blanket judgment of the project. In this case, TrustMCP matched shell execution in repository scripts and maintenance paths, which is exactly the kind of capability surface this tool is meant to surface before deeper review.
 
+For a balanced no-match example, at pinned ref `b1575edfefde09e3cf7c805aea79a92131271659`, TrustMCP reported the following on `github/github-mcp-server`:
+
+```text
+Target: github/github-mcp-server
+Ref: main@b1575edfefde09e3cf7c805aea79a92131271659
+Summary: No matching rules were triggered. Static heuristics only; this does not mean the target is safe.
+```
+
+That is also a point-in-time result, not a blanket safety judgment. It means the current TrustMCP rules did not match shell execution, outbound fetch, or broad filesystem patterns at that pinned commit.
+
 Run the included checks:
 
 ```bash
