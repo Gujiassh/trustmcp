@@ -1,6 +1,20 @@
 name: TrustMCP
 description: Scan a checked-out repository with the TrustMCP CLI.
 
+outputs:
+  finding-count:
+    description: Total findings reported by TrustMCP.
+    value: ${{ steps.scan.outputs.finding-count }}
+  low-count:
+    description: Count of low-severity findings.
+    value: ${{ steps.scan.outputs.low-count }}
+  medium-count:
+    description: Count of medium-severity findings.
+    value: ${{ steps.scan.outputs.medium-count }}
+  high-count:
+    description: Count of high-severity findings.
+    value: ${{ steps.scan.outputs.high-count }}
+
 inputs:
   target:
     description: Local path, gh:owner/repo shorthand, or public GitHub repository URL to scan. Defaults to the checked-out workspace.
@@ -79,6 +93,7 @@ runs:
       run: npm run build
 
     - name: Run TrustMCP scan
+      id: scan
       shell: bash
       working-directory: ${{ github.action_path }}
       env:
@@ -87,10 +102,4 @@ runs:
         FAIL_ON: ${{ inputs.fail-on }}
       run: |
         set -euo pipefail
-        args=("$TARGET" "--format" "$FORMAT")
-
-        if [ -n "$FAIL_ON" ]; then
-          args+=("--fail-on" "$FAIL_ON")
-        fi
-
-        node dist/cli/main.js "${args[@]}"
+        node dist/action/main.js "$TARGET" "$FORMAT" "$FAIL_ON"

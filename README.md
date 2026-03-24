@@ -110,14 +110,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: Gujiassh/trustmcp@v0.1.0
+      - id: trustmcp
+        uses: Gujiassh/trustmcp@v0.1.0
         with:
           target: ${{ github.workspace }}
           format: json
           fail-on: high
+      - run: |
+          echo "findings=${{ steps.trustmcp.outputs.finding-count }}"
+          echo "high=${{ steps.trustmcp.outputs.high-count }}"
 ```
 
 The action builds TrustMCP from its own source tree on each run and then scans the checked-out target path or public GitHub URL you pass in. It does not rely on a published npm package or marketplace wrapper. The example above uses the current stable tag `v0.1.0`; if you need stricter supply-chain pinning, use a specific commit SHA.
+
+The reusable action exposes `finding-count`, `low-count`, `medium-count`, and `high-count` outputs derived from the same report summary that the CLI emits in JSON.
 
 ## Real-world pinned example
 

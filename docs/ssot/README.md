@@ -14,4 +14,6 @@ JSON output now includes deterministic summary severity counters for `low`, `med
 
 The public repo now also ships a reusable composite GitHub Action plus an official example workflow that gates a checked-out repository with `--fail-on`, and the example now points at the stable `v0.1.0` tag.
 
+The reusable action now exposes machine-readable summary outputs for total findings and low/medium/high severity counts.
+
 README now includes a pinned real-world scan snapshot so visitors can see how TrustMCP output looks on a recognizable public MCP repository without relying on contrived fixtures alone.

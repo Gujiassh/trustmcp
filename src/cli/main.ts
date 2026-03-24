@@ -3,6 +3,7 @@
 import { pathToFileURL } from "node:url";
 
 import { auditTarget as defaultAuditTarget } from "../core/audit.js";
+import { isSeverity, shouldFailForThreshold } from "../core/thresholds.js";
 import type { AuditReport, Severity } from "../core/types.js";
 import { renderJsonReport } from "../renderers/json.js";
 import { renderTextReport } from "../renderers/text.js";
@@ -24,12 +25,6 @@ interface CliDependencies {
   stdout?: OutputWriter;
   stderr?: OutputWriter;
 }
-
-const SEVERITY_LEVELS: Record<Severity, number> = {
-  low: 0,
-  medium: 1,
-  high: 2
-};
 
 export async function runCli(argv: string[], dependencies: CliDependencies = {}): Promise<number> {
   const stdout = dependencies.stdout ?? process.stdout;
@@ -145,21 +140,9 @@ function usage(): string {
     "",
     "Targets:",
     "  - local directory",
-    "  - public GitHub repository URL"
+    "  - public GitHub repository URL",
+    "  - gh:owner/repo"
   ].join("\n");
-}
-
-function shouldFailForThreshold(report: AuditReport, failOn?: Severity): boolean {
-  if (failOn === undefined) {
-    return false;
-  }
-
-  const thresholdLevel = SEVERITY_LEVELS[failOn];
-  return report.findings.some((finding) => SEVERITY_LEVELS[finding.severity] >= thresholdLevel);
-}
-
-function isSeverity(value: string | undefined): value is Severity {
-  return value === "low" || value === "medium" || value === "high";
 }
 
 const isMainModule =
