@@ -1,5 +1,7 @@
 import { listRules } from "../rules/index.js";
 
+export type RuleListFormat = "json" | "tsv";
+
 export function renderRuleList(): string {
   const lines = ["ruleId\tseverity\ttitle"];
 
@@ -8,4 +10,8 @@ export function renderRuleList(): string {
   }
 
   return lines.join("\n");
+}
+
+export function renderRuleListJson(): string {
+  return JSON.stringify(listRules(), null, 2);
 }

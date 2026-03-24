@@ -9,7 +9,7 @@ import { TRUSTMCP_VERSION } from "../core/version.js";
 import { loadCliConfig, type CliConfig } from "./config.js";
 import { runDoctor } from "./doctor.js";
 import { DEFAULT_CONFIG_PATH, writeStarterConfig } from "./init-config.js";
-import { renderRuleList } from "./list-rules.js";
+import { renderRuleList, renderRuleListJson, type RuleListFormat } from "./list-rules.js";
 import { isOutputFormat, renderReport, renderSummaryReport, type OutputFormat } from "../renderers/output.js";
 import { writeRenderedOutput } from "../utils/write-rendered-output.js";
 
@@ -47,6 +47,7 @@ interface DoctorCliArguments {
 
 interface ListRulesCliArguments {
   listRules: true;
+  format: RuleListFormat;
 }
 
 interface VersionCliArguments {
@@ -91,7 +92,8 @@ export async function runCli(argv: string[], dependencies: CliDependencies = {})
     }
 
     if (isListRulesCommand(parsed)) {
-      stdout.write(`${renderRuleList()}\n`);
+      const output = parsed.format === "json" ? renderRuleListJson() : renderRuleList();
+      stdout.write(`${output}\n`);
       return 0;
     }
 
@@ -384,14 +386,54 @@ function parseDoctorArguments(argv: string[]): DoctorCliArguments | null {
 
 function parseListRulesArguments(argv: string[]): ListRulesCliArguments | null {
   if (argv.length === 0) {
-    return { listRules: true };
+    return { listRules: true, format: "tsv" };
   }
 
   if (argv.includes("--help") || argv.includes("-h")) {
     return null;
   }
 
-  throw new Error("list-rules does not accept additional arguments.");
+  let format: RuleListFormat = "tsv";
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const argument = argv[index];
+    if (argument === undefined) {
+      continue;
+    }
+
+    if (argument === "--json") {
+      format = "json";
+      continue;
+    }
+
+    if (argument === "--format") {
+      const nextArgument = argv[index + 1];
+      if (nextArgument !== "json" && nextArgument !== "tsv") {
+        throw new Error("list-rules --format expects one of: tsv, json.");
+      }
+
+      format = nextArgument;
+      index += 1;
+      continue;
+    }
+
+    if (argument.startsWith("--format=")) {
+      const value = argument.slice("--format=".length);
+      if (value !== "json" && value !== "tsv") {
+        throw new Error("list-rules --format expects one of: tsv, json.");
+      }
+
+      format = value;
+      continue;
+    }
+
+    throw new Error("list-rules does not accept additional arguments.");
+  }
+
+  return {
+    listRules: true,
+    format
+  };
 }
 
 function parseVersionArguments(argv: string[]): VersionCliArguments {

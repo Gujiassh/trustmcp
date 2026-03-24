@@ -104,7 +104,19 @@ describe("parseArguments", () => {
 
   it("parses list-rules with no extra arguments", () => {
     expect(parseArguments(["list-rules"])).toEqual({
-      listRules: true
+      listRules: true,
+      format: "tsv"
+    });
+  });
+
+  it("parses list-rules JSON entry points", () => {
+    expect(parseArguments(["list-rules", "--json"])).toEqual({
+      listRules: true,
+      format: "json"
+    });
+    expect(parseArguments(["list-rules", "--format", "json"])).toEqual({
+      listRules: true,
+      format: "json"
     });
   });
 
@@ -156,6 +168,11 @@ describe("parseArguments", () => {
   it("rejects extra list-rules arguments", () => {
     expect(() => parseArguments(["list-rules", "extra"]))
       .toThrowError("list-rules does not accept additional arguments.");
+  });
+
+  it("rejects invalid list-rules format values", () => {
+    expect(() => parseArguments(["list-rules", "--format", "markdown"]))
+      .toThrowError("list-rules --format expects one of: tsv, json.");
   });
 
   it("rejects extra version arguments", () => {
@@ -441,6 +458,37 @@ describe("runCli exit thresholds", () => {
       "mcp/outbound-fetch\tmedium\tOutbound network request capability detected\n" +
       "mcp/shell-exec\thigh\tShell execution capability detected\n"
     );
+  });
+
+  it("prints the shipped rule set as stable JSON when requested", async () => {
+    const stdout: string[] = [];
+
+    const exitCode = await runCli(["list-rules", "--json"], {
+      auditTarget: async () => {
+        throw new Error("list-rules should not invoke the scan engine");
+      },
+      stdout: createWriter(stdout)
+    });
+
+    expect(exitCode).toBe(0);
+    expect(stdout.join("")).toBe(`[
+  {
+    "id": "mcp/broad-filesystem",
+    "severity": "high",
+    "title": "Filesystem access using broad or tool-controlled paths detected"
+  },
+  {
+    "id": "mcp/outbound-fetch",
+    "severity": "medium",
+    "title": "Outbound network request capability detected"
+  },
+  {
+    "id": "mcp/shell-exec",
+    "severity": "high",
+    "title": "Shell execution capability detected"
+  }
+]
+`);
   });
 
   it("prints the TrustMCP version without invoking the scan engine", async () => {

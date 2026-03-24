@@ -93,6 +93,21 @@ _trustmcp() {
   fi
 
   if [[ "${COMP_WORDS[1]}" == "list-rules" ]]; then
+    case "$prev" in
+      --format)
+        _trustmcp_add_word_matches "tsv json" "$cur"
+        return
+        ;;
+    esac
+
+    case "$cur" in
+      --format=*)
+        _trustmcp_add_prefixed_word_matches "--format=" "tsv json" "${cur#--format=}"
+        return
+        ;;
+    esac
+
+    _trustmcp_add_word_matches "--help -h --json --format" "$cur"
     return
   fi
 

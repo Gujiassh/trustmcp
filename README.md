@@ -53,6 +53,8 @@ For a rule-by-rule explainer, check out [TrustMCP rules explained](./docs/trustm
 
 If you want the current IDs from the CLI, run `node dist/cli/main.js list-rules`.
 
+For automation-friendly rule metadata, run `node dist/cli/main.js list-rules --json`.
+
 Every finding includes:
 
 - `ruleId`
