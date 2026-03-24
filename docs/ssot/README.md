@@ -28,6 +28,8 @@ JSON output now includes deterministic summary severity counters for `low`, `med
 
 The public repo now also ships a reusable composite GitHub Action plus official example workflows for a checked-out repository target, an explicit public GitHub target, markdown artifact retention, SARIF artifact retention, and GitHub code-scanning SARIF upload, all pointing at the stable `v0.1.0` tag.
 
+The repo now also ships a conservative manual GitHub release workflow triggered by `workflow_dispatch`, with explicit version validation and GitHub release creation only.
+
 The reusable action now exposes machine-readable summary outputs for total findings and low/medium/high severity counts.
 
 When running inside GitHub Actions with `GITHUB_STEP_SUMMARY` available, the reusable action also appends the existing markdown report there.

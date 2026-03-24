@@ -47,3 +47,14 @@ If you change a rule:
 ## Design boundaries
 
 Please do not expand TrustMCP into a hosted platform, web UI, account system, or dynamic execution product as part of v0.1 maintenance. This repository is intentionally a narrow CLI.
+
+## Manual GitHub releases
+
+This repository ships a conservative manual release workflow at `.github/workflows/release.yml`.
+
+- run it with `workflow_dispatch`
+- provide a tag like `v0.1.1`
+- run it from the default branch
+- make sure `package.json` already matches the same version without the leading `v`
+
+The workflow validates the version, runs tests and build, and then creates the GitHub tag and release. It does not publish to npm.
