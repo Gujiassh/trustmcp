@@ -94,9 +94,24 @@ node dist/cli/main.js https://github.com/modelcontextprotocol/servers --format j
 
 ## GitHub Actions example
 
-For a copy-pasteable GitHub Actions gate, start from [`./.github/examples/trustmcp-gate.yml`](./.github/examples/trustmcp-gate.yml). It checks out your repository, checks out TrustMCP from source, builds it, and scans the checked-out workspace locally with `--fail-on high`.
+TrustMCP now ships a reusable composite action at the repository root. For a copy-pasteable workflow, start from [`./.github/examples/trustmcp-gate.yml`](./.github/examples/trustmcp-gate.yml).
 
-That example is intentionally plain: no marketplace action, no npm package, and no extra wrapper layer. Copy it into the repository you want to scan as `.github/workflows/trustmcp-gate.yml`, then adjust the trigger or threshold if needed.
+Minimal external usage looks like this:
+
+```yaml
+jobs:
+  trustmcp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Gujiassh/trustmcp@main
+        with:
+          target: ${{ github.workspace }}
+          format: json
+          fail-on: high
+```
+
+The action builds TrustMCP from its own source tree on each run and then scans the checked-out target path or public GitHub URL you pass in. It does not rely on a published npm package or marketplace wrapper. For real production use, pin the action to a specific commit SHA or tag instead of `@main`.
 
 ## Real-world pinned example
 

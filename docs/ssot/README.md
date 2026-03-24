@@ -12,6 +12,6 @@ GitHub input ergonomics stay narrow: repository root URLs are accepted, while tr
 
 JSON output now includes deterministic summary severity counters for `low`, `medium`, and `high` findings.
 
-The public repo now also ships an official copy-paste GitHub Actions example that builds TrustMCP from source and gates a checked-out repository with `--fail-on`.
+The public repo now also ships a reusable composite GitHub Action plus an official example workflow that gates a checked-out repository with `--fail-on`.
 
 README now includes a pinned real-world scan snapshot so visitors can see how TrustMCP output looks on a recognizable public MCP repository without relying on contrived fixtures alone.
