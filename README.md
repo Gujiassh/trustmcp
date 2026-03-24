@@ -127,6 +127,12 @@ Reuse stable CLI defaults from an explicit JSON config file:
 node dist/cli/main.js gh:modelcontextprotocol/servers --config trustmcp.config.json
 ```
 
+Generate a starter config file without overwriting an existing one:
+
+```bash
+node dist/cli/main.js init-config
+```
+
 Source the shipped shell completions directly for repeated local use:
 
 ```bash

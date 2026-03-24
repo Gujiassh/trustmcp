@@ -12,6 +12,7 @@ describe("completion scripts", () => {
 
     expect(script).toContain("complete -F _trustmcp trustmcp");
     expect(script).toContain("scan");
+    expect(script).toContain("init-config");
     expect(script).toContain("--config");
     expect(script).toContain("--summary-only");
     expect(script).toContain("--fail-on");
@@ -25,6 +26,7 @@ describe("completion scripts", () => {
 
     expect(script).toContain("compdef _trustmcp trustmcp");
     expect(script).toContain("scan");
+    expect(script).toContain("init-config");
     expect(script).toContain("--config");
     expect(script).toContain("--summary-only");
     expect(script).toContain("--fail-on");

@@ -4,6 +4,7 @@ _trustmcp() {
   local curcontext="$curcontext" state line
   local -a formats severities options
   local -i has_target=0 skip_next=0 index
+  local subcommand=""
   local arg
 
   formats=(text json markdown sarif)
@@ -31,6 +32,9 @@ _trustmcp() {
         fi
 
         case "$arg" in
+          init-config)
+            subcommand="init-config"
+            ;;
           --format|--config|--fail-on|--output-file)
             skip_next=1
             ;;
@@ -39,14 +43,23 @@ _trustmcp() {
           -*)
             ;;
           *)
-            has_target=1
+            if [[ "$subcommand" != "init-config" ]]; then
+              has_target=1
+            fi
             ;;
         esac
       done
 
+      if [[ "${words[1]}" == "init-config" ]]; then
+        if (( CURRENT == 2 )); then
+          _files
+        fi
+        return
+      fi
+
       if (( has_target == 0 )); then
         _alternative \
-          'subcommand:subcommand:(scan)' \
+          'subcommand:subcommand:(scan init-config)' \
           'option:option:compadd -- --help -h --json --format --config --fail-on --summary-only --output-file' \
           'directory:directory:_files -/'
         return

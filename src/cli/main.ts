@@ -6,6 +6,7 @@ import { auditTarget as defaultAuditTarget } from "../core/audit.js";
 import { isSeverity, shouldFailForThreshold } from "../core/thresholds.js";
 import type { Severity } from "../core/types.js";
 import { loadCliConfig, type CliConfig } from "./config.js";
+import { DEFAULT_CONFIG_PATH, writeStarterConfig } from "./init-config.js";
 import { isOutputFormat, renderReport, renderSummaryReport, type OutputFormat } from "../renderers/output.js";
 import { writeRenderedOutput } from "../utils/write-rendered-output.js";
 
@@ -30,6 +31,13 @@ interface ParsedCliArguments {
   configFile?: string;
 }
 
+interface InitConfigCliArguments {
+  initConfig: true;
+  outputPath: string;
+}
+
+type ParsedCommand = ParsedCliArguments | InitConfigCliArguments;
+
 interface CliDependencies {
   auditTarget?: typeof defaultAuditTarget;
   stdout?: OutputWriter;
@@ -46,6 +54,12 @@ export async function runCli(argv: string[], dependencies: CliDependencies = {})
 
     if (parsed === null) {
       stdout.write(`${usage()}\n`);
+      return 0;
+    }
+
+    if (isInitConfigCommand(parsed)) {
+      await writeStarterConfig(parsed.outputPath);
+      stdout.write(`Wrote starter config to ${parsed.outputPath}\n`);
       return 0;
     }
 
@@ -66,7 +80,11 @@ export async function runCli(argv: string[], dependencies: CliDependencies = {})
   }
 }
 
-export function parseArguments(argv: string[]): ParsedCliArguments | null {
+export function parseArguments(argv: string[]): ParsedCommand | null {
+  if (argv[0] === "init-config") {
+    return parseInitConfigArguments(argv.slice(1));
+  }
+
   const args = argv[0] === "scan" ? argv.slice(1) : [...argv];
   if (args.length === 0 || args.includes("--help") || args.includes("-h")) {
     return null;
@@ -219,6 +237,44 @@ export function parseArguments(argv: string[]): ParsedCliArguments | null {
   return options;
 }
 
+function parseInitConfigArguments(argv: string[]): InitConfigCliArguments | null {
+  if (argv.length === 0) {
+    return {
+      initConfig: true,
+      outputPath: DEFAULT_CONFIG_PATH
+    };
+  }
+
+  if (argv.includes("--help") || argv.includes("-h")) {
+    return null;
+  }
+
+  let outputPath = DEFAULT_CONFIG_PATH;
+  let sawPath = false;
+
+  for (const argument of argv) {
+    if (argument.startsWith("-")) {
+      throw new Error(`Unknown option: ${argument}`);
+    }
+
+    if (sawPath) {
+      throw new Error("init-config accepts at most one optional output path.");
+    }
+
+    outputPath = argument;
+    sawPath = true;
+  }
+
+  return {
+    initConfig: true,
+    outputPath
+  };
+}
+
+function isInitConfigCommand(parsed: ParsedCommand): parsed is InitConfigCliArguments {
+  return "initConfig" in parsed;
+}
+
 export function resolveCliOptions(parsed: ParsedCliArguments, config: CliConfig): CliOptions {
   const options: CliOptions = {
     target: parsed.target,
@@ -249,6 +305,7 @@ function usage(): string {
     "Usage:",
     "  trustmcp <target> [--config path] [--format text|json|markdown|sarif] [--summary-only] [--fail-on low|medium|high] [--output-file path]",
     "  trustmcp scan <target> [--config path] [--format text|json|markdown|sarif] [--summary-only] [--fail-on low|medium|high] [--output-file path]",
+    "  trustmcp init-config [path]",
     "",
     "Targets:",
     "  - local directory",

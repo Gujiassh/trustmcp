@@ -75,6 +75,20 @@ describe("parseArguments", () => {
     });
   });
 
+  it("parses init-config with the default output path", () => {
+    expect(parseArguments(["init-config"])).toEqual({
+      initConfig: true,
+      outputPath: "trustmcp.config.json"
+    });
+  });
+
+  it("parses init-config with an explicit output path", () => {
+    expect(parseArguments(["init-config", "configs/trustmcp.config.json"])).toEqual({
+      initConfig: true,
+      outputPath: "configs/trustmcp.config.json"
+    });
+  });
+
   it("rejects invalid format values", () => {
     expect(() => parseArguments(["./fixtures/local-risky", "--format", "html"]))
       .toThrowError("--format expects one of: text, json, markdown, sarif.");
@@ -102,6 +116,11 @@ describe("parseArguments", () => {
   it("rejects missing --fail-on values", () => {
     expect(() => parseArguments(["./fixtures/local-risky", "--fail-on"]))
       .toThrowError("--fail-on expects one of: low, medium, high.");
+  });
+
+  it("rejects extra init-config positional arguments", () => {
+    expect(() => parseArguments(["init-config", "one.json", "two.json"]))
+      .toThrowError("init-config accepts at most one optional output path.");
   });
 });
 
@@ -326,6 +345,41 @@ describe("runCli exit thresholds", () => {
     expect(cliFileContent).toContain("# TrustMCP Summary");
     expect(cliFileContent).not.toContain('"tool"');
     await expect(readFile(configOutputFile, "utf8")).rejects.toThrow();
+  });
+
+  it("writes a starter config file with the supported stable fields", async () => {
+    const outputFile = await createTempFilePath("trustmcp.config.json");
+    const stdout: string[] = [];
+
+    const exitCode = await runCli(["init-config", outputFile], {
+      stdout: createWriter(stdout)
+    });
+
+    const fileContent = await readFile(outputFile, "utf8");
+    expect(exitCode).toBe(0);
+    expect(stdout.join("")).toBe(`Wrote starter config to ${outputFile}\n`);
+    expect(fileContent).toBe(`{
+  "format": "markdown",
+  "fail-on": "high",
+  "summary-only": false,
+  "output-file": "trustmcp-report.md"
+}
+`);
+  });
+
+  it("refuses to overwrite an existing config file", async () => {
+    const outputFile = await createTempFilePath("trustmcp.config.json");
+    const stderr: string[] = [];
+    await writeFile(outputFile, "{}\n", "utf8");
+
+    const exitCode = await runCli(["init-config", outputFile], {
+      stdout: createWriter([]),
+      stderr: createWriter(stderr)
+    });
+
+    expect(exitCode).toBe(1);
+    expect(stderr.join("")).toBe(`TrustMCP error: Config file already exists: ${outputFile}\n`);
+    expect(await readFile(outputFile, "utf8")).toBe("{}\n");
   });
 });
 

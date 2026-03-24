@@ -33,6 +33,7 @@ _trustmcp_add_directory_matches() {
 _trustmcp() {
   local cur prev arg
   local -i has_target=0 skip_next=0 i
+  local subcommand=""
   local formats="text json markdown sarif"
   local severities="low medium high"
   local flags="--help -h --json --format --config --fail-on --summary-only --output-file"
@@ -58,6 +59,17 @@ _trustmcp() {
       return
       ;;
   esac
+
+  if [[ "${COMP_WORDS[1]}" == "init-config" ]]; then
+    if (( COMP_CWORD == 2 )); then
+      _trustmcp_add_file_matches "" "$cur"
+      return
+    fi
+
+    if (( COMP_CWORD > 2 )); then
+      return
+    fi
+  fi
 
   case "$cur" in
     --format=*)
@@ -87,6 +99,9 @@ _trustmcp() {
     fi
 
     case "$arg" in
+      init-config)
+        subcommand="init-config"
+        ;;
       --format|--config|--fail-on|--output-file)
         skip_next=1
         ;;
@@ -95,13 +110,15 @@ _trustmcp() {
       -*)
         ;;
       *)
-        has_target=1
+        if [[ "$subcommand" != "init-config" ]]; then
+          has_target=1
+        fi
         ;;
     esac
   done
 
   if (( has_target == 0 )); then
-    _trustmcp_add_word_matches "scan $flags" "$cur"
+    _trustmcp_add_word_matches "scan init-config $flags" "$cur"
     _trustmcp_add_directory_matches "$cur"
     return
   fi
