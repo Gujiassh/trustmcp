@@ -10,6 +10,8 @@ If you want the fuller comparison, check out [What TrustMCP scans, and how it di
 
 Canonical repository: https://github.com/Gujiassh/trustmcp
 
+Release history: [CHANGELOG.md](./CHANGELOG.md)
+
 ## Why scan MCP servers
 
 MCP servers are getting easier to discover and easier to wire into local tools. Trust review is still mostly manual, so TrustMCP focuses on a believable first step: scan the code, point to concrete evidence, and explain why it matters.

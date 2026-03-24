@@ -56,5 +56,6 @@ This repository ships a conservative manual release workflow at `.github/workflo
 - provide a tag like `v0.1.1`
 - run it from the default branch
 - make sure `package.json` already matches the same version without the leading `v`
+- add or update the matching entry in `CHANGELOG.md`
 
 The workflow validates the version, runs tests and build, and then creates the GitHub tag and release. It does not publish to npm.

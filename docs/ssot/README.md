@@ -40,6 +40,8 @@ The public repo now also ships a reusable composite GitHub Action plus official 
 
 The repo now also ships a conservative manual GitHub release workflow triggered by `workflow_dispatch`, with explicit version validation and GitHub release creation only.
 
+The public repo now also has a lightweight `CHANGELOG.md` as the release-history entry point for current and future GitHub releases.
+
 The repo now also ships an explicit npm pack validation path so future package distribution can be checked deliberately without publishing.
 
 The reusable action now exposes machine-readable summary outputs for total findings and low/medium/high severity counts.
