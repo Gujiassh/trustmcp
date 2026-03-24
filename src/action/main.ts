@@ -4,6 +4,7 @@ import { pathToFileURL } from "node:url";
 import { auditTarget as defaultAuditTarget } from "../core/audit.js";
 import { shouldFailForThreshold } from "../core/thresholds.js";
 import type { AuditReport, Severity } from "../core/types.js";
+import { renderMarkdownReport } from "../renderers/markdown.js";
 import { isOutputFormat, renderReport, type OutputFormat } from "../renderers/output.js";
 
 interface OutputWriter {
@@ -21,6 +22,7 @@ interface ActionDependencies {
   stdout?: OutputWriter;
   stderr?: OutputWriter;
   githubOutputPath?: string;
+  githubStepSummaryPath?: string;
 }
 
 export async function runAction(
@@ -36,6 +38,7 @@ export async function runAction(
     const output = renderReport(report, options.format);
     stdout.write(`${output}\n`);
     await writeActionOutputs(report, dependencies.githubOutputPath ?? process.env.GITHUB_OUTPUT);
+    await writeActionSummary(report, dependencies.githubStepSummaryPath ?? process.env.GITHUB_STEP_SUMMARY);
     return shouldFailForThreshold(report, options.failOn) ? 2 : 0;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -57,6 +60,14 @@ export async function writeActionOutputs(report: AuditReport, githubOutputPath?:
   ];
 
   await appendFile(githubOutputPath, `${outputLines.join("\n")}\n`);
+}
+
+export async function writeActionSummary(report: AuditReport, githubStepSummaryPath?: string): Promise<void> {
+  if (githubStepSummaryPath === undefined || githubStepSummaryPath.length === 0) {
+    return;
+  }
+
+  await appendFile(githubStepSummaryPath, `${renderMarkdownReport(report)}\n`);
 }
 
 function parseActionArguments(argv: string[]): ActionOptions {

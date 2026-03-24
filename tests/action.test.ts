@@ -17,6 +17,7 @@ afterEach(async () => {
 describe("runAction", () => {
   it("writes machine-readable summary outputs for a non-empty report", async () => {
     const outputPath = await createOutputPath();
+    const summaryPath = await createSummaryPath();
     const stdout: string[] = [];
 
     const exitCode = await runAction(
@@ -28,7 +29,8 @@ describe("runAction", () => {
       {
         auditTarget: async () => createReport("local-directory", ["high", "high", "medium"]),
         stdout: createWriter(stdout),
-        githubOutputPath: outputPath
+        githubOutputPath: outputPath,
+        githubStepSummaryPath: summaryPath
       }
     );
 
@@ -40,6 +42,44 @@ describe("runAction", () => {
       "medium-count": "1",
       "high-count": "2"
     });
+    expect(await readFile(summaryPath, "utf8")).toBe(`# TrustMCP Report
+
+- Target: \`./fixtures/local-risky\`
+- Source: \`local-directory\`
+- Findings: 3
+- Rules triggered: 3
+- Severity counts: low 0, medium 1, high 2
+- Summary: 3 finding(s) across 3 rule(s). Static heuristics only.
+
+## Findings
+
+### 1. Shell execution capability detected
+- Rule: \`rule-1\`
+- Severity: \`high\`
+- Confidence: \`high\`
+- Location: \`src/example-1.ts:1\`
+- Evidence: evidence-1
+- Why it matters: why-1
+- Remediation: remediation-1
+
+### 2. Shell execution capability detected
+- Rule: \`rule-2\`
+- Severity: \`high\`
+- Confidence: \`high\`
+- Location: \`src/example-2.ts:2\`
+- Evidence: evidence-2
+- Why it matters: why-2
+- Remediation: remediation-2
+
+### 3. Outbound network request capability detected
+- Rule: \`rule-3\`
+- Severity: \`medium\`
+- Confidence: \`high\`
+- Location: \`src/example-3.ts:3\`
+- Evidence: evidence-3
+- Why it matters: why-3
+- Remediation: remediation-3
+`);
   });
 
   it("writes zeroed outputs for an empty report", async () => {
@@ -64,6 +104,21 @@ describe("runAction", () => {
       "medium-count": "0",
       "high-count": "0"
     });
+  });
+
+  it("skips summary writing when the summary path is unavailable", async () => {
+    const exitCode = await runAction(
+      {
+        target: "./fixtures/local-clean",
+        format: "markdown"
+      },
+      {
+        auditTarget: async () => createReport("local-directory", []),
+        stdout: createWriter([])
+      }
+    );
+
+    expect(exitCode).toBe(0);
   });
 });
 
@@ -127,6 +182,14 @@ async function createOutputPath(): Promise<string> {
   const outputPath = join(directory, "github-output.txt");
   await writeFile(outputPath, "", "utf8");
   return outputPath;
+}
+
+async function createSummaryPath(): Promise<string> {
+  const directory = await mkdtemp(join(tmpdir(), "trustmcp-action-summary-test-"));
+  tempDirectories.push(directory);
+  const summaryPath = join(directory, "github-step-summary.md");
+  await writeFile(summaryPath, "", "utf8");
+  return summaryPath;
 }
 
 async function readOutputs(outputPath: string): Promise<Record<string, string>> {

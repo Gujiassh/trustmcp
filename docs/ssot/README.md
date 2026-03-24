@@ -18,4 +18,6 @@ The public repo now also ships a reusable composite GitHub Action plus an offici
 
 The reusable action now exposes machine-readable summary outputs for total findings and low/medium/high severity counts.
 
+When running inside GitHub Actions with `GITHUB_STEP_SUMMARY` available, the reusable action also appends the existing markdown report there.
+
 README now includes a pinned real-world scan snapshot so visitors can see how TrustMCP output looks on a recognizable public MCP repository without relying on contrived fixtures alone.
