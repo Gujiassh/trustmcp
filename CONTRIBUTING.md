@@ -2,6 +2,8 @@
 
 Thanks for helping make TrustMCP more useful.
 
+If you are trying to remember which doc or command covers which job, check out the [TrustMCP contributor task map](./docs/contributor-task-map.md).
+
 ## Local workflow
 
 Install dependencies:
