@@ -92,6 +92,10 @@ _trustmcp() {
     fi
   fi
 
+  if [[ "${COMP_WORDS[1]}" == "list-rules" ]]; then
+    return
+  fi
+
   case "$cur" in
     --format=*)
       _trustmcp_add_prefixed_word_matches "--format=" "$formats" "${cur#--format=}"
@@ -120,7 +124,7 @@ _trustmcp() {
     fi
 
     case "$arg" in
-      init-config|doctor)
+      init-config|doctor|list-rules)
         subcommand="$arg"
         ;;
       --format|--config|--fail-on|--output-file)
@@ -139,7 +143,7 @@ _trustmcp() {
   done
 
   if (( has_target == 0 )); then
-    _trustmcp_add_word_matches "scan doctor init-config $flags" "$cur"
+    _trustmcp_add_word_matches "scan doctor init-config list-rules $flags" "$cur"
     _trustmcp_add_directory_matches "$cur"
     return
   fi

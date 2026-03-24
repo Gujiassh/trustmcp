@@ -57,6 +57,8 @@ export interface MaterializedSource {
 }
 
 export interface Rule {
+  defaultSeverity: Severity;
   id: string;
+  title: string;
   evaluate(files: ScanFile[]): Finding[];
 }

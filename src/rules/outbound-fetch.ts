@@ -10,7 +10,9 @@ const USER_CONTROLLED_URL_PATTERN =
   /(?:args|params|input|request|toolInput|toolArgs|resource)\.[A-Za-z0-9_]*url\b/i;
 
 export const outboundFetchRule: Rule = {
+  defaultSeverity: "medium",
   id: "mcp/outbound-fetch",
+  title: "Outbound network request capability detected",
   evaluate(files: ScanFile[]): Finding[] {
     const findings: Finding[] = [];
 
@@ -30,7 +32,7 @@ export const outboundFetchRule: Rule = {
             ruleId: "mcp/outbound-fetch",
             severity: "medium",
             confidence,
-            title: "Outbound network request capability detected",
+            title: outboundFetchRule.title,
             file: file.relativePath,
             line: index + 1,
             evidence: line,

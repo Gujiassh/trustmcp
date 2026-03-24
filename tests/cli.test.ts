@@ -101,6 +101,12 @@ describe("parseArguments", () => {
     });
   });
 
+  it("parses list-rules with no extra arguments", () => {
+    expect(parseArguments(["list-rules"])).toEqual({
+      listRules: true
+    });
+  });
+
   it("rejects invalid format values", () => {
     expect(() => parseArguments(["./fixtures/local-risky", "--format", "html"]))
       .toThrowError("--format expects one of: text, json, markdown, sarif.");
@@ -138,6 +144,11 @@ describe("parseArguments", () => {
   it("rejects extra doctor positional arguments", () => {
     expect(() => parseArguments(["doctor", "one", "two"]))
       .toThrowError("doctor accepts exactly one target: a local directory, GitHub repository URL, or gh:owner/repo.");
+  });
+
+  it("rejects extra list-rules arguments", () => {
+    expect(() => parseArguments(["list-rules", "extra"]))
+      .toThrowError("list-rules does not accept additional arguments.");
   });
 });
 
@@ -397,6 +408,25 @@ describe("runCli exit thresholds", () => {
     expect(exitCode).toBe(1);
     expect(stderr.join("")).toBe(`TrustMCP error: Config file already exists: ${outputFile}\n`);
     expect(await readFile(outputFile, "utf8")).toBe("{}\n");
+  });
+
+  it("prints the shipped rule set in a compact stable form", async () => {
+    const stdout: string[] = [];
+
+    const exitCode = await runCli(["list-rules"], {
+      auditTarget: async () => {
+        throw new Error("list-rules should not invoke the scan engine");
+      },
+      stdout: createWriter(stdout)
+    });
+
+    expect(exitCode).toBe(0);
+    expect(stdout.join("")).toBe(
+      "ruleId\tseverity\ttitle\n" +
+      "mcp/broad-filesystem\thigh\tFilesystem access using broad or tool-controlled paths detected\n" +
+      "mcp/outbound-fetch\tmedium\tOutbound network request capability detected\n" +
+      "mcp/shell-exec\thigh\tShell execution capability detected\n"
+    );
   });
 
   it("runs doctor successfully for a valid local target and config without invoking the scan engine", async () => {

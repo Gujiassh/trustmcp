@@ -17,7 +17,9 @@ const USER_PATH_PATTERN =
   /(?:args|params|input|request|toolInput|toolArgs|resource)\.[A-Za-z0-9_]*path\b|\b(?:filePath|dirPath|targetPath|requestedPath|workspacePath|userPath|pathArg)\b/i;
 
 export const broadFilesystemRule: Rule = {
+  defaultSeverity: "high",
   id: "mcp/broad-filesystem",
+  title: "Filesystem access using broad or tool-controlled paths detected",
   evaluate(files: ScanFile[]): Finding[] {
     const findings: Finding[] = [];
 
@@ -44,7 +46,7 @@ export const broadFilesystemRule: Rule = {
             ruleId: "mcp/broad-filesystem",
             severity: "high",
             confidence,
-            title: "Filesystem access using broad or tool-controlled paths detected",
+            title: broadFilesystemRule.title,
             file: file.relativePath,
             line: index + 1,
             evidence,

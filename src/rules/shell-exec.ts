@@ -14,7 +14,9 @@ const EXECA_PATTERN = /\bexeca(?:Command|CommandSync|Sync)?\s*\(/;
 const BUN_PATTERN = /\bBun\.spawn\s*\(/;
 
 export const shellExecRule: Rule = {
+  defaultSeverity: "high",
   id: "mcp/shell-exec",
+  title: "Shell execution capability detected",
   evaluate(files: ScanFile[]): Finding[] {
     const findings: Finding[] = [];
 
@@ -37,7 +39,7 @@ export const shellExecRule: Rule = {
             ruleId: "mcp/shell-exec",
             severity: "high",
             confidence: "high",
-            title: "Shell execution capability detected",
+            title: shellExecRule.title,
             file: file.relativePath,
             line: index + 1,
             evidence: line,

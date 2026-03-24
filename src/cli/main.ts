@@ -8,6 +8,7 @@ import type { Severity } from "../core/types.js";
 import { loadCliConfig, type CliConfig } from "./config.js";
 import { runDoctor } from "./doctor.js";
 import { DEFAULT_CONFIG_PATH, writeStarterConfig } from "./init-config.js";
+import { renderRuleList } from "./list-rules.js";
 import { isOutputFormat, renderReport, renderSummaryReport, type OutputFormat } from "../renderers/output.js";
 import { writeRenderedOutput } from "../utils/write-rendered-output.js";
 
@@ -43,7 +44,11 @@ interface DoctorCliArguments {
   configFile?: string;
 }
 
-type ParsedCommand = ParsedCliArguments | InitConfigCliArguments | DoctorCliArguments;
+interface ListRulesCliArguments {
+  listRules: true;
+}
+
+type ParsedCommand = ParsedCliArguments | InitConfigCliArguments | DoctorCliArguments | ListRulesCliArguments;
 
 interface CliDependencies {
   auditTarget?: typeof defaultAuditTarget;
@@ -80,6 +85,11 @@ export async function runCli(argv: string[], dependencies: CliDependencies = {})
       return result.ok ? 0 : 1;
     }
 
+    if (isListRulesCommand(parsed)) {
+      stdout.write(`${renderRuleList()}\n`);
+      return 0;
+    }
+
     const config = await loadCliConfig(parsed.configFile);
     const resolved = resolveCliOptions(parsed, config);
 
@@ -104,6 +114,10 @@ export function parseArguments(argv: string[]): ParsedCommand | null {
 
   if (argv[0] === "doctor") {
     return parseDoctorArguments(argv.slice(1));
+  }
+
+  if (argv[0] === "list-rules") {
+    return parseListRulesArguments(argv.slice(1));
   }
 
   const args = argv[0] === "scan" ? argv.slice(1) : [...argv];
@@ -354,12 +368,28 @@ function parseDoctorArguments(argv: string[]): DoctorCliArguments | null {
   return options;
 }
 
+function parseListRulesArguments(argv: string[]): ListRulesCliArguments | null {
+  if (argv.length === 0) {
+    return { listRules: true };
+  }
+
+  if (argv.includes("--help") || argv.includes("-h")) {
+    return null;
+  }
+
+  throw new Error("list-rules does not accept additional arguments.");
+}
+
 function isInitConfigCommand(parsed: ParsedCommand): parsed is InitConfigCliArguments {
   return "initConfig" in parsed;
 }
 
 function isDoctorCommand(parsed: ParsedCommand): parsed is DoctorCliArguments {
   return "doctor" in parsed;
+}
+
+function isListRulesCommand(parsed: ParsedCommand): parsed is ListRulesCliArguments {
+  return "listRules" in parsed;
 }
 
 export function resolveCliOptions(parsed: ParsedCliArguments, config: CliConfig): CliOptions {
@@ -394,6 +424,7 @@ function usage(): string {
     "  trustmcp scan <target> [--config path] [--format text|json|markdown|sarif] [--summary-only] [--fail-on low|medium|high] [--output-file path]",
     "  trustmcp doctor <target> [--config path]",
     "  trustmcp init-config [path]",
+    "  trustmcp list-rules",
     "",
     "Targets:",
     "  - local directory",

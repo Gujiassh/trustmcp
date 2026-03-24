@@ -70,9 +70,13 @@ _trustmcp() {
         return
       fi
 
+      if [[ "${words[1]}" == "list-rules" ]]; then
+        return
+      fi
+
       if (( has_target == 0 )); then
         _alternative \
-          'subcommand:subcommand:(scan doctor init-config)' \
+          'subcommand:subcommand:(scan doctor init-config list-rules)' \
           'option:option:compadd -- --help -h --json --format --config --fail-on --summary-only --output-file' \
           'directory:directory:_files -/'
         return

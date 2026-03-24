@@ -14,6 +14,7 @@ describe("completion scripts", () => {
     expect(script).toContain("scan");
     expect(script).toContain("doctor");
     expect(script).toContain("init-config");
+    expect(script).toContain("list-rules");
     expect(script).toContain("--config");
     expect(script).toContain("--summary-only");
     expect(script).toContain("--fail-on");
@@ -29,6 +30,7 @@ describe("completion scripts", () => {
     expect(script).toContain("scan");
     expect(script).toContain("doctor");
     expect(script).toContain("init-config");
+    expect(script).toContain("list-rules");
     expect(script).toContain("--config");
     expect(script).toContain("--summary-only");
     expect(script).toContain("--fail-on");
