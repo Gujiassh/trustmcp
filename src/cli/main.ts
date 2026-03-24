@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 
 import { auditTarget as defaultAuditTarget } from "../core/audit.js";
@@ -15,6 +16,7 @@ interface CliOptions {
   target: string;
   format: OutputFormat;
   failOn?: Severity;
+  outputFile?: string;
 }
 
 interface CliDependencies {
@@ -38,6 +40,11 @@ export async function runCli(argv: string[], dependencies: CliDependencies = {})
 
     const report = await auditTarget(parsed.target);
     const output = renderReport(report, parsed.format);
+
+    if (parsed.outputFile !== undefined) {
+      await writeFile(parsed.outputFile, `${output}\n`, "utf8");
+    }
+
     stdout.write(`${output}\n`);
     return shouldFailForThreshold(report, parsed.failOn) ? 2 : 0;
   } catch (error) {
@@ -56,6 +63,7 @@ export function parseArguments(argv: string[]): CliOptions | null {
   let format: OutputFormat = "text";
   let target: string | undefined;
   let failOn: Severity | undefined;
+  let outputFile: string | undefined;
 
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
@@ -110,6 +118,27 @@ export function parseArguments(argv: string[]): CliOptions | null {
       continue;
     }
 
+    if (argument === "--output-file") {
+      const nextArgument = args[index + 1];
+      if (nextArgument === undefined || nextArgument.startsWith("-")) {
+        throw new Error("--output-file expects a file path.");
+      }
+
+      outputFile = nextArgument;
+      index += 1;
+      continue;
+    }
+
+    if (argument.startsWith("--output-file=")) {
+      const value = argument.slice("--output-file=".length);
+      if (value.length === 0) {
+        throw new Error("--output-file expects a file path.");
+      }
+
+      outputFile = value;
+      continue;
+    }
+
     if (argument.startsWith("-")) {
       throw new Error(`Unknown option: ${argument}`);
     }
@@ -125,15 +154,25 @@ export function parseArguments(argv: string[]): CliOptions | null {
     throw new Error("Missing target. Provide a local directory or a public GitHub repository URL.");
   }
 
-  return failOn === undefined ? { target, format } : { target, format, failOn };
+  const options: CliOptions = { target, format };
+
+  if (failOn !== undefined) {
+    options.failOn = failOn;
+  }
+
+  if (outputFile !== undefined) {
+    options.outputFile = outputFile;
+  }
+
+  return options;
 }
 
 function usage(): string {
   return [
     "TrustMCP v0.1.0",
     "Usage:",
-    "  trustmcp <target> [--format text|json|markdown] [--fail-on low|medium|high]",
-    "  trustmcp scan <target> [--format text|json|markdown] [--fail-on low|medium|high]",
+    "  trustmcp <target> [--format text|json|markdown] [--fail-on low|medium|high] [--output-file path]",
+    "  trustmcp scan <target> [--format text|json|markdown] [--fail-on low|medium|high] [--output-file path]",
     "",
     "Targets:",
     "  - local directory",

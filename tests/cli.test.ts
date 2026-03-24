@@ -1,7 +1,17 @@
-import { describe, expect, it } from "vitest";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+import { afterEach, describe, expect, it } from "vitest";
 
 import type { AuditReport, Severity } from "../src/core/types.js";
 import { parseArguments, runCli } from "../src/cli/main.js";
+
+const tempDirectories: string[] = [];
+
+afterEach(async () => {
+  await Promise.all(tempDirectories.splice(0).map((directory) => rm(directory, { recursive: true, force: true })));
+});
 
 describe("parseArguments", () => {
   it("parses --fail-on with a separate severity argument", () => {
@@ -27,9 +37,29 @@ describe("parseArguments", () => {
     });
   });
 
+  it("parses --output-file in both supported forms", () => {
+    expect(parseArguments(["./fixtures/local-risky", "--output-file", "report.md"])).toEqual({
+      target: "./fixtures/local-risky",
+      format: "text",
+      outputFile: "report.md"
+    });
+    expect(parseArguments(["./fixtures/local-risky", "--output-file=report.json", "--format", "json"])).toEqual({
+      target: "./fixtures/local-risky",
+      format: "json",
+      outputFile: "report.json"
+    });
+  });
+
   it("rejects invalid format values", () => {
     expect(() => parseArguments(["./fixtures/local-risky", "--format", "html"]))
       .toThrowError("--format expects one of: text, json, markdown.");
+  });
+
+  it("rejects missing --output-file values", () => {
+    expect(() => parseArguments(["./fixtures/local-risky", "--output-file"]))
+      .toThrowError("--output-file expects a file path.");
+    expect(() => parseArguments(["./fixtures/local-risky", "--output-file", "--format", "json"]))
+      .toThrowError("--output-file expects a file path.");
   });
 
   it("rejects invalid --fail-on values", () => {
@@ -87,6 +117,29 @@ describe("runCli exit thresholds", () => {
 
     expect(exitCode).toBe(0);
   });
+
+  it("writes the rendered report to an explicit file path while preserving stdout", async () => {
+    const outputFile = await createTempFilePath("trustmcp-report.md");
+    const stdout: string[] = [];
+
+    const exitCode = await runCli([
+      "./fixtures/local-risky",
+      "--format",
+      "markdown",
+      "--output-file",
+      outputFile
+    ], {
+      auditTarget: async () => createReport("local-directory", ["high", "medium"]),
+      stdout: createWriter(stdout)
+    });
+
+    const fileContent = await readFile(outputFile, "utf8");
+
+    expect(exitCode).toBe(0);
+    expect(stdout.join("")).toContain("# TrustMCP Report");
+    expect(fileContent).toContain("# TrustMCP Report");
+    expect(fileContent).toContain("Shell execution capability detected");
+  });
 });
 
 function createReport(sourceType: "local-directory" | "public-github-repo", severities: Severity[]): AuditReport {
@@ -141,4 +194,10 @@ function createWriter(chunks: string[]) {
       chunks.push(chunk);
     }
   };
+}
+
+async function createTempFilePath(fileName: string): Promise<string> {
+  const directory = await mkdtemp(join(tmpdir(), "trustmcp-cli-test-"));
+  tempDirectories.push(directory);
+  return join(directory, fileName);
 }

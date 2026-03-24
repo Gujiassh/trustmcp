@@ -94,6 +94,12 @@ Emit compact markdown for a PR comment or job summary:
 node dist/cli/main.js gh:modelcontextprotocol/servers --format markdown
 ```
 
+Write the selected format to a file while still printing it to stdout:
+
+```bash
+node dist/cli/main.js gh:modelcontextprotocol/servers --format markdown --output-file trustmcp-report.md
+```
+
 JSON reports include `summary.severityCounts.low`, `summary.severityCounts.medium`, and `summary.severityCounts.high` so CI consumers can read stable severity totals without re-counting the finding list.
 
 Fail a CI job when a finding meets or exceeds a severity threshold:
