@@ -104,14 +104,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: Gujiassh/trustmcp@main
+      - uses: Gujiassh/trustmcp@v0.1.0
         with:
           target: ${{ github.workspace }}
           format: json
           fail-on: high
 ```
 
-The action builds TrustMCP from its own source tree on each run and then scans the checked-out target path or public GitHub URL you pass in. It does not rely on a published npm package or marketplace wrapper. For real production use, pin the action to a specific commit SHA or tag instead of `@main`.
+The action builds TrustMCP from its own source tree on each run and then scans the checked-out target path or public GitHub URL you pass in. It does not rely on a published npm package or marketplace wrapper. The example above uses the current stable tag `v0.1.0`; if you need stricter supply-chain pinning, use a specific commit SHA.
 
 ## Real-world pinned example
 
