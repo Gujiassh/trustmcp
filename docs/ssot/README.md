@@ -30,6 +30,8 @@ Public docs now also include a compact troubleshooting guide for common TrustMCP
 
 Public docs now also include a dedicated install-path guide covering source checkout, direct CLI use, `npm link`, and pack-readiness without implying npm publication.
 
+Public docs now also include a short future install migration note so source-based install guidance can evolve cleanly if packaged distribution is added later.
+
 Public docs now also include a compact npm publish checklist for the final manual registry step when the project is ready.
 
 The repo now also ships static bash and zsh completion scripts for the stable CLI surface.

@@ -23,6 +23,8 @@ node dist/cli/main.js ./path-to-target
 
 That is the main supported path today.
 
+If you want the short future-looking note about how a packaged install path would differ conceptually, check out [Future install migration note for source users](./future-install-migration.md).
+
 ## Use direct `node dist/cli/main.js` when you want the lowest-friction path
 
 After building, you can run TrustMCP without any linking step:
