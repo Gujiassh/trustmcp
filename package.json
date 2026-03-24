@@ -20,6 +20,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "pack:check": "npm run build && node scripts/pack-check.mjs",
+    "publish:check": "npm test && npm run build && npm run pack:check",
     "test": "vitest run",
     "smoke": "npm run build && node scripts/smoke.mjs"
   },
