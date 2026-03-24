@@ -70,6 +70,8 @@ npm run pack:check
 
 It only means the repository has a repeatable local check for future packaging.
 
+If you are preparing for the eventual manual registry step, check out the [npm publish checklist for TrustMCP](./npm-publish-checklist.md).
+
 ## Choose the path that matches what you need
 
 Use:
