@@ -1,0 +1,29 @@
+name: TrustMCP upload SARIF
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  trustmcp:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: mkdir -p reports
+
+      - id: trustmcp
+        uses: Gujiassh/trustmcp@v0.1.0
+        with:
+          target: ${{ github.workspace }}
+          format: sarif
+          fail-on: high
+          output-file: reports/trustmcp.sarif
+
+      - uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: reports/trustmcp.sarif

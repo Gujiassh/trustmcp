@@ -146,7 +146,7 @@ node dist/cli/main.js https://github.com/modelcontextprotocol/servers --format j
 
 ## GitHub Actions example
 
-TrustMCP now ships a reusable composite action at the repository root. For copy-pasteable workflows, start from [`./.github/examples/trustmcp-gate.yml`](./.github/examples/trustmcp-gate.yml) for the checked-out workspace case, [`./.github/examples/trustmcp-public-target.yml`](./.github/examples/trustmcp-public-target.yml) for an explicit public GitHub target, [`./.github/examples/trustmcp-artifact.yml`](./.github/examples/trustmcp-artifact.yml) to retain a rendered markdown report, or [`./.github/examples/trustmcp-sarif-artifact.yml`](./.github/examples/trustmcp-sarif-artifact.yml) for the parallel SARIF artifact path.
+TrustMCP now ships a reusable composite action at the repository root. For copy-pasteable workflows, start from [`./.github/examples/trustmcp-gate.yml`](./.github/examples/trustmcp-gate.yml) for the checked-out workspace case, [`./.github/examples/trustmcp-public-target.yml`](./.github/examples/trustmcp-public-target.yml) for an explicit public GitHub target, [`./.github/examples/trustmcp-artifact.yml`](./.github/examples/trustmcp-artifact.yml) to retain a rendered markdown report, [`./.github/examples/trustmcp-sarif-artifact.yml`](./.github/examples/trustmcp-sarif-artifact.yml) for a retained SARIF file, or [`./.github/examples/trustmcp-upload-sarif.yml`](./.github/examples/trustmcp-upload-sarif.yml) for the GitHub code-scanning upload path.
 
 Minimal external usage looks like this:
 
