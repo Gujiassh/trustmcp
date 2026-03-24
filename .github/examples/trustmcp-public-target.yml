@@ -1,0 +1,23 @@
+name: TrustMCP public target
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  trustmcp:
+    runs-on: ubuntu-latest
+
+    steps:
+      - id: trustmcp
+        uses: Gujiassh/trustmcp@v0.1.0
+        with:
+          target: https://github.com/modelcontextprotocol/servers
+          format: markdown
+          fail-on: high
+
+      - run: |
+          echo "findings=${{ steps.trustmcp.outputs.finding-count }}"
+          echo "high=${{ steps.trustmcp.outputs.high-count }}"
