@@ -6,6 +6,7 @@ import { auditTarget as defaultAuditTarget } from "../core/audit.js";
 import { isSeverity, shouldFailForThreshold } from "../core/thresholds.js";
 import type { Severity } from "../core/types.js";
 import { loadCliConfig, type CliConfig } from "./config.js";
+import { runDoctor } from "./doctor.js";
 import { DEFAULT_CONFIG_PATH, writeStarterConfig } from "./init-config.js";
 import { isOutputFormat, renderReport, renderSummaryReport, type OutputFormat } from "../renderers/output.js";
 import { writeRenderedOutput } from "../utils/write-rendered-output.js";
@@ -36,7 +37,13 @@ interface InitConfigCliArguments {
   outputPath: string;
 }
 
-type ParsedCommand = ParsedCliArguments | InitConfigCliArguments;
+interface DoctorCliArguments {
+  doctor: true;
+  target: string;
+  configFile?: string;
+}
+
+type ParsedCommand = ParsedCliArguments | InitConfigCliArguments | DoctorCliArguments;
 
 interface CliDependencies {
   auditTarget?: typeof defaultAuditTarget;
@@ -63,6 +70,16 @@ export async function runCli(argv: string[], dependencies: CliDependencies = {})
       return 0;
     }
 
+    if (isDoctorCommand(parsed)) {
+      const result = await runDoctor(
+        parsed.configFile === undefined
+          ? { target: parsed.target }
+          : { target: parsed.target, configFile: parsed.configFile }
+      );
+      stdout.write(`${result.output}\n`);
+      return result.ok ? 0 : 1;
+    }
+
     const config = await loadCliConfig(parsed.configFile);
     const resolved = resolveCliOptions(parsed, config);
 
@@ -83,6 +100,10 @@ export async function runCli(argv: string[], dependencies: CliDependencies = {})
 export function parseArguments(argv: string[]): ParsedCommand | null {
   if (argv[0] === "init-config") {
     return parseInitConfigArguments(argv.slice(1));
+  }
+
+  if (argv[0] === "doctor") {
+    return parseDoctorArguments(argv.slice(1));
   }
 
   const args = argv[0] === "scan" ? argv.slice(1) : [...argv];
@@ -271,8 +292,74 @@ function parseInitConfigArguments(argv: string[]): InitConfigCliArguments | null
   };
 }
 
+function parseDoctorArguments(argv: string[]): DoctorCliArguments | null {
+  if (argv.length === 0 || argv.includes("--help") || argv.includes("-h")) {
+    return null;
+  }
+
+  let target: string | undefined;
+  let configFile: string | undefined;
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const argument = argv[index];
+    if (argument === undefined) {
+      continue;
+    }
+
+    if (argument === "--config") {
+      const nextArgument = argv[index + 1];
+      if (nextArgument === undefined || nextArgument.startsWith("-")) {
+        throw new Error("--config expects a file path.");
+      }
+
+      configFile = nextArgument;
+      index += 1;
+      continue;
+    }
+
+    if (argument.startsWith("--config=")) {
+      const value = argument.slice("--config=".length);
+      if (value.length === 0) {
+        throw new Error("--config expects a file path.");
+      }
+
+      configFile = value;
+      continue;
+    }
+
+    if (argument.startsWith("-")) {
+      throw new Error(`Unknown option: ${argument}`);
+    }
+
+    if (target !== undefined) {
+      throw new Error("doctor accepts exactly one target: a local directory, GitHub repository URL, or gh:owner/repo.");
+    }
+
+    target = argument;
+  }
+
+  if (target === undefined) {
+    throw new Error("doctor requires a local directory, GitHub repository URL, or gh:owner/repo target.");
+  }
+
+  const options: DoctorCliArguments = {
+    doctor: true,
+    target
+  };
+
+  if (configFile !== undefined) {
+    options.configFile = configFile;
+  }
+
+  return options;
+}
+
 function isInitConfigCommand(parsed: ParsedCommand): parsed is InitConfigCliArguments {
   return "initConfig" in parsed;
+}
+
+function isDoctorCommand(parsed: ParsedCommand): parsed is DoctorCliArguments {
+  return "doctor" in parsed;
 }
 
 export function resolveCliOptions(parsed: ParsedCliArguments, config: CliConfig): CliOptions {
@@ -305,6 +392,7 @@ function usage(): string {
     "Usage:",
     "  trustmcp <target> [--config path] [--format text|json|markdown|sarif] [--summary-only] [--fail-on low|medium|high] [--output-file path]",
     "  trustmcp scan <target> [--config path] [--format text|json|markdown|sarif] [--summary-only] [--fail-on low|medium|high] [--output-file path]",
+    "  trustmcp doctor <target> [--config path]",
     "  trustmcp init-config [path]",
     "",
     "Targets:",

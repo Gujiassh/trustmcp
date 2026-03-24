@@ -89,6 +89,18 @@ describe("parseArguments", () => {
     });
   });
 
+  it("parses doctor with target and optional config", () => {
+    expect(parseArguments(["doctor", "gh:modelcontextprotocol/servers"])).toEqual({
+      doctor: true,
+      target: "gh:modelcontextprotocol/servers"
+    });
+    expect(parseArguments(["doctor", "./fixtures/local-risky", "--config", "trustmcp.config.json"])).toEqual({
+      doctor: true,
+      target: "./fixtures/local-risky",
+      configFile: "trustmcp.config.json"
+    });
+  });
+
   it("rejects invalid format values", () => {
     expect(() => parseArguments(["./fixtures/local-risky", "--format", "html"]))
       .toThrowError("--format expects one of: text, json, markdown, sarif.");
@@ -121,6 +133,11 @@ describe("parseArguments", () => {
   it("rejects extra init-config positional arguments", () => {
     expect(() => parseArguments(["init-config", "one.json", "two.json"]))
       .toThrowError("init-config accepts at most one optional output path.");
+  });
+
+  it("rejects extra doctor positional arguments", () => {
+    expect(() => parseArguments(["doctor", "one", "two"]))
+      .toThrowError("doctor accepts exactly one target: a local directory, GitHub repository URL, or gh:owner/repo.");
   });
 });
 
@@ -380,6 +397,97 @@ describe("runCli exit thresholds", () => {
     expect(exitCode).toBe(1);
     expect(stderr.join("")).toBe(`TrustMCP error: Config file already exists: ${outputFile}\n`);
     expect(await readFile(outputFile, "utf8")).toBe("{}\n");
+  });
+
+  it("runs doctor successfully for a valid local target and config without invoking the scan engine", async () => {
+    const configFile = await createConfigFile(JSON.stringify({ format: "json" }));
+    const stdout: string[] = [];
+
+    const exitCode = await runCli([
+      "doctor",
+      "./fixtures/local-risky",
+      "--config",
+      configFile
+    ], {
+      auditTarget: async () => {
+        throw new Error("doctor should not invoke the scan engine");
+      },
+      stdout: createWriter(stdout)
+    });
+
+    expect(exitCode).toBe(0);
+    expect(stdout.join("")).toContain("TrustMCP doctor");
+    expect(stdout.join("")).toContain(`Config: OK ${configFile}`);
+    expect(stdout.join("")).toContain("Target: OK local directory");
+    expect(stdout.join("")).toContain("Status: ready to scan.");
+  });
+
+  it("reports unsupported GitHub tree URLs compactly in doctor", async () => {
+    const stdout: string[] = [];
+
+    const exitCode = await runCli([
+      "doctor",
+      "https://github.com/modelcontextprotocol/servers/tree/main"
+    ], {
+      auditTarget: async () => {
+        throw new Error("doctor should not invoke the scan engine");
+      },
+      stdout: createWriter(stdout)
+    });
+
+    expect(exitCode).toBe(1);
+    expect(stdout.join("")).toContain("Target: ERROR GitHub tree URLs are not supported.");
+    expect(stdout.join("")).toContain("Use the repository root URL instead: https://github.com/modelcontextprotocol/servers");
+    expect(stdout.join("")).toContain("Status: fix the errors above and run doctor again.");
+  });
+
+  it("reports invalid gh shorthand compactly in doctor", async () => {
+    const stdout: string[] = [];
+
+    const exitCode = await runCli(["doctor", "gh:modelcontextprotocol"], {
+      auditTarget: async () => {
+        throw new Error("doctor should not invoke the scan engine");
+      },
+      stdout: createWriter(stdout)
+    });
+
+    expect(exitCode).toBe(1);
+    expect(stdout.join("")).toContain("Target: ERROR GitHub shorthand inputs must look like gh:<owner>/<repo>.");
+  });
+
+  it("reports missing local directories compactly in doctor", async () => {
+    const stdout: string[] = [];
+
+    const exitCode = await runCli(["doctor", "./fixtures/does-not-exist"], {
+      auditTarget: async () => {
+        throw new Error("doctor should not invoke the scan engine");
+      },
+      stdout: createWriter(stdout)
+    });
+
+    expect(exitCode).toBe(1);
+    expect(stdout.join("")).toContain("Target: ERROR Local directory not found: ./fixtures/does-not-exist");
+  });
+
+  it("reports invalid config files in doctor", async () => {
+    const configFile = await createConfigFile(JSON.stringify({ format: "html" }));
+    const stdout: string[] = [];
+
+    const exitCode = await runCli([
+      "doctor",
+      "./fixtures/local-risky",
+      "--config",
+      configFile
+    ], {
+      auditTarget: async () => {
+        throw new Error("doctor should not invoke the scan engine");
+      },
+      stdout: createWriter(stdout)
+    });
+
+    expect(exitCode).toBe(1);
+    expect(stdout.join("")).toContain("Config: ERROR Config file");
+    expect(stdout.join("")).toContain("has invalid 'format'. Expected one of: text, json, markdown, sarif.");
   });
 });
 

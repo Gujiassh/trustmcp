@@ -155,6 +155,12 @@ Generate a starter config file without overwriting an existing one:
 node dist/cli/main.js init-config
 ```
 
+Validate a target and optional config before your first real scan:
+
+```bash
+node dist/cli/main.js doctor gh:modelcontextprotocol/servers --config trustmcp.config.json
+```
+
 Source the shipped shell completions directly for repeated local use:
 
 ```bash

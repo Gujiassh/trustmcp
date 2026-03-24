@@ -32,8 +32,8 @@ _trustmcp() {
         fi
 
         case "$arg" in
-          init-config)
-            subcommand="init-config"
+          init-config|doctor)
+            subcommand="$arg"
             ;;
           --format|--config|--fail-on|--output-file)
             skip_next=1
@@ -57,9 +57,22 @@ _trustmcp() {
         return
       fi
 
+      if [[ "${words[1]}" == "doctor" ]]; then
+        if (( CURRENT == 2 )); then
+          _files -/
+        elif [[ "${words[CURRENT-1]}" == "--config" ]]; then
+          _files
+        elif [[ "${words[CURRENT]}" == --config=* ]]; then
+          _files
+        else
+          compadd -- --config
+        fi
+        return
+      fi
+
       if (( has_target == 0 )); then
         _alternative \
-          'subcommand:subcommand:(scan init-config)' \
+          'subcommand:subcommand:(scan doctor init-config)' \
           'option:option:compadd -- --help -h --json --format --config --fail-on --summary-only --output-file' \
           'directory:directory:_files -/'
         return

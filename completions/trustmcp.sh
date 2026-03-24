@@ -71,6 +71,27 @@ _trustmcp() {
     fi
   fi
 
+  if [[ "${COMP_WORDS[1]}" == "doctor" ]]; then
+    case "$prev" in
+      --config)
+        _trustmcp_add_file_matches "" "$cur"
+        return
+        ;;
+    esac
+
+    case "$cur" in
+      --config=*)
+        _trustmcp_add_file_matches "--config=" "${cur#--config=}"
+        return
+        ;;
+    esac
+
+    if (( COMP_CWORD == 2 )); then
+      _trustmcp_add_directory_matches "$cur"
+      return
+    fi
+  fi
+
   case "$cur" in
     --format=*)
       _trustmcp_add_prefixed_word_matches "--format=" "$formats" "${cur#--format=}"
@@ -99,8 +120,8 @@ _trustmcp() {
     fi
 
     case "$arg" in
-      init-config)
-        subcommand="init-config"
+      init-config|doctor)
+        subcommand="$arg"
         ;;
       --format|--config|--fail-on|--output-file)
         skip_next=1
@@ -118,7 +139,7 @@ _trustmcp() {
   done
 
   if (( has_target == 0 )); then
-    _trustmcp_add_word_matches "scan init-config $flags" "$cur"
+    _trustmcp_add_word_matches "scan doctor init-config $flags" "$cur"
     _trustmcp_add_directory_matches "$cur"
     return
   fi
