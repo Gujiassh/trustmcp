@@ -34,9 +34,13 @@ It does **not** claim a target is safe.
 
 For the short answer plus scope and non-goals, check out [What TrustMCP scans, and how it differs from npm audit](./docs/what-trustmcp-scans.md).
 
+For a rule-by-rule explainer, check out [TrustMCP rules explained](./docs/trustmcp-rules.md).
+
 - `mcp/shell-exec`
 - `mcp/outbound-fetch`
 - `mcp/broad-filesystem`
+
+If you want the current IDs from the CLI, run `node dist/cli/main.js list-rules`.
 
 Every finding includes:
 
