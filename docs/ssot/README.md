@@ -22,6 +22,8 @@ The CLI now also ships an explicit `doctor` command for read-only first-use vali
 
 The CLI now also ships an explicit `list-rules` command for compact introspection of the current shipped rule set.
 
+Public docs now also include a dedicated explainer for what TrustMCP scans, what it does not scan, and how that differs from `npm audit`.
+
 The repo now also ships static bash and zsh completion scripts for the stable CLI surface.
 
 GitHub input ergonomics stay narrow: repository root inputs are accepted as full URLs or `gh:owner/repo`, while tree/blob/subpath URLs are rejected with a repository-root hint rather than normalized ambiguously.

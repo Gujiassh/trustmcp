@@ -6,6 +6,8 @@ TrustMCP is an MCP server security scanner for JavaScript and TypeScript reposit
 
 If `npm audit` is the mental model that brought you here, keep the comparison specific: TrustMCP scans source code for risky MCP server capabilities, not dependency CVEs. Unlike a sandbox, it does **not** execute the server.
 
+If you want the fuller comparison, check out [What TrustMCP scans, and how it differs from npm audit](./docs/what-trustmcp-scans.md).
+
 Canonical repository: https://github.com/Gujiassh/trustmcp
 
 ## Why scan MCP servers
@@ -29,6 +31,8 @@ It does **not** claim a target is safe.
 - Export JSON, Markdown, or SARIF for automation, artifacts, and code scanning
 
 ## What TrustMCP scans
+
+For the short answer plus scope and non-goals, check out [What TrustMCP scans, and how it differs from npm audit](./docs/what-trustmcp-scans.md).
 
 - `mcp/shell-exec`
 - `mcp/outbound-fetch`
