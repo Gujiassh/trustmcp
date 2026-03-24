@@ -12,6 +12,8 @@ Public output formats now include `text`, `json`, and a compact `markdown` mode 
 
 CLI output ergonomics now also include `--output-file` for persisting the selected rendered format to disk without suppressing stdout.
 
+CLI status ergonomics now also include `--summary-only` for compact terminal and CI checks without changing the underlying audit report model.
+
 GitHub input ergonomics stay narrow: repository root inputs are accepted as full URLs or `gh:owner/repo`, while tree/blob/subpath URLs are rejected with a repository-root hint rather than normalized ambiguously.
 
 JSON output now includes deterministic summary severity counters for `low`, `medium`, and `high` findings.

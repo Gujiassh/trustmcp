@@ -100,6 +100,12 @@ Write the selected format to a file while still printing it to stdout:
 node dist/cli/main.js gh:modelcontextprotocol/servers --format markdown --output-file trustmcp-report.md
 ```
 
+Emit only the compact summary for terminal or CI status checks:
+
+```bash
+node dist/cli/main.js gh:modelcontextprotocol/servers --summary-only --fail-on high
+```
+
 JSON reports include `summary.severityCounts.low`, `summary.severityCounts.medium`, and `summary.severityCounts.high` so CI consumers can read stable severity totals without re-counting the finding list.
 
 Fail a CI job when a finding meets or exceeds a severity threshold:

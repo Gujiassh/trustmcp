@@ -6,6 +6,7 @@ import { auditTarget } from "../src/core/audit.js";
 import type { AuditReport } from "../src/core/types.js";
 import { renderJsonReport } from "../src/renderers/json.js";
 import { renderMarkdownReport } from "../src/renderers/markdown.js";
+import { renderSummaryReport } from "../src/renderers/output.js";
 import { renderTextReport } from "../src/renderers/text.js";
 
 const localRiskyFixture = fileURLToPath(new URL("../fixtures/local-risky", import.meta.url));
@@ -117,6 +118,43 @@ describe("renderers", () => {
 ## Findings
 
 No matching rules were triggered.`);
+  });
+
+  it("renders deterministic summary-only markdown", () => {
+    expect(renderSummaryReport(createReport(["high", "medium"]), "markdown")).toBe(`# TrustMCP Summary
+
+- Target: \`example/risky-mcp\`
+- Source: \`public-github-repo\`
+- Ref: \`main@abc123def456\`
+- Findings: 2
+- Rules triggered: 2
+- Severity counts: low 0, medium 1, high 1
+- Summary: 2 finding(s) across 2 rule(s). Static heuristics only.`);
+  });
+
+  it("renders deterministic summary-only json without findings", () => {
+    expect(renderSummaryReport(createReport([]), "json")).toBe(`{
+  "tool": {
+    "name": "TrustMCP",
+    "version": "0.1.0"
+  },
+  "target": {
+    "input": "https://github.com/example/risky-mcp",
+    "displayName": "example/risky-mcp",
+    "sourceType": "public-github-repo",
+    "resolvedRef": "main@abc123def456"
+  },
+  "summary": {
+    "findingCount": 0,
+    "triggeredRuleCount": 0,
+    "severityCounts": {
+      "low": 0,
+      "medium": 0,
+      "high": 0
+    },
+    "message": "No matching rules were triggered. Static heuristics only; this does not mean the target is safe."
+  }
+}`);
   });
 });
 

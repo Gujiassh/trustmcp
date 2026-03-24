@@ -6,7 +6,7 @@ import { pathToFileURL } from "node:url";
 import { auditTarget as defaultAuditTarget } from "../core/audit.js";
 import { isSeverity, shouldFailForThreshold } from "../core/thresholds.js";
 import type { Severity } from "../core/types.js";
-import { isOutputFormat, renderReport, type OutputFormat } from "../renderers/output.js";
+import { isOutputFormat, renderReport, renderSummaryReport, type OutputFormat } from "../renderers/output.js";
 
 interface OutputWriter {
   write(chunk: string): unknown;
@@ -17,6 +17,7 @@ interface CliOptions {
   format: OutputFormat;
   failOn?: Severity;
   outputFile?: string;
+  summaryOnly?: boolean;
 }
 
 interface CliDependencies {
@@ -39,7 +40,7 @@ export async function runCli(argv: string[], dependencies: CliDependencies = {})
     }
 
     const report = await auditTarget(parsed.target);
-    const output = renderReport(report, parsed.format);
+    const output = parsed.summaryOnly ? renderSummaryReport(report, parsed.format) : renderReport(report, parsed.format);
 
     if (parsed.outputFile !== undefined) {
       await writeFile(parsed.outputFile, `${output}\n`, "utf8");
@@ -64,6 +65,7 @@ export function parseArguments(argv: string[]): CliOptions | null {
   let target: string | undefined;
   let failOn: Severity | undefined;
   let outputFile: string | undefined;
+  let summaryOnly = false;
 
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
@@ -139,6 +141,11 @@ export function parseArguments(argv: string[]): CliOptions | null {
       continue;
     }
 
+    if (argument === "--summary-only") {
+      summaryOnly = true;
+      continue;
+    }
+
     if (argument.startsWith("-")) {
       throw new Error(`Unknown option: ${argument}`);
     }
@@ -164,6 +171,10 @@ export function parseArguments(argv: string[]): CliOptions | null {
     options.outputFile = outputFile;
   }
 
+  if (summaryOnly) {
+    options.summaryOnly = true;
+  }
+
   return options;
 }
 
@@ -171,8 +182,8 @@ function usage(): string {
   return [
     "TrustMCP v0.1.0",
     "Usage:",
-    "  trustmcp <target> [--format text|json|markdown] [--fail-on low|medium|high] [--output-file path]",
-    "  trustmcp scan <target> [--format text|json|markdown] [--fail-on low|medium|high] [--output-file path]",
+    "  trustmcp <target> [--format text|json|markdown] [--summary-only] [--fail-on low|medium|high] [--output-file path]",
+    "  trustmcp scan <target> [--format text|json|markdown] [--summary-only] [--fail-on low|medium|high] [--output-file path]",
     "",
     "Targets:",
     "  - local directory",

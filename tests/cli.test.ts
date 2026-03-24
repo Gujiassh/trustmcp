@@ -50,6 +50,14 @@ describe("parseArguments", () => {
     });
   });
 
+  it("parses --summary-only as a boolean flag", () => {
+    expect(parseArguments(["gh:modelcontextprotocol/servers", "--summary-only", "--format", "markdown"])).toEqual({
+      target: "gh:modelcontextprotocol/servers",
+      format: "markdown",
+      summaryOnly: true
+    });
+  });
+
   it("rejects invalid format values", () => {
     expect(() => parseArguments(["./fixtures/local-risky", "--format", "html"]))
       .toThrowError("--format expects one of: text, json, markdown.");
@@ -139,6 +147,50 @@ describe("runCli exit thresholds", () => {
     expect(stdout.join("")).toContain("# TrustMCP Report");
     expect(fileContent).toContain("# TrustMCP Report");
     expect(fileContent).toContain("Shell execution capability detected");
+  });
+
+  it("emits only the compact text summary while preserving fail-on behavior", async () => {
+    const stdout: string[] = [];
+
+    const exitCode = await runCli([
+      "./fixtures/local-risky",
+      "--summary-only",
+      "--fail-on",
+      "high"
+    ], {
+      auditTarget: async () => createReport("local-directory", ["high", "medium"]),
+      stdout: createWriter(stdout)
+    });
+
+    const output = stdout.join("");
+    expect(exitCode).toBe(2);
+    expect(output).toContain("Summary: 2 finding(s) across 2 rule(s). Static heuristics only.");
+    expect(output).not.toContain("Rule:");
+    expect(output).not.toContain("Shell execution capability detected");
+  });
+
+  it("emits compact json summary-only output for a no-findings report", async () => {
+    const stdout: string[] = [];
+
+    const exitCode = await runCli([
+      "./fixtures/local-clean",
+      "--summary-only",
+      "--format",
+      "json"
+    ], {
+      auditTarget: async () => createReport("local-directory", []),
+      stdout: createWriter(stdout)
+    });
+
+    const parsed = JSON.parse(stdout.join("")) as {
+      summary: { findingCount: number; message: string };
+      findings?: unknown;
+    };
+
+    expect(exitCode).toBe(0);
+    expect(parsed.summary.findingCount).toBe(0);
+    expect(parsed.summary.message).toContain("No matching rules were triggered.");
+    expect("findings" in parsed).toBe(false);
   });
 });
 
