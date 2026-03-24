@@ -30,7 +30,7 @@ GitHub input ergonomics stay narrow: repository root inputs are accepted as full
 
 JSON output now includes deterministic summary severity counters for `low`, `medium`, and `high` findings.
 
-The public repo now also ships a reusable composite GitHub Action plus official example workflows for a checked-out repository target, an explicit public GitHub target, markdown artifact retention, SARIF artifact retention, and GitHub code-scanning SARIF upload, all pointing at the stable `v0.1.0` tag.
+The public repo now also ships a reusable composite GitHub Action plus official example workflows for a checked-out repository target, an explicit public GitHub target, markdown artifact retention, JSON artifact retention, SARIF artifact retention, and GitHub code-scanning SARIF upload, all pointing at the stable `v0.1.0` tag.
 
 The repo now also ships a conservative manual GitHub release workflow triggered by `workflow_dispatch`, with explicit version validation and GitHub release creation only.
 
