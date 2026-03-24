@@ -11,3 +11,5 @@ Current public CLI surface includes text or JSON reports plus `--fail-on low|med
 GitHub input ergonomics stay narrow: repository root URLs are accepted, while tree/blob/subpath URLs are rejected with a repository-root hint rather than normalized ambiguously.
 
 JSON output now includes deterministic summary severity counters for `low`, `medium`, and `high` findings.
+
+The public repo now also ships an official copy-paste GitHub Actions example that builds TrustMCP from source and gates a checked-out repository with `--fail-on`.

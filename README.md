@@ -92,6 +92,12 @@ node dist/cli/main.js https://github.com/modelcontextprotocol/servers --format j
 
 `--fail-on low` fails on any finding, `--fail-on medium` fails on medium or high findings, and `--fail-on high` fails on high findings only. Threshold matches exit with code `2`; TrustMCP runtime or argument errors exit with code `1`.
 
+## GitHub Actions example
+
+For a copy-pasteable GitHub Actions gate, start from [`./.github/examples/trustmcp-gate.yml`](./.github/examples/trustmcp-gate.yml). It checks out your repository, checks out TrustMCP from source, builds it, and scans the checked-out workspace locally with `--fail-on high`.
+
+That example is intentionally plain: no marketplace action, no npm package, and no extra wrapper layer. Copy it into the repository you want to scan as `.github/workflows/trustmcp-gate.yml`, then adjust the trigger or threshold if needed.
+
 Run the included checks:
 
 ```bash
