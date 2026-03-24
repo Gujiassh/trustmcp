@@ -6,6 +6,7 @@ import { shouldFailForThreshold } from "../core/thresholds.js";
 import type { AuditReport, Severity } from "../core/types.js";
 import { renderMarkdownReport } from "../renderers/markdown.js";
 import { isOutputFormat, renderReport, type OutputFormat } from "../renderers/output.js";
+import { writeRenderedOutput } from "../utils/write-rendered-output.js";
 
 interface OutputWriter {
   write(chunk: string): unknown;
@@ -15,6 +16,7 @@ interface ActionOptions {
   target: string;
   format: OutputFormat;
   failOn?: Severity;
+  outputFile?: string;
 }
 
 interface ActionDependencies {
@@ -36,6 +38,7 @@ export async function runAction(
   try {
     const report = await auditTarget(options.target);
     const output = renderReport(report, options.format);
+    await writeRenderedOutput(output, options.outputFile);
     stdout.write(`${output}\n`);
     await writeActionOutputs(report, dependencies.githubOutputPath ?? process.env.GITHUB_OUTPUT);
     await writeActionSummary(report, dependencies.githubStepSummaryPath ?? process.env.GITHUB_STEP_SUMMARY);
@@ -78,6 +81,7 @@ function parseActionArguments(argv: string[]): ActionOptions {
   const target = argv[0];
   const format = argv[1];
   const failOn = argv[2];
+  const outputFile = argv[3];
 
   if (target === undefined || format === undefined) {
     throw new Error("Action runner expects at least <target> and <format> arguments.");
@@ -91,7 +95,17 @@ function parseActionArguments(argv: string[]): ActionOptions {
     throw new Error("Action runner expects fail-on to be 'low', 'medium', or 'high' when provided.");
   }
 
-  return failOn === undefined || failOn === "" ? { target, format } : { target, format, failOn };
+  const options: ActionOptions = { target, format };
+
+  if (failOn !== undefined && failOn !== "") {
+    options.failOn = failOn;
+  }
+
+  if (outputFile !== undefined && outputFile !== "") {
+    options.outputFile = outputFile;
+  }
+
+  return options;
 }
 
 const isMainModule =

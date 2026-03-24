@@ -106,6 +106,65 @@ describe("runAction", () => {
     });
   });
 
+  it("writes the rendered report to an explicit file path without changing outputs or stdout", async () => {
+    const outputPath = await createOutputPath();
+    const summaryPath = await createSummaryPath();
+    const reportPath = await createReportPath();
+    const stdout: string[] = [];
+
+    const exitCode = await runAction(
+      {
+        target: "./fixtures/local-risky",
+        format: "markdown",
+        failOn: "high",
+        outputFile: reportPath
+      },
+      {
+        auditTarget: async () => createReport("local-directory", ["high", "medium"]),
+        stdout: createWriter(stdout),
+        githubOutputPath: outputPath,
+        githubStepSummaryPath: summaryPath
+      }
+    );
+
+    const reportContent = await readFile(reportPath, "utf8");
+
+    expect(exitCode).toBe(2);
+    expect(reportContent).toContain("# TrustMCP Report");
+    expect(reportContent).toContain("Shell execution capability detected");
+    expect(stdout.join("")).toBe(reportContent);
+    expect(await readOutputs(outputPath)).toEqual({
+      "finding-count": "2",
+      "low-count": "0",
+      "medium-count": "1",
+      "high-count": "1"
+    });
+    expect(await readFile(summaryPath, "utf8")).toContain("# TrustMCP Report");
+  });
+
+  it("fails cleanly when the output-file directory does not exist", async () => {
+    const tempDirectory = await mkdtemp(join(tmpdir(), "trustmcp-action-missing-dir-test-"));
+    tempDirectories.push(tempDirectory);
+    const missingReportPath = join(tempDirectory, "missing", "trustmcp-report.md");
+    const stderr: string[] = [];
+
+    const exitCode = await runAction(
+      {
+        target: "./fixtures/local-risky",
+        format: "markdown",
+        outputFile: missingReportPath
+      },
+      {
+        auditTarget: async () => createReport("local-directory", ["high"]),
+        stdout: createWriter([]),
+        stderr: createWriter(stderr)
+      }
+    );
+
+    expect(exitCode).toBe(1);
+    expect(stderr.join("")).toContain(`Output file directory does not exist: ${join(tempDirectory, "missing")}`);
+  });
+
   it("skips summary writing when the summary path is unavailable", async () => {
     const exitCode = await runAction(
       {
@@ -190,6 +249,12 @@ async function createSummaryPath(): Promise<string> {
   const summaryPath = join(directory, "github-step-summary.md");
   await writeFile(summaryPath, "", "utf8");
   return summaryPath;
+}
+
+async function createReportPath(): Promise<string> {
+  const directory = await mkdtemp(join(tmpdir(), "trustmcp-action-report-test-"));
+  tempDirectories.push(directory);
+  return join(directory, "trustmcp-report.md");
 }
 
 async function readOutputs(outputPath: string): Promise<Record<string, string>> {

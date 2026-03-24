@@ -24,4 +24,6 @@ The reusable action now exposes machine-readable summary outputs for total findi
 
 When running inside GitHub Actions with `GITHUB_STEP_SUMMARY` available, the reusable action also appends the existing markdown report there.
 
+The reusable action now also accepts `output-file` for writing the selected rendered report to disk for later workflow steps.
+
 README now includes a pinned real-world scan snapshot so visitors can see how TrustMCP output looks on a recognizable public MCP repository without relying on contrived fixtures alone.

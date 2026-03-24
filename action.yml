@@ -28,6 +28,10 @@ inputs:
     description: Exit non-zero when a finding at or above this severity exists.
     required: false
     default: ""
+  output-file:
+    description: Optional file path for writing the selected rendered report.
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -44,12 +48,27 @@ runs:
         INPUT_TARGET: ${{ inputs.target }}
         INPUT_FORMAT: ${{ inputs.format }}
         INPUT_FAIL_ON: ${{ inputs.fail-on }}
+        INPUT_OUTPUT_FILE: ${{ inputs.output-file }}
       run: |
         set -euo pipefail
         target="$INPUT_TARGET"
+        output_file="$INPUT_OUTPUT_FILE"
 
         if [ -z "$target" ]; then
           target="$GITHUB_WORKSPACE"
+        fi
+
+        if [ -n "$output_file" ]; then
+          case "$output_file" in
+            /*) ;;
+            *) output_file="$GITHUB_WORKSPACE/$output_file" ;;
+          esac
+
+          output_dir=$(dirname "$output_file")
+          if [ ! -d "$output_dir" ]; then
+            printf '%s\n' "TrustMCP action error: output-file directory does not exist: $output_dir" >&2
+            exit 1
+          fi
         fi
 
         case "$INPUT_FORMAT" in
@@ -81,6 +100,7 @@ runs:
         esac
 
         printf 'target=%s\n' "$target" >> "$GITHUB_OUTPUT"
+        printf 'output-file=%s\n' "$output_file" >> "$GITHUB_OUTPUT"
 
     - name: Install dependencies
       shell: bash
@@ -100,6 +120,7 @@ runs:
         TARGET: ${{ steps.resolve.outputs.target }}
         FORMAT: ${{ inputs.format }}
         FAIL_ON: ${{ inputs.fail-on }}
+        OUTPUT_FILE: ${{ steps.resolve.outputs.output-file }}
       run: |
         set -euo pipefail
-        node dist/action/main.js "$TARGET" "$FORMAT" "$FAIL_ON"
+        node dist/action/main.js "$TARGET" "$FORMAT" "$FAIL_ON" "$OUTPUT_FILE"
