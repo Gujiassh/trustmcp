@@ -74,7 +74,13 @@ Scan a public GitHub repo:
 node dist/cli/main.js https://github.com/modelcontextprotocol/servers --format text
 ```
 
-GitHub scans accept **repository root URLs only** such as `https://github.com/owner/repo`. Trailing slashes, `.git`, and repo-root query fragments are normalized. Copied `tree/...`, `blob/...`, and other GitHub subpath URLs are rejected with a hint to use the repository root URL instead.
+Or use explicit GitHub shorthand:
+
+```bash
+node dist/cli/main.js gh:modelcontextprotocol/servers --format text
+```
+
+GitHub scans accept **repository root inputs only**: either `https://github.com/owner/repo` or `gh:owner/repo`. Trailing slashes, `.git`, and repo-root query fragments are normalized for full URLs. Copied `tree/...`, `blob/...`, and other GitHub subpath URLs are rejected with a hint to use the repository root URL instead. Invalid shorthand fails with `gh:<owner>/<repo>` guidance rather than falling through to local-path handling.
 
 Emit JSON for CI or other tooling:
 

@@ -56,4 +56,22 @@ describe("auditTarget", () => {
       new Set(["mcp/shell-exec", "mcp/outbound-fetch", "mcp/broad-filesystem"])
     );
   });
+
+  it("routes gh shorthand through the existing GitHub scan pipeline", async () => {
+    const report = await auditTarget("gh:example/risky-mcp", {
+      materializeGitHubRepository: async (input: string): Promise<MaterializedSource> => ({
+        rootDir: localRiskyFixture,
+        target: {
+          input,
+          displayName: "example/risky-mcp",
+          sourceType: "public-github-repo",
+          resolvedRef: "main@abc123def456"
+        }
+      })
+    });
+
+    expect(report.target.sourceType).toBe("public-github-repo");
+    expect(report.target.input).toBe("gh:example/risky-mcp");
+    expect(report.findings).toHaveLength(3);
+  });
 });

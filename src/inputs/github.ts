@@ -33,6 +33,8 @@ type GitHubUrlAnalysis =
 const MAX_REDIRECTS = 5;
 const REQUEST_TIMEOUT_MS = 15_000;
 const MAX_RESPONSE_BYTES = 25_000_000;
+const GITHUB_SHORTHAND_PREFIX = "gh:";
+const GITHUB_SHORTHAND_MESSAGE = "GitHub shorthand inputs must look like gh:<owner>/<repo>.";
 
 export function parseGitHubRepositoryUrl(input: string): GitHubRepositoryReference | null {
   const analysis = analyzeGitHubRepositoryUrl(input);
@@ -45,6 +47,10 @@ export function getUnsupportedGitHubUrlMessage(input: string): string | null {
 }
 
 function analyzeGitHubRepositoryUrl(input: string): GitHubUrlAnalysis {
+  if (input.startsWith(GITHUB_SHORTHAND_PREFIX)) {
+    return analyzeGitHubShorthand(input);
+  }
+
   try {
     const url = new URL(input);
     if (url.protocol !== "https:" || url.hostname !== "github.com") {
@@ -95,6 +101,39 @@ function analyzeGitHubRepositoryUrl(input: string): GitHubUrlAnalysis {
   } catch {
     return { kind: "not-github" };
   }
+}
+
+function analyzeGitHubShorthand(input: string): GitHubUrlAnalysis {
+  const shorthand = input.slice(GITHUB_SHORTHAND_PREFIX.length);
+  const parts = shorthand.split("/");
+  const owner = parts[0];
+  const repoPart = parts[1];
+
+  if (parts.length !== 2 || owner === undefined || repoPart === undefined) {
+    return {
+      kind: "unsupported-shape",
+      message: GITHUB_SHORTHAND_MESSAGE
+    };
+  }
+
+  const repo = repoPart.replace(/\.git$/, "");
+
+  if (owner.length === 0 || repo.length === 0) {
+    return {
+      kind: "unsupported-shape",
+      message: GITHUB_SHORTHAND_MESSAGE
+    };
+  }
+
+  return {
+    kind: "repository",
+    reference: {
+      owner,
+      repo,
+      canonicalUrl: `https://github.com/${owner}/${repo}`,
+      displayName: `${owner}/${repo}`
+    }
+  };
 }
 
 function describeUnsupportedGitHubPath(segment: string | undefined): string {

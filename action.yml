@@ -3,7 +3,7 @@ description: Scan a checked-out repository with the TrustMCP CLI.
 
 inputs:
   target:
-    description: Local path or public GitHub repository URL to scan. Defaults to the checked-out workspace.
+    description: Local path, gh:owner/repo shorthand, or public GitHub repository URL to scan. Defaults to the checked-out workspace.
     required: false
     default: ""
   format:
@@ -57,7 +57,7 @@ runs:
         fi
 
         case "$target" in
-          http://*|https://*) ;;
+          gh:*|http://*|https://*) ;;
           *)
             if [ ! -e "$target" ]; then
               printf '%s\n' "TrustMCP action error: target does not exist: $target" >&2
