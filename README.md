@@ -127,6 +127,13 @@ Reuse stable CLI defaults from an explicit JSON config file:
 node dist/cli/main.js gh:modelcontextprotocol/servers --config trustmcp.config.json
 ```
 
+Source the shipped shell completions directly for repeated local use:
+
+```bash
+source completions/trustmcp.sh
+source completions/trustmcp.zsh
+```
+
 JSON reports include `summary.severityCounts.low`, `summary.severityCounts.medium`, and `summary.severityCounts.high` so CI consumers can read stable severity totals without re-counting the finding list.
 
 Fail a CI job when a finding meets or exceeds a severity threshold:

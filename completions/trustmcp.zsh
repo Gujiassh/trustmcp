@@ -1,0 +1,60 @@
+#compdef trustmcp
+
+_trustmcp() {
+  local curcontext="$curcontext" state line
+  local -a formats severities options
+  local -i has_target=0 skip_next=0 index
+  local arg
+
+  formats=(text json markdown sarif)
+  severities=(low medium high)
+  options=(--help -h --json --format --config --fail-on --summary-only --output-file)
+
+  _arguments -C -s -S \
+    '(-h --help)'{-h,--help}'[Show help]' \
+    '--json[Use JSON output shorthand]' \
+    '--format=-[Select output format]:format:(text json markdown sarif)' \
+    '--config=-[Load JSON config defaults]:config file:_files' \
+    '--fail-on=-[Fail when findings meet the severity threshold]:severity:(low medium high)' \
+    '--summary-only[Emit only the top-line summary]' \
+    '--output-file=-[Write the rendered report to a file]:output file:_files' \
+    '*::argument:->args'
+
+  case "$state" in
+    args)
+      for (( index=1; index<CURRENT; index+=1 )); do
+        arg="${words[index]}"
+
+        if (( skip_next )); then
+          skip_next=0
+          continue
+        fi
+
+        case "$arg" in
+          --format|--config|--fail-on|--output-file)
+            skip_next=1
+            ;;
+          --format=*|--config=*|--fail-on=*|--output-file=*|--json|--summary-only|-h|--help|scan)
+            ;;
+          -*)
+            ;;
+          *)
+            has_target=1
+            ;;
+        esac
+      done
+
+      if (( has_target == 0 )); then
+        _alternative \
+          'subcommand:subcommand:(scan)' \
+          'option:option:compadd -- --help -h --json --format --config --fail-on --summary-only --output-file' \
+          'directory:directory:_files -/'
+        return
+      fi
+
+      compadd -- --help -h --json --format --config --fail-on --summary-only --output-file
+      ;;
+  esac
+}
+
+compdef _trustmcp trustmcp
