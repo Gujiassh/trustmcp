@@ -5,6 +5,7 @@ import { pathToFileURL } from "node:url";
 import { auditTarget as defaultAuditTarget } from "../core/audit.js";
 import { isSeverity, shouldFailForThreshold } from "../core/thresholds.js";
 import type { Severity } from "../core/types.js";
+import { TRUSTMCP_VERSION } from "../core/version.js";
 import { loadCliConfig, type CliConfig } from "./config.js";
 import { runDoctor } from "./doctor.js";
 import { DEFAULT_CONFIG_PATH, writeStarterConfig } from "./init-config.js";
@@ -48,7 +49,11 @@ interface ListRulesCliArguments {
   listRules: true;
 }
 
-type ParsedCommand = ParsedCliArguments | InitConfigCliArguments | DoctorCliArguments | ListRulesCliArguments;
+interface VersionCliArguments {
+  version: true;
+}
+
+type ParsedCommand = ParsedCliArguments | InitConfigCliArguments | DoctorCliArguments | ListRulesCliArguments | VersionCliArguments;
 
 interface CliDependencies {
   auditTarget?: typeof defaultAuditTarget;
@@ -90,6 +95,11 @@ export async function runCli(argv: string[], dependencies: CliDependencies = {})
       return 0;
     }
 
+    if (isVersionCommand(parsed)) {
+      stdout.write(`${TRUSTMCP_VERSION}\n`);
+      return 0;
+    }
+
     const config = await loadCliConfig(parsed.configFile);
     const resolved = resolveCliOptions(parsed, config);
 
@@ -108,6 +118,10 @@ export async function runCli(argv: string[], dependencies: CliDependencies = {})
 }
 
 export function parseArguments(argv: string[]): ParsedCommand | null {
+  if (argv[0] === "--version" || argv[0] === "-v" || argv[0] === "version") {
+    return parseVersionArguments(argv.slice(1));
+  }
+
   if (argv[0] === "init-config") {
     return parseInitConfigArguments(argv.slice(1));
   }
@@ -380,6 +394,14 @@ function parseListRulesArguments(argv: string[]): ListRulesCliArguments | null {
   throw new Error("list-rules does not accept additional arguments.");
 }
 
+function parseVersionArguments(argv: string[]): VersionCliArguments {
+  if (argv.length > 0) {
+    throw new Error("version does not accept additional arguments.");
+  }
+
+  return { version: true };
+}
+
 function isInitConfigCommand(parsed: ParsedCommand): parsed is InitConfigCliArguments {
   return "initConfig" in parsed;
 }
@@ -390,6 +412,10 @@ function isDoctorCommand(parsed: ParsedCommand): parsed is DoctorCliArguments {
 
 function isListRulesCommand(parsed: ParsedCommand): parsed is ListRulesCliArguments {
   return "listRules" in parsed;
+}
+
+function isVersionCommand(parsed: ParsedCommand): parsed is VersionCliArguments {
+  return "version" in parsed;
 }
 
 export function resolveCliOptions(parsed: ParsedCliArguments, config: CliConfig): CliOptions {
@@ -420,6 +446,9 @@ function usage(): string {
   return [
     "TrustMCP v0.1.0",
     "Usage:",
+    "  trustmcp --version",
+    "  trustmcp -v",
+    "  trustmcp version",
     "  trustmcp <target> [--config path] [--format text|json|markdown|sarif] [--summary-only] [--fail-on low|medium|high] [--output-file path]",
     "  trustmcp scan <target> [--config path] [--format text|json|markdown|sarif] [--summary-only] [--fail-on low|medium|high] [--output-file path]",
     "  trustmcp doctor <target> [--config path]",

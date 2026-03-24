@@ -36,7 +36,7 @@ _trustmcp() {
   local subcommand=""
   local formats="text json markdown sarif"
   local severities="low medium high"
-  local flags="--help -h --json --format --config --fail-on --summary-only --output-file"
+  local flags="--help -h --version -v --json --format --config --fail-on --summary-only --output-file"
 
   COMPREPLY=()
   cur="${COMP_WORDS[COMP_CWORD]}"
@@ -96,6 +96,10 @@ _trustmcp() {
     return
   fi
 
+  if [[ "${COMP_WORDS[1]}" == "version" ]]; then
+    return
+  fi
+
   case "$cur" in
     --format=*)
       _trustmcp_add_prefixed_word_matches "--format=" "$formats" "${cur#--format=}"
@@ -124,13 +128,13 @@ _trustmcp() {
     fi
 
     case "$arg" in
-      init-config|doctor|list-rules)
+      init-config|doctor|list-rules|version)
         subcommand="$arg"
         ;;
       --format|--config|--fail-on|--output-file)
         skip_next=1
         ;;
-      --format=*|--config=*|--fail-on=*|--output-file=*|--json|--summary-only|-h|--help|scan)
+      --format=*|--config=*|--fail-on=*|--output-file=*|--json|--summary-only|-h|--help|--version|-v|scan)
         ;;
       -*)
         ;;
@@ -143,7 +147,7 @@ _trustmcp() {
   done
 
   if (( has_target == 0 )); then
-    _trustmcp_add_word_matches "scan doctor init-config list-rules $flags" "$cur"
+    _trustmcp_add_word_matches "scan doctor init-config list-rules version $flags" "$cur"
     _trustmcp_add_directory_matches "$cur"
     return
   fi

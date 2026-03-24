@@ -15,7 +15,10 @@ describe("completion scripts", () => {
     expect(script).toContain("doctor");
     expect(script).toContain("init-config");
     expect(script).toContain("list-rules");
+    expect(script).toContain("version");
     expect(script).toContain("--config");
+    expect(script).toContain("--version");
+    expect(script).toContain("-v");
     expect(script).toContain("--summary-only");
     expect(script).toContain("--fail-on");
     expect(script).toContain("--output-file");
@@ -31,7 +34,10 @@ describe("completion scripts", () => {
     expect(script).toContain("doctor");
     expect(script).toContain("init-config");
     expect(script).toContain("list-rules");
+    expect(script).toContain("version");
     expect(script).toContain("--config");
+    expect(script).toContain("--version");
+    expect(script).toContain("-v");
     expect(script).toContain("--summary-only");
     expect(script).toContain("--fail-on");
     expect(script).toContain("--output-file");

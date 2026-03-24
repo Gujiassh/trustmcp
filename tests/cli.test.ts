@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { AuditReport, Severity } from "../src/core/types.js";
+import { TRUSTMCP_VERSION } from "../src/core/version.js";
 import { parseArguments, runCli } from "../src/cli/main.js";
 
 const tempDirectories: string[] = [];
@@ -107,6 +108,12 @@ describe("parseArguments", () => {
     });
   });
 
+  it("parses version entry points", () => {
+    expect(parseArguments(["--version"])).toEqual({ version: true });
+    expect(parseArguments(["-v"])).toEqual({ version: true });
+    expect(parseArguments(["version"])).toEqual({ version: true });
+  });
+
   it("rejects invalid format values", () => {
     expect(() => parseArguments(["./fixtures/local-risky", "--format", "html"]))
       .toThrowError("--format expects one of: text, json, markdown, sarif.");
@@ -149,6 +156,13 @@ describe("parseArguments", () => {
   it("rejects extra list-rules arguments", () => {
     expect(() => parseArguments(["list-rules", "extra"]))
       .toThrowError("list-rules does not accept additional arguments.");
+  });
+
+  it("rejects extra version arguments", () => {
+    expect(() => parseArguments(["version", "extra"]))
+      .toThrowError("version does not accept additional arguments.");
+    expect(() => parseArguments(["--version", "extra"]))
+      .toThrowError("version does not accept additional arguments.");
   });
 });
 
@@ -427,6 +441,44 @@ describe("runCli exit thresholds", () => {
       "mcp/outbound-fetch\tmedium\tOutbound network request capability detected\n" +
       "mcp/shell-exec\thigh\tShell execution capability detected\n"
     );
+  });
+
+  it("prints the TrustMCP version without invoking the scan engine", async () => {
+    const stdout: string[] = [];
+
+    const exitCode = await runCli(["--version"], {
+      auditTarget: async () => {
+        throw new Error("version should not invoke the scan engine");
+      },
+      stdout: createWriter(stdout)
+    });
+
+    expect(exitCode).toBe(0);
+    expect(stdout.join("")).toBe(`${TRUSTMCP_VERSION}\n`);
+  });
+
+  it("prints the same version for -v and version", async () => {
+    const shortStdout: string[] = [];
+    const commandStdout: string[] = [];
+
+    const shortExitCode = await runCli(["-v"], {
+      auditTarget: async () => {
+        throw new Error("version should not invoke the scan engine");
+      },
+      stdout: createWriter(shortStdout)
+    });
+
+    const commandExitCode = await runCli(["version"], {
+      auditTarget: async () => {
+        throw new Error("version should not invoke the scan engine");
+      },
+      stdout: createWriter(commandStdout)
+    });
+
+    expect(shortExitCode).toBe(0);
+    expect(commandExitCode).toBe(0);
+    expect(shortStdout.join("")).toBe(`${TRUSTMCP_VERSION}\n`);
+    expect(commandStdout.join("")).toBe(`${TRUSTMCP_VERSION}\n`);
   });
 
   it("runs doctor successfully for a valid local target and config without invoking the scan engine", async () => {

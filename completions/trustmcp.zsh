@@ -9,10 +9,11 @@ _trustmcp() {
 
   formats=(text json markdown sarif)
   severities=(low medium high)
-  options=(--help -h --json --format --config --fail-on --summary-only --output-file)
+  options=(--help -h --version -v --json --format --config --fail-on --summary-only --output-file)
 
   _arguments -C -s -S \
     '(-h --help)'{-h,--help}'[Show help]' \
+    '(-v --version)'{-v,--version}'[Show TrustMCP version]' \
     '--json[Use JSON output shorthand]' \
     '--format=-[Select output format]:format:(text json markdown sarif)' \
     '--config=-[Load JSON config defaults]:config file:_files' \
@@ -32,13 +33,13 @@ _trustmcp() {
         fi
 
         case "$arg" in
-          init-config|doctor)
+          init-config|doctor|version)
             subcommand="$arg"
             ;;
           --format|--config|--fail-on|--output-file)
             skip_next=1
             ;;
-          --format=*|--config=*|--fail-on=*|--output-file=*|--json|--summary-only|-h|--help|scan)
+          --format=*|--config=*|--fail-on=*|--output-file=*|--json|--summary-only|-h|--help|-v|--version|scan)
             ;;
           -*)
             ;;
@@ -74,15 +75,19 @@ _trustmcp() {
         return
       fi
 
+      if [[ "${words[1]}" == "version" ]]; then
+        return
+      fi
+
       if (( has_target == 0 )); then
         _alternative \
-          'subcommand:subcommand:(scan doctor init-config list-rules)' \
-          'option:option:compadd -- --help -h --json --format --config --fail-on --summary-only --output-file' \
+          'subcommand:subcommand:(scan doctor init-config list-rules version)' \
+          'option:option:compadd -- --help -h --version -v --json --format --config --fail-on --summary-only --output-file' \
           'directory:directory:_files -/'
         return
       fi
 
-      compadd -- --help -h --json --format --config --fail-on --summary-only --output-file
+      compadd -- --help -h --version -v --json --format --config --fail-on --summary-only --output-file
       ;;
   esac
 }
