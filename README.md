@@ -60,6 +60,8 @@ Requires Node.js 18.18+.
 
 TrustMCP is **not published to npm yet**. The supported path today is source checkout, local build, then either `node dist/cli/main.js ...` or `npm link`. The repository does include a pack-readiness check for future npm distribution, but that does **not** publish anything.
 
+If you want the install options explained in one place, check out [Installing TrustMCP today](./docs/installing-trustmcp.md).
+
 Install dependencies and build:
 
 ```bash
