@@ -58,13 +58,19 @@ Every finding includes:
 
 Requires Node.js 18.18+.
 
-TrustMCP is **not published to npm yet**. The supported path today is source checkout, local build, then either `node dist/cli/main.js ...` or `npm link`.
+TrustMCP is **not published to npm yet**. The supported path today is source checkout, local build, then either `node dist/cli/main.js ...` or `npm link`. The repository does include a pack-readiness check for future npm distribution, but that does **not** publish anything.
 
 Install dependencies and build:
 
 ```bash
 npm install
 npm run build
+```
+
+Validate the future npm tarball contents locally:
+
+```bash
+npm run pack:check
 ```
 
 Run against a local folder:

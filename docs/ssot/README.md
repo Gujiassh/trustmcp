@@ -38,6 +38,8 @@ The public repo now also ships a reusable composite GitHub Action plus official 
 
 The repo now also ships a conservative manual GitHub release workflow triggered by `workflow_dispatch`, with explicit version validation and GitHub release creation only.
 
+The repo now also ships an explicit npm pack validation path so future package distribution can be checked deliberately without publishing.
+
 The reusable action now exposes machine-readable summary outputs for total findings and low/medium/high severity counts.
 
 When running inside GitHub Actions with `GITHUB_STEP_SUMMARY` available, the reusable action also appends the existing markdown report there.
