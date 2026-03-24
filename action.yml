@@ -53,9 +53,9 @@ runs:
         fi
 
         case "$INPUT_FORMAT" in
-          text|json) ;;
+          text|json|markdown) ;;
           *)
-            printf '%s\n' "TrustMCP action error: format must be 'text' or 'json'." >&2
+            printf '%s\n' "TrustMCP action error: format must be 'text', 'json', or 'markdown'." >&2
             exit 1
             ;;
         esac

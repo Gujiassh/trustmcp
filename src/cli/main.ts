@@ -4,11 +4,8 @@ import { pathToFileURL } from "node:url";
 
 import { auditTarget as defaultAuditTarget } from "../core/audit.js";
 import { isSeverity, shouldFailForThreshold } from "../core/thresholds.js";
-import type { AuditReport, Severity } from "../core/types.js";
-import { renderJsonReport } from "../renderers/json.js";
-import { renderTextReport } from "../renderers/text.js";
-
-type OutputFormat = "json" | "text";
+import type { Severity } from "../core/types.js";
+import { isOutputFormat, renderReport, type OutputFormat } from "../renderers/output.js";
 
 interface OutputWriter {
   write(chunk: string): unknown;
@@ -40,7 +37,7 @@ export async function runCli(argv: string[], dependencies: CliDependencies = {})
     }
 
     const report = await auditTarget(parsed.target);
-    const output = parsed.format === "json" ? renderJsonReport(report) : renderTextReport(report);
+    const output = renderReport(report, parsed.format);
     stdout.write(`${output}\n`);
     return shouldFailForThreshold(report, parsed.failOn) ? 2 : 0;
   } catch (error) {
@@ -73,8 +70,8 @@ export function parseArguments(argv: string[]): CliOptions | null {
 
     if (argument === "--format") {
       const nextArgument = args[index + 1];
-      if (nextArgument !== "json" && nextArgument !== "text") {
-        throw new Error("--format expects either 'text' or 'json'.");
+      if (!isOutputFormat(nextArgument)) {
+        throw new Error("--format expects one of: text, json, markdown.");
       }
 
       format = nextArgument;
@@ -84,8 +81,8 @@ export function parseArguments(argv: string[]): CliOptions | null {
 
     if (argument.startsWith("--format=")) {
       const value = argument.slice("--format=".length);
-      if (value !== "json" && value !== "text") {
-        throw new Error("--format expects either 'text' or 'json'.");
+      if (!isOutputFormat(value)) {
+        throw new Error("--format expects one of: text, json, markdown.");
       }
 
       format = value;
@@ -135,8 +132,8 @@ function usage(): string {
   return [
     "TrustMCP v0.1.0",
     "Usage:",
-    "  trustmcp <target> [--format text|json] [--fail-on low|medium|high]",
-    "  trustmcp scan <target> [--format text|json] [--fail-on low|medium|high]",
+    "  trustmcp <target> [--format text|json|markdown] [--fail-on low|medium|high]",
+    "  trustmcp scan <target> [--format text|json|markdown] [--fail-on low|medium|high]",
     "",
     "Targets:",
     "  - local directory",

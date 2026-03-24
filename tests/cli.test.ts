@@ -20,6 +20,18 @@ describe("parseArguments", () => {
     });
   });
 
+  it("parses markdown output format", () => {
+    expect(parseArguments(["gh:modelcontextprotocol/servers", "--format", "markdown"])).toEqual({
+      target: "gh:modelcontextprotocol/servers",
+      format: "markdown"
+    });
+  });
+
+  it("rejects invalid format values", () => {
+    expect(() => parseArguments(["./fixtures/local-risky", "--format", "html"]))
+      .toThrowError("--format expects one of: text, json, markdown.");
+  });
+
   it("rejects invalid --fail-on values", () => {
     expect(() => parseArguments(["./fixtures/local-risky", "--fail-on", "critical"]))
       .toThrowError("--fail-on expects one of: low, medium, high.");

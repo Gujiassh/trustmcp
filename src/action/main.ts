@@ -4,10 +4,7 @@ import { pathToFileURL } from "node:url";
 import { auditTarget as defaultAuditTarget } from "../core/audit.js";
 import { shouldFailForThreshold } from "../core/thresholds.js";
 import type { AuditReport, Severity } from "../core/types.js";
-import { renderJsonReport } from "../renderers/json.js";
-import { renderTextReport } from "../renderers/text.js";
-
-type OutputFormat = "json" | "text";
+import { isOutputFormat, renderReport, type OutputFormat } from "../renderers/output.js";
 
 interface OutputWriter {
   write(chunk: string): unknown;
@@ -36,7 +33,7 @@ export async function runAction(
 
   try {
     const report = await auditTarget(options.target);
-    const output = options.format === "json" ? renderJsonReport(report) : renderTextReport(report);
+    const output = renderReport(report, options.format);
     stdout.write(`${output}\n`);
     await writeActionOutputs(report, dependencies.githubOutputPath ?? process.env.GITHUB_OUTPUT);
     return shouldFailForThreshold(report, options.failOn) ? 2 : 0;
@@ -75,8 +72,8 @@ function parseActionArguments(argv: string[]): ActionOptions {
     throw new Error("Action runner expects at least <target> and <format> arguments.");
   }
 
-  if (format !== "json" && format !== "text") {
-    throw new Error("Action runner expects format to be 'text' or 'json'.");
+  if (!isOutputFormat(format)) {
+    throw new Error("Action runner expects format to be 'text', 'json', or 'markdown'.");
   }
 
   if (failOn !== undefined && failOn !== "" && failOn !== "low" && failOn !== "medium" && failOn !== "high") {

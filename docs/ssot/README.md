@@ -8,6 +8,8 @@ Public-facing documentation in this repo should stay aligned with shipped behavi
 
 Current public CLI surface includes text or JSON reports plus `--fail-on low|medium|high` for CI-oriented exit thresholds.
 
+Public output formats now include `text`, `json`, and a compact `markdown` mode for PR comments and summaries.
+
 GitHub input ergonomics stay narrow: repository root inputs are accepted as full URLs or `gh:owner/repo`, while tree/blob/subpath URLs are rejected with a repository-root hint rather than normalized ambiguously.
 
 JSON output now includes deterministic summary severity counters for `low`, `medium`, and `high` findings.
