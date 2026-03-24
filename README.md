@@ -12,6 +12,15 @@ Canonical repository: https://github.com/Gujiassh/trustmcp
 
 Release history: [CHANGELOG.md](./CHANGELOG.md)
 
+## Install and release readiness
+
+TrustMCP is usable today from source checkout and local build. It is **not published to npm yet**.
+
+- Use [Installing TrustMCP today](./docs/installing-trustmcp.md) for the current supported install paths: direct `node dist/cli/main.js ...` usage and optional `npm link`.
+- Use `npm run pack:check` to validate future npm tarball contents locally.
+- Use `npm run publish:check` to run the local release/package preflight in one command.
+- Use [the npm publish checklist](./docs/npm-publish-checklist.md) and [CONTRIBUTING.md](./CONTRIBUTING.md) when the project is actually ready for the final manual registry and GitHub release steps.
+
 ## Why scan MCP servers
 
 MCP servers are getting easier to discover and easier to wire into local tools. Trust review is still mostly manual, so TrustMCP focuses on a believable first step: scan the code, point to concrete evidence, and explain why it matters.
