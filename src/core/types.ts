@@ -24,6 +24,11 @@ export interface AuditTarget {
 export interface AuditSummary {
   findingCount: number;
   triggeredRuleCount: number;
+  severityCounts: {
+    low: number;
+    medium: number;
+    high: number;
+  };
   message: string;
 }
 

@@ -68,6 +68,7 @@ async function materializeTarget(
 
 function createReport(materializedSource: MaterializedSource, findings: Finding[]): AuditReport {
   const triggeredRuleCount = new Set(findings.map((finding) => finding.ruleId)).size;
+  const severityCounts = countFindingsBySeverity(findings);
   const summaryMessage =
     findings.length === 0
       ? "No matching rules were triggered. Static heuristics only; this does not mean the target is safe."
@@ -83,8 +84,23 @@ function createReport(materializedSource: MaterializedSource, findings: Finding[
     summary: {
       findingCount: findings.length,
       triggeredRuleCount,
+      severityCounts,
       message: summaryMessage
     },
     findings
   };
+}
+
+function countFindingsBySeverity(findings: Finding[]): AuditReport["summary"]["severityCounts"] {
+  const severityCounts = {
+    low: 0,
+    medium: 0,
+    high: 0
+  };
+
+  for (const finding of findings) {
+    severityCounts[finding.severity] += 1;
+  }
+
+  return severityCounts;
 }

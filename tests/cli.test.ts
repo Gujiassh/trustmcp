@@ -96,6 +96,11 @@ function createReport(sourceType: "local-directory" | "public-github-repo", seve
     summary: {
       findingCount: severities.length,
       triggeredRuleCount: severities.length,
+      severityCounts: {
+        low: severities.filter((severity) => severity === "low").length,
+        medium: severities.filter((severity) => severity === "medium").length,
+        high: severities.filter((severity) => severity === "high").length
+      },
       message: severities.length === 0
         ? "No matching rules were triggered. Static heuristics only; this does not mean the target is safe."
         : `${severities.length} finding(s) across ${severities.length} rule(s). Static heuristics only.`

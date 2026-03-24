@@ -82,6 +82,8 @@ Emit JSON for CI or other tooling:
 node dist/cli/main.js ./fixtures/local-risky --format json
 ```
 
+JSON reports include `summary.severityCounts.low`, `summary.severityCounts.medium`, and `summary.severityCounts.high` so CI consumers can read stable severity totals without re-counting the finding list.
+
 Fail a CI job when a finding meets or exceeds a severity threshold:
 
 ```bash

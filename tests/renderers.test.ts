@@ -14,13 +14,47 @@ describe("renderers", () => {
     const first = renderJsonReport(await auditTarget(localRiskyFixture));
     const second = renderJsonReport(await auditTarget(localRiskyFixture));
     const parsed = JSON.parse(first) as {
-      summary: { findingCount: number };
+      summary: {
+        findingCount: number;
+        severityCounts: {
+          low: number;
+          medium: number;
+          high: number;
+        };
+      };
       findings: Array<{ ruleId: string }>;
     };
 
     expect(first).toBe(second);
     expect(parsed.summary.findingCount).toBe(3);
+    expect(parsed.summary.severityCounts).toEqual({
+      low: 0,
+      medium: 1,
+      high: 2
+    });
     expect(parsed.findings[0]?.ruleId).toBe("mcp/broad-filesystem");
+  });
+
+  it("renders zeroed severity counters for no-match JSON output", async () => {
+    const parsed = JSON.parse(renderJsonReport(await auditTarget(localCleanFixture))) as {
+      summary: {
+        findingCount: number;
+        severityCounts: {
+          low: number;
+          medium: number;
+          high: number;
+        };
+      };
+      findings: unknown[];
+    };
+
+    expect(parsed.summary.findingCount).toBe(0);
+    expect(parsed.summary.severityCounts).toEqual({
+      low: 0,
+      medium: 0,
+      high: 0
+    });
+    expect(parsed.findings).toEqual([]);
   });
 
   it("renders the no-match text without claiming safety", async () => {
