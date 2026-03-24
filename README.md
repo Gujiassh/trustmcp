@@ -1,27 +1,34 @@
-# TrustMCP
+# TrustMCP — MCP server security scanner for JavaScript and TypeScript
 
-> Static risk audit for JS/TS MCP servers before you run them.
+> CLI and GitHub Action for static security scanning of Model Context Protocol (MCP) server repositories.
 
-TrustMCP is a narrow static audit CLI for JavaScript and TypeScript MCP server repositories that flags a few high-signal risk patterns before you run them.
+TrustMCP is an MCP server security scanner for JavaScript and TypeScript repositories. It works as both a CLI and a GitHub Action, and it flags risky MCP server capabilities before you run unknown code locally or wire it into CI.
 
-If `npm audit` is the mental model that brought you here, keep the comparison loose: TrustMCP does **not** use CVE feeds, dependency advisories, or runtime analysis. It is a small source-level preflight check.
+If `npm audit` is the mental model that brought you here, keep the comparison specific: TrustMCP scans source code for risky MCP server capabilities, not dependency CVEs. Unlike a sandbox, it does **not** execute the server.
 
 Canonical repository: https://github.com/Gujiassh/trustmcp
 
-## Why now
+## Why scan MCP servers
 
 MCP servers are getting easier to discover and easier to wire into local tools. Trust review is still mostly manual, so TrustMCP focuses on a believable first step: scan the code, point to concrete evidence, and explain why it matters.
 
-TrustMCP v0.1 intentionally stays small:
+TrustMCP intentionally stays small:
 
 - one local CLI
+- one reusable GitHub Action
 - static heuristics only
 - public GitHub repo root URLs or local folders
 - three evidence-backed rules
 
 It does **not** claim a target is safe.
 
-## What v0.1 checks
+## Common use cases
+
+- Review a third-party MCP server before local use
+- Gate your own MCP server repository in CI
+- Export JSON, Markdown, or SARIF for automation, artifacts, and code scanning
+
+## What TrustMCP scans
 
 - `mcp/shell-exec`
 - `mcp/outbound-fetch`
@@ -39,36 +46,47 @@ Every finding includes:
 - `whyItMatters`
 - `remediation`
 
-## Quickstart
+## Quick start
 
-TrustMCP is **not published to npm yet**. The supported v0.1 path is source checkout, local build, then either `node dist/cli/main.js ...` or `npm link`.
+Requires Node.js 18.18+.
 
-Install dependencies:
+TrustMCP is **not published to npm yet**. The supported path today is source checkout, local build, then either `node dist/cli/main.js ...` or `npm link`.
+
+Install dependencies and build:
 
 ```bash
 npm install
-```
-
-Build the CLI:
-
-```bash
 npm run build
 ```
 
-Optional: link the local CLI command:
+Run against a local folder:
+
+```bash
+node dist/cli/main.js ./fixtures/local-risky
+```
+
+Run against a public GitHub repository:
+
+```bash
+node dist/cli/main.js gh:modelcontextprotocol/servers --format text
+```
+
+Optional: link the local CLI command for repeated use:
 
 ```bash
 npm link
 trustmcp ./fixtures/local-risky
 ```
 
-Scan a local folder:
+## CLI usage
+
+### Run against a local folder
 
 ```bash
 node dist/cli/main.js ./fixtures/local-risky
 ```
 
-Scan a public GitHub repo:
+### Run against a public GitHub repository
 
 ```bash
 node dist/cli/main.js https://github.com/modelcontextprotocol/servers --format text
@@ -81,6 +99,8 @@ node dist/cli/main.js gh:modelcontextprotocol/servers --format text
 ```
 
 GitHub scans accept **repository root inputs only**: either `https://github.com/owner/repo` or `gh:owner/repo`. Trailing slashes, `.git`, and repo-root query fragments are normalized for full URLs. Copied `tree/...`, `blob/...`, and other GitHub subpath URLs are rejected with a hint to use the repository root URL instead. Invalid shorthand fails with `gh:<owner>/<repo>` guidance rather than falling through to local-path handling.
+
+### Output formats
 
 Emit JSON for CI or other tooling:
 
@@ -112,6 +132,8 @@ Emit only the compact summary for terminal or CI status checks:
 node dist/cli/main.js gh:modelcontextprotocol/servers --summary-only --fail-on high
 ```
 
+### Config file
+
 Reuse stable CLI defaults from an explicit JSON config file:
 
 ```json
@@ -142,6 +164,8 @@ source completions/trustmcp.zsh
 
 JSON reports include `summary.severityCounts.low`, `summary.severityCounts.medium`, and `summary.severityCounts.high` so CI consumers can read stable severity totals without re-counting the finding list.
 
+### CI exit codes
+
 Fail a CI job when a finding meets or exceeds a severity threshold:
 
 ```bash
@@ -150,7 +174,7 @@ node dist/cli/main.js https://github.com/modelcontextprotocol/servers --format j
 
 `--fail-on low` fails on any finding, `--fail-on medium` fails on medium or high findings, and `--fail-on high` fails on high findings only. Threshold matches exit with code `2`; TrustMCP runtime or argument errors exit with code `1`.
 
-## GitHub Actions example
+## Use TrustMCP in GitHub Actions
 
 TrustMCP now ships a reusable composite action at the repository root. For copy-pasteable workflows, start from [`./.github/examples/trustmcp-gate.yml`](./.github/examples/trustmcp-gate.yml) for the checked-out workspace case, [`./.github/examples/trustmcp-public-target.yml`](./.github/examples/trustmcp-public-target.yml) for an explicit public GitHub target, [`./.github/examples/trustmcp-artifact.yml`](./.github/examples/trustmcp-artifact.yml) to retain a rendered markdown report, [`./.github/examples/trustmcp-sarif-artifact.yml`](./.github/examples/trustmcp-sarif-artifact.yml) for a retained SARIF file, or [`./.github/examples/trustmcp-upload-sarif.yml`](./.github/examples/trustmcp-upload-sarif.yml) for the GitHub code-scanning upload path.
 
@@ -181,7 +205,7 @@ When `GITHUB_STEP_SUMMARY` is available, the reusable action also appends the co
 
 If a later workflow step needs a concrete report file, set `output-file`, for example `output-file: reports/trustmcp.md`. Relative paths are resolved from the checked-out workspace, and the parent directory must already exist.
 
-## Real-world pinned example
+## Real scan examples
 
 At pinned ref `eed21856dcf0defa23394909e27125311fed246f`, TrustMCP reported the following on `microsoft/playwright-mcp`:
 
@@ -240,7 +264,7 @@ No matching rules were triggered.
 
 That message is intentionally narrow. It is **not** a safety verdict.
 
-## Limitations
+## Limitations and non-goals
 
 TrustMCP is honest about scope:
 

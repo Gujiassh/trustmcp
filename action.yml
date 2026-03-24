@@ -1,5 +1,5 @@
 name: TrustMCP
-description: Scan a checked-out repository with the TrustMCP CLI.
+description: GitHub Action for static security scanning of JavaScript/TypeScript Model Context Protocol (MCP) server repositories, with JSON, Markdown, and SARIF output.
 
 outputs:
   finding-count:
@@ -17,11 +17,11 @@ outputs:
 
 inputs:
   target:
-    description: Local path, gh:owner/repo shorthand, or public GitHub repository URL to scan. Defaults to the checked-out workspace.
+    description: Local folder, gh:owner/repo shorthand, or public GitHub repository URL to scan. Defaults to the checked-out workspace.
     required: false
     default: ""
   format:
-    description: Report output format.
+    description: Report output format (text, json, markdown, or sarif).
     required: false
     default: json
   fail-on:

@@ -1,7 +1,7 @@
 {
   "name": "trustmcp",
   "version": "0.1.0",
-  "description": "Static risk audit for MCP servers before you run them.",
+  "description": "CLI and GitHub Action for static security scanning of JavaScript/TypeScript Model Context Protocol (MCP) server repositories.",
   "type": "module",
   "bin": {
     "trustmcp": "dist/cli/main.js"
@@ -23,9 +23,18 @@
   },
   "keywords": [
     "mcp",
+    "model-context-protocol",
+    "mcp-server",
+    "mcp-security",
     "security",
     "audit",
+    "security-scanner",
+    "static-analysis",
     "cli",
+    "github-action",
+    "sarif",
+    "code-scanning",
+    "javascript",
     "typescript"
   ],
   "author": "ryanba",
