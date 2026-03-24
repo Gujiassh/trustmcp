@@ -1,0 +1,29 @@
+name: TrustMCP artifact
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  trustmcp:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: mkdir -p reports
+
+      - id: trustmcp
+        uses: Gujiassh/trustmcp@v0.1.0
+        with:
+          target: ${{ github.workspace }}
+          format: markdown
+          fail-on: high
+          output-file: reports/trustmcp.md
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trustmcp-report
+          path: reports/trustmcp.md

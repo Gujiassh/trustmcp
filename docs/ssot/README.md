@@ -22,7 +22,7 @@ GitHub input ergonomics stay narrow: repository root inputs are accepted as full
 
 JSON output now includes deterministic summary severity counters for `low`, `medium`, and `high` findings.
 
-The public repo now also ships a reusable composite GitHub Action plus official example workflows for both a checked-out repository target and an explicit public GitHub target, all pointing at the stable `v0.1.0` tag.
+The public repo now also ships a reusable composite GitHub Action plus official example workflows for a checked-out repository target, an explicit public GitHub target, and artifact retention, all pointing at the stable `v0.1.0` tag.
 
 The reusable action now exposes machine-readable summary outputs for total findings and low/medium/high severity counts.
 

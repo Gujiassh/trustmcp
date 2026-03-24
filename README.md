@@ -146,7 +146,7 @@ node dist/cli/main.js https://github.com/modelcontextprotocol/servers --format j
 
 ## GitHub Actions example
 
-TrustMCP now ships a reusable composite action at the repository root. For copy-pasteable workflows, start from [`./.github/examples/trustmcp-gate.yml`](./.github/examples/trustmcp-gate.yml) for the checked-out workspace case or [`./.github/examples/trustmcp-public-target.yml`](./.github/examples/trustmcp-public-target.yml) for an explicit public GitHub target.
+TrustMCP now ships a reusable composite action at the repository root. For copy-pasteable workflows, start from [`./.github/examples/trustmcp-gate.yml`](./.github/examples/trustmcp-gate.yml) for the checked-out workspace case, [`./.github/examples/trustmcp-public-target.yml`](./.github/examples/trustmcp-public-target.yml) for an explicit public GitHub target, or [`./.github/examples/trustmcp-artifact.yml`](./.github/examples/trustmcp-artifact.yml) to retain a rendered report with `actions/upload-artifact`.
 
 Minimal external usage looks like this:
 
