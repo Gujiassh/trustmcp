@@ -36,6 +36,13 @@ describe("parseArguments", () => {
     });
   });
 
+  it("parses SARIF output format", () => {
+    expect(parseArguments(["gh:modelcontextprotocol/servers", "--format", "sarif"])).toEqual({
+      target: "gh:modelcontextprotocol/servers",
+      format: "sarif"
+    });
+  });
+
   it("parses --output-file in both supported forms", () => {
     expect(parseArguments(["./fixtures/local-risky", "--output-file", "report.md"])).toEqual({
       target: "./fixtures/local-risky",
@@ -70,7 +77,7 @@ describe("parseArguments", () => {
 
   it("rejects invalid format values", () => {
     expect(() => parseArguments(["./fixtures/local-risky", "--format", "html"]))
-      .toThrowError("--format expects one of: text, json, markdown.");
+      .toThrowError("--format expects one of: text, json, markdown, sarif.");
   });
 
   it("rejects missing --config values", () => {
@@ -166,6 +173,35 @@ describe("runCli exit thresholds", () => {
     expect(fileContent).toContain("Shell execution capability detected");
   });
 
+  it("renders deterministic SARIF through the CLI and writes it to disk", async () => {
+    const outputFile = await createTempFilePath("trustmcp-report.sarif");
+    const stdout: string[] = [];
+
+    const exitCode = await runCli([
+      "./fixtures/local-risky",
+      "--format",
+      "sarif",
+      "--output-file",
+      outputFile
+    ], {
+      auditTarget: async () => createReport("local-directory", ["high", "medium"]),
+      stdout: createWriter(stdout)
+    });
+
+    const stdoutContent = stdout.join("");
+    const fileContent = await readFile(outputFile, "utf8");
+    const parsed = JSON.parse(stdoutContent) as {
+      version: string;
+      runs: Array<{ results: Array<{ ruleId: string }> }>;
+    };
+
+    expect(exitCode).toBe(0);
+    expect(stdoutContent).toBe(fileContent);
+    expect(parsed.version).toBe("2.1.0");
+    expect(parsed.runs[0]?.results).toHaveLength(2);
+    expect(parsed.runs[0]?.results[0]?.ruleId).toBe("rule-1");
+  });
+
   it("emits only the compact text summary while preserving fail-on behavior", async () => {
     const stdout: string[] = [];
 
@@ -253,7 +289,7 @@ describe("runCli exit thresholds", () => {
     });
 
     expect(exitCode).toBe(1);
-    expect(stderr.join("")).toContain("has invalid 'format'. Expected one of: text, json, markdown.");
+    expect(stderr.join("")).toContain("has invalid 'format'. Expected one of: text, json, markdown, sarif.");
   });
 
   it("lets CLI flags override config values predictably", async () => {

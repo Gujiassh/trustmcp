@@ -7,6 +7,7 @@ import type { AuditReport } from "../src/core/types.js";
 import { renderJsonReport } from "../src/renderers/json.js";
 import { renderMarkdownReport } from "../src/renderers/markdown.js";
 import { renderSummaryReport } from "../src/renderers/output.js";
+import { renderSarifReport } from "../src/renderers/sarif.js";
 import { renderTextReport } from "../src/renderers/text.js";
 
 const localRiskyFixture = fileURLToPath(new URL("../fixtures/local-risky", import.meta.url));
@@ -154,6 +155,118 @@ No matching rules were triggered.`);
     },
     "message": "No matching rules were triggered. Static heuristics only; this does not mean the target is safe."
   }
+}`);
+  });
+
+  it("renders deterministic SARIF output", () => {
+    expect(renderSarifReport(createReport(["high", "medium"]))).toBe(`{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "TrustMCP",
+          "version": "0.1.0",
+          "informationUri": "https://github.com/Gujiassh/trustmcp",
+          "rules": [
+            {
+              "id": "mcp/outbound-fetch",
+              "shortDescription": {
+                "text": "Outbound network request capability detected"
+              },
+              "fullDescription": {
+                "text": "why-2"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "help": {
+                "text": "remediation-2"
+              },
+              "properties": {
+                "confidence": "high",
+                "severity": "medium"
+              }
+            },
+            {
+              "id": "mcp/shell-exec",
+              "shortDescription": {
+                "text": "Shell execution capability detected"
+              },
+              "fullDescription": {
+                "text": "why-1"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "help": {
+                "text": "remediation-1"
+              },
+              "properties": {
+                "confidence": "high",
+                "severity": "high"
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "mcp/shell-exec",
+          "level": "error",
+          "message": {
+            "text": "Shell execution capability detected"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/example-1.ts"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "properties": {
+            "confidence": "high",
+            "severity": "high",
+            "evidence": "evidence-1",
+            "whyItMatters": "why-1",
+            "remediation": "remediation-1"
+          }
+        },
+        {
+          "ruleId": "mcp/outbound-fetch",
+          "level": "warning",
+          "message": {
+            "text": "Outbound network request capability detected"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/example-2.ts"
+                },
+                "region": {
+                  "startLine": 2
+                }
+              }
+            }
+          ],
+          "properties": {
+            "confidence": "high",
+            "severity": "medium",
+            "evidence": "evidence-2",
+            "whyItMatters": "why-2",
+            "remediation": "remediation-2"
+          }
+        }
+      ]
+    }
+  ]
 }`);
   });
 });

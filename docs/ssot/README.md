@@ -8,7 +8,7 @@ Public-facing documentation in this repo should stay aligned with shipped behavi
 
 Current public CLI surface includes text or JSON reports plus `--fail-on low|medium|high` for CI-oriented exit thresholds.
 
-Public output formats now include `text`, `json`, and a compact `markdown` mode for PR comments and summaries.
+Public output formats now include `text`, `json`, `markdown`, and deterministic `sarif` rendering for code-scanning workflows.
 
 CLI output ergonomics now also include `--output-file` for persisting the selected rendered format to disk without suppressing stdout.
 

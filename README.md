@@ -94,6 +94,12 @@ Emit compact markdown for a PR comment or job summary:
 node dist/cli/main.js gh:modelcontextprotocol/servers --format markdown
 ```
 
+Emit SARIF for code-scanning or security workflow ingestion:
+
+```bash
+node dist/cli/main.js gh:modelcontextprotocol/servers --format sarif --output-file trustmcp.sarif
+```
+
 Write the selected format to a file while still printing it to stdout:
 
 ```bash

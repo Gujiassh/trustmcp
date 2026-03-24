@@ -88,7 +88,7 @@ function parseActionArguments(argv: string[]): ActionOptions {
   }
 
   if (!isOutputFormat(format)) {
-    throw new Error("Action runner expects format to be 'text', 'json', or 'markdown'.");
+    throw new Error("Action runner expects format to be 'text', 'json', 'markdown', or 'sarif'.");
   }
 
   if (failOn !== undefined && failOn !== "" && failOn !== "low" && failOn !== "medium" && failOn !== "high") {

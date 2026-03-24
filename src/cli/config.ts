@@ -55,7 +55,7 @@ function validateCliConfig(value: unknown, configFile: string): CliConfig {
   const format = value["format"];
   if (format !== undefined) {
     if (typeof format !== "string" || !isOutputFormat(format)) {
-      throw new Error(`Config file ${configFile} has invalid 'format'. Expected one of: text, json, markdown.`);
+      throw new Error(`Config file ${configFile} has invalid 'format'. Expected one of: text, json, markdown, sarif.`);
     }
 
     config.format = format;

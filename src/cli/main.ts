@@ -93,7 +93,7 @@ export function parseArguments(argv: string[]): ParsedCliArguments | null {
     if (argument === "--format") {
       const nextArgument = args[index + 1];
       if (!isOutputFormat(nextArgument)) {
-        throw new Error("--format expects one of: text, json, markdown.");
+        throw new Error("--format expects one of: text, json, markdown, sarif.");
       }
 
       format = nextArgument;
@@ -104,7 +104,7 @@ export function parseArguments(argv: string[]): ParsedCliArguments | null {
     if (argument.startsWith("--format=")) {
       const value = argument.slice("--format=".length);
       if (!isOutputFormat(value)) {
-        throw new Error("--format expects one of: text, json, markdown.");
+        throw new Error("--format expects one of: text, json, markdown, sarif.");
       }
 
       format = value;
@@ -247,8 +247,8 @@ function usage(): string {
   return [
     "TrustMCP v0.1.0",
     "Usage:",
-    "  trustmcp <target> [--config path] [--format text|json|markdown] [--summary-only] [--fail-on low|medium|high] [--output-file path]",
-    "  trustmcp scan <target> [--config path] [--format text|json|markdown] [--summary-only] [--fail-on low|medium|high] [--output-file path]",
+    "  trustmcp <target> [--config path] [--format text|json|markdown|sarif] [--summary-only] [--fail-on low|medium|high] [--output-file path]",
+    "  trustmcp scan <target> [--config path] [--format text|json|markdown|sarif] [--summary-only] [--fail-on low|medium|high] [--output-file path]",
     "",
     "Targets:",
     "  - local directory",

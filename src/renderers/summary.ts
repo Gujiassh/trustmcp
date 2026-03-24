@@ -1,6 +1,10 @@
 import type { AuditReport } from "../core/types.js";
 
-export function renderSummaryReport(report: AuditReport, format: "json" | "markdown" | "text"): string {
+export function renderSummaryReport(report: AuditReport, format: "json" | "markdown" | "sarif" | "text"): string {
+  if (format === "sarif") {
+    throw new Error("--summary-only is not supported with --format sarif.");
+  }
+
   if (format === "json") {
     return JSON.stringify(
       {
