@@ -14,6 +14,8 @@ CLI output ergonomics now also include `--output-file` for persisting the select
 
 CLI status ergonomics now also include `--summary-only` for compact terminal and CI checks without changing the underlying audit report model.
 
+CLI defaults can now also be loaded from an explicit JSON file via `--config`, covering the stable fields `format`, `fail-on`, `summary-only`, and `output-file`.
+
 GitHub input ergonomics stay narrow: repository root inputs are accepted as full URLs or `gh:owner/repo`, while tree/blob/subpath URLs are rejected with a repository-root hint rather than normalized ambiguously.
 
 JSON output now includes deterministic summary severity counters for `low`, `medium`, and `high` findings.

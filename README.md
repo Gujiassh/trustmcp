@@ -106,6 +106,21 @@ Emit only the compact summary for terminal or CI status checks:
 node dist/cli/main.js gh:modelcontextprotocol/servers --summary-only --fail-on high
 ```
 
+Reuse stable CLI defaults from an explicit JSON config file:
+
+```json
+{
+  "format": "markdown",
+  "fail-on": "high",
+  "summary-only": true,
+  "output-file": "reports/trustmcp.md"
+}
+```
+
+```bash
+node dist/cli/main.js gh:modelcontextprotocol/servers --config trustmcp.config.json
+```
+
 JSON reports include `summary.severityCounts.low`, `summary.severityCounts.medium`, and `summary.severityCounts.high` so CI consumers can read stable severity totals without re-counting the finding list.
 
 Fail a CI job when a finding meets or exceeds a severity threshold:

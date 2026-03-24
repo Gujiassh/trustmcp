@@ -5,6 +5,7 @@ import { pathToFileURL } from "node:url";
 import { auditTarget as defaultAuditTarget } from "../core/audit.js";
 import { isSeverity, shouldFailForThreshold } from "../core/thresholds.js";
 import type { Severity } from "../core/types.js";
+import { loadCliConfig, type CliConfig } from "./config.js";
 import { isOutputFormat, renderReport, renderSummaryReport, type OutputFormat } from "../renderers/output.js";
 import { writeRenderedOutput } from "../utils/write-rendered-output.js";
 
@@ -18,6 +19,15 @@ interface CliOptions {
   failOn?: Severity;
   outputFile?: string;
   summaryOnly?: boolean;
+}
+
+interface ParsedCliArguments {
+  target: string;
+  format?: OutputFormat;
+  failOn?: Severity;
+  outputFile?: string;
+  summaryOnly?: boolean;
+  configFile?: string;
 }
 
 interface CliDependencies {
@@ -39,13 +49,16 @@ export async function runCli(argv: string[], dependencies: CliDependencies = {})
       return 0;
     }
 
-    const report = await auditTarget(parsed.target);
-    const output = parsed.summaryOnly ? renderSummaryReport(report, parsed.format) : renderReport(report, parsed.format);
+    const config = await loadCliConfig(parsed.configFile);
+    const resolved = resolveCliOptions(parsed, config);
 
-    await writeRenderedOutput(output, parsed.outputFile);
+    const report = await auditTarget(resolved.target);
+    const output = resolved.summaryOnly ? renderSummaryReport(report, resolved.format) : renderReport(report, resolved.format);
+
+    await writeRenderedOutput(output, resolved.outputFile);
 
     stdout.write(`${output}\n`);
-    return shouldFailForThreshold(report, parsed.failOn) ? 2 : 0;
+    return shouldFailForThreshold(report, resolved.failOn) ? 2 : 0;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     stderr.write(`TrustMCP error: ${message}\n`);
@@ -53,17 +66,18 @@ export async function runCli(argv: string[], dependencies: CliDependencies = {})
   }
 }
 
-export function parseArguments(argv: string[]): CliOptions | null {
+export function parseArguments(argv: string[]): ParsedCliArguments | null {
   const args = argv[0] === "scan" ? argv.slice(1) : [...argv];
   if (args.length === 0 || args.includes("--help") || args.includes("-h")) {
     return null;
   }
 
-  let format: OutputFormat = "text";
+  let format: OutputFormat | undefined;
   let target: string | undefined;
   let failOn: Severity | undefined;
   let outputFile: string | undefined;
-  let summaryOnly = false;
+  let summaryOnly: boolean | undefined;
+  let configFile: string | undefined;
 
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
@@ -94,6 +108,27 @@ export function parseArguments(argv: string[]): CliOptions | null {
       }
 
       format = value;
+      continue;
+    }
+
+    if (argument === "--config") {
+      const nextArgument = args[index + 1];
+      if (nextArgument === undefined || nextArgument.startsWith("-")) {
+        throw new Error("--config expects a file path.");
+      }
+
+      configFile = nextArgument;
+      index += 1;
+      continue;
+    }
+
+    if (argument.startsWith("--config=")) {
+      const value = argument.slice("--config=".length);
+      if (value.length === 0) {
+        throw new Error("--config expects a file path.");
+      }
+
+      configFile = value;
       continue;
     }
 
@@ -159,7 +194,11 @@ export function parseArguments(argv: string[]): CliOptions | null {
     throw new Error("Missing target. Provide a local directory or a public GitHub repository URL.");
   }
 
-  const options: CliOptions = { target, format };
+  const options: ParsedCliArguments = { target };
+
+  if (format !== undefined) {
+    options.format = format;
+  }
 
   if (failOn !== undefined) {
     options.failOn = failOn;
@@ -173,6 +212,34 @@ export function parseArguments(argv: string[]): CliOptions | null {
     options.summaryOnly = true;
   }
 
+  if (configFile !== undefined) {
+    options.configFile = configFile;
+  }
+
+  return options;
+}
+
+export function resolveCliOptions(parsed: ParsedCliArguments, config: CliConfig): CliOptions {
+  const options: CliOptions = {
+    target: parsed.target,
+    format: parsed.format ?? config.format ?? "text"
+  };
+
+  const failOn = parsed.failOn ?? config.failOn;
+  if (failOn !== undefined) {
+    options.failOn = failOn;
+  }
+
+  const outputFile = parsed.outputFile ?? config.outputFile;
+  if (outputFile !== undefined) {
+    options.outputFile = outputFile;
+  }
+
+  const summaryOnly = parsed.summaryOnly ?? config.summaryOnly;
+  if (summaryOnly === true) {
+    options.summaryOnly = true;
+  }
+
   return options;
 }
 
@@ -180,8 +247,8 @@ function usage(): string {
   return [
     "TrustMCP v0.1.0",
     "Usage:",
-    "  trustmcp <target> [--format text|json|markdown] [--summary-only] [--fail-on low|medium|high] [--output-file path]",
-    "  trustmcp scan <target> [--format text|json|markdown] [--summary-only] [--fail-on low|medium|high] [--output-file path]",
+    "  trustmcp <target> [--config path] [--format text|json|markdown] [--summary-only] [--fail-on low|medium|high] [--output-file path]",
+    "  trustmcp scan <target> [--config path] [--format text|json|markdown] [--summary-only] [--fail-on low|medium|high] [--output-file path]",
     "",
     "Targets:",
     "  - local directory",

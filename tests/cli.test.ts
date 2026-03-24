@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -17,7 +17,6 @@ describe("parseArguments", () => {
   it("parses --fail-on with a separate severity argument", () => {
     expect(parseArguments(["./fixtures/local-risky", "--fail-on", "medium"])).toEqual({
       target: "./fixtures/local-risky",
-      format: "text",
       failOn: "medium"
     });
   });
@@ -40,13 +39,24 @@ describe("parseArguments", () => {
   it("parses --output-file in both supported forms", () => {
     expect(parseArguments(["./fixtures/local-risky", "--output-file", "report.md"])).toEqual({
       target: "./fixtures/local-risky",
-      format: "text",
       outputFile: "report.md"
     });
     expect(parseArguments(["./fixtures/local-risky", "--output-file=report.json", "--format", "json"])).toEqual({
       target: "./fixtures/local-risky",
       format: "json",
       outputFile: "report.json"
+    });
+  });
+
+  it("parses --config in both supported forms", () => {
+    expect(parseArguments(["./fixtures/local-risky", "--config", "trustmcp.config.json"])).toEqual({
+      target: "./fixtures/local-risky",
+      configFile: "trustmcp.config.json"
+    });
+    expect(parseArguments(["./fixtures/local-risky", "--config=trustmcp.config.json", "--format", "json"])).toEqual({
+      target: "./fixtures/local-risky",
+      configFile: "trustmcp.config.json",
+      format: "json"
     });
   });
 
@@ -61,6 +71,13 @@ describe("parseArguments", () => {
   it("rejects invalid format values", () => {
     expect(() => parseArguments(["./fixtures/local-risky", "--format", "html"]))
       .toThrowError("--format expects one of: text, json, markdown.");
+  });
+
+  it("rejects missing --config values", () => {
+    expect(() => parseArguments(["./fixtures/local-risky", "--config"]))
+      .toThrowError("--config expects a file path.");
+    expect(() => parseArguments(["./fixtures/local-risky", "--config", "--format", "json"]))
+      .toThrowError("--config expects a file path.");
   });
 
   it("rejects missing --output-file values", () => {
@@ -192,6 +209,88 @@ describe("runCli exit thresholds", () => {
     expect(parsed.summary.message).toContain("No matching rules were triggered.");
     expect("findings" in parsed).toBe(false);
   });
+
+  it("applies supported defaults from a config file", async () => {
+    const reportPath = await createTempFilePath("report-from-config.md");
+    const configFile = await createConfigFile(
+      JSON.stringify({
+        format: "markdown",
+        "fail-on": "medium",
+        "summary-only": true,
+        "output-file": reportPath
+      })
+    );
+    const stdout: string[] = [];
+
+    const exitCode = await runCli([
+      "./fixtures/local-risky",
+      "--config",
+      configFile
+    ], {
+      auditTarget: async () => createReport("local-directory", ["medium"]),
+      stdout: createWriter(stdout)
+    });
+
+    const fileContent = await readFile(reportPath, "utf8");
+    expect(exitCode).toBe(2);
+    expect(stdout.join("")).toContain("# TrustMCP Summary");
+    expect(fileContent).toContain("# TrustMCP Summary");
+    expect(fileContent).not.toContain("## Findings");
+  });
+
+  it("fails clearly on invalid config values", async () => {
+    const configFile = await createConfigFile(JSON.stringify({ format: "html" }));
+    const stderr: string[] = [];
+
+    const exitCode = await runCli([
+      "./fixtures/local-risky",
+      "--config",
+      configFile
+    ], {
+      auditTarget: async () => createReport("local-directory", ["high"]),
+      stdout: createWriter([]),
+      stderr: createWriter(stderr)
+    });
+
+    expect(exitCode).toBe(1);
+    expect(stderr.join("")).toContain("has invalid 'format'. Expected one of: text, json, markdown.");
+  });
+
+  it("lets CLI flags override config values predictably", async () => {
+    const configOutputFile = await createTempFilePath("report-from-config.json");
+    const cliOutputFile = await createTempFilePath("report-from-cli.md");
+    const configFile = await createConfigFile(
+      JSON.stringify({
+        format: "json",
+        "fail-on": "low",
+        "summary-only": true,
+        "output-file": configOutputFile
+      })
+    );
+    const stdout: string[] = [];
+
+    const exitCode = await runCli([
+      "./fixtures/local-risky",
+      "--config",
+      configFile,
+      "--format",
+      "markdown",
+      "--fail-on",
+      "high",
+      "--output-file",
+      cliOutputFile
+    ], {
+      auditTarget: async () => createReport("local-directory", ["medium"]),
+      stdout: createWriter(stdout)
+    });
+
+    const cliFileContent = await readFile(cliOutputFile, "utf8");
+    expect(exitCode).toBe(0);
+    expect(stdout.join("")).toContain("# TrustMCP Summary");
+    expect(cliFileContent).toContain("# TrustMCP Summary");
+    expect(cliFileContent).not.toContain('"tool"');
+    await expect(readFile(configOutputFile, "utf8")).rejects.toThrow();
+  });
 });
 
 function createReport(sourceType: "local-directory" | "public-github-repo", severities: Severity[]): AuditReport {
@@ -252,4 +351,10 @@ async function createTempFilePath(fileName: string): Promise<string> {
   const directory = await mkdtemp(join(tmpdir(), "trustmcp-cli-test-"));
   tempDirectories.push(directory);
   return join(directory, fileName);
+}
+
+async function createConfigFile(content: string): Promise<string> {
+  const configPath = await createTempFilePath("trustmcp.config.json");
+  await writeFile(configPath, content, "utf8");
+  return configPath;
 }

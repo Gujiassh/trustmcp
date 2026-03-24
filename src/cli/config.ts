@@ -1,0 +1,96 @@
+import { readFile } from "node:fs/promises";
+
+import { isSeverity } from "../core/thresholds.js";
+import type { Severity } from "../core/types.js";
+import { isOutputFormat, type OutputFormat } from "../renderers/output.js";
+
+const SUPPORTED_CONFIG_FIELDS = ["format", "fail-on", "summary-only", "output-file"] as const;
+
+export interface CliConfig {
+  format?: OutputFormat;
+  failOn?: Severity;
+  summaryOnly?: boolean;
+  outputFile?: string;
+}
+
+export async function loadCliConfig(configFile?: string): Promise<CliConfig> {
+  if (configFile === undefined) {
+    return {};
+  }
+
+  let content: string;
+  try {
+    content = await readFile(configFile, "utf8");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to read config file ${configFile}: ${message}`);
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(content);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Config file ${configFile} must contain valid JSON: ${message}`);
+  }
+
+  return validateCliConfig(parsed, configFile);
+}
+
+function validateCliConfig(value: unknown, configFile: string): CliConfig {
+  if (!isRecord(value)) {
+    throw new Error(`Config file ${configFile} must contain a JSON object.`);
+  }
+
+  for (const key of Object.keys(value)) {
+    if (!SUPPORTED_CONFIG_FIELDS.includes(key as (typeof SUPPORTED_CONFIG_FIELDS)[number])) {
+      throw new Error(
+        `Unsupported config field '${key}' in ${configFile}. Supported fields: ${SUPPORTED_CONFIG_FIELDS.join(", ")}.`
+      );
+    }
+  }
+
+  const config: CliConfig = {};
+
+  const format = value["format"];
+  if (format !== undefined) {
+    if (typeof format !== "string" || !isOutputFormat(format)) {
+      throw new Error(`Config file ${configFile} has invalid 'format'. Expected one of: text, json, markdown.`);
+    }
+
+    config.format = format;
+  }
+
+  const failOn = value["fail-on"];
+  if (failOn !== undefined) {
+    if (typeof failOn !== "string" || !isSeverity(failOn)) {
+      throw new Error(`Config file ${configFile} has invalid 'fail-on'. Expected one of: low, medium, high.`);
+    }
+
+    config.failOn = failOn;
+  }
+
+  const summaryOnly = value["summary-only"];
+  if (summaryOnly !== undefined) {
+    if (typeof summaryOnly !== "boolean") {
+      throw new Error(`Config file ${configFile} has invalid 'summary-only'. Expected a boolean.`);
+    }
+
+    config.summaryOnly = summaryOnly;
+  }
+
+  const outputFile = value["output-file"];
+  if (outputFile !== undefined) {
+    if (typeof outputFile !== "string" || outputFile.length === 0) {
+      throw new Error(`Config file ${configFile} has invalid 'output-file'. Expected a non-empty string.`);
+    }
+
+    config.outputFile = outputFile;
+  }
+
+  return config;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
