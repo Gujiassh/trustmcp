@@ -98,6 +98,23 @@ For a copy-pasteable GitHub Actions gate, start from [`./.github/examples/trustm
 
 That example is intentionally plain: no marketplace action, no npm package, and no extra wrapper layer. Copy it into the repository you want to scan as `.github/workflows/trustmcp-gate.yml`, then adjust the trigger or threshold if needed.
 
+## Real-world pinned example
+
+At pinned ref `eed21856dcf0defa23394909e27125311fed246f`, TrustMCP reported the following on `microsoft/playwright-mcp`:
+
+```text
+Target: microsoft/playwright-mcp
+Ref: main@eed21856dcf0defa23394909e27125311fed246f
+Summary: 4 finding(s) across 1 rule(s). Static heuristics only.
+
+[HIGH][HIGH] Shell execution capability detected
+Rule: mcp/shell-exec
+Location: packages/playwright-mcp/update-readme.js:149
+Evidence: execSync('node cli.js --help > help.txt');
+```
+
+This is a point-in-time heuristic capability match, not a blanket judgment of the project. In this case, TrustMCP matched shell execution in repository scripts and maintenance paths, which is exactly the kind of capability surface this tool is meant to surface before deeper review.
+
 Run the included checks:
 
 ```bash
