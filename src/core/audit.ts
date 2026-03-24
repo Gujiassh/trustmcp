@@ -2,7 +2,11 @@ import { collectSourceFiles } from "./source-files.js";
 import { looksLikeUrl, sortFindings } from "./rule-helpers.js";
 import type { AuditReport, Finding, MaterializedSource } from "./types.js";
 import { TRUSTMCP_VERSION } from "./version.js";
-import { materializeGitHubRepository, parseGitHubRepositoryUrl } from "../inputs/github.js";
+import {
+  getUnsupportedGitHubUrlMessage,
+  materializeGitHubRepository,
+  parseGitHubRepositoryUrl
+} from "../inputs/github.js";
 import { materializeLocalDirectory } from "../inputs/local.js";
 import { runAllRules } from "../rules/index.js";
 
@@ -48,6 +52,11 @@ async function materializeTarget(
 ): Promise<MaterializedSource> {
   if (parseGitHubRepositoryUrl(targetInput) !== null) {
     return dependencies.materializeGitHubRepository(targetInput);
+  }
+
+  const unsupportedGitHubUrlMessage = getUnsupportedGitHubUrlMessage(targetInput);
+  if (unsupportedGitHubUrlMessage !== null) {
+    throw new Error(unsupportedGitHubUrlMessage);
   }
 
   if (looksLikeUrl(targetInput)) {

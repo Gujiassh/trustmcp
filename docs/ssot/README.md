@@ -7,3 +7,5 @@ Internal planning and decision logs are maintained outside this public repositor
 Public-facing documentation in this repo should stay aligned with shipped behavior. Private incubation notes and discarded options are intentionally not mirrored here.
 
 Current public CLI surface includes text or JSON reports plus `--fail-on low|medium|high` for CI-oriented exit thresholds.
+
+GitHub input ergonomics stay narrow: repository root URLs are accepted, while tree/blob/subpath URLs are rejected with a repository-root hint rather than normalized ambiguously.

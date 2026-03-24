@@ -74,7 +74,7 @@ Scan a public GitHub repo:
 node dist/cli/main.js https://github.com/modelcontextprotocol/servers --format text
 ```
 
-GitHub scans currently accept **repo root URLs only** and fetch the current default-branch snapshot of the public repository.
+GitHub scans accept **repository root URLs only** such as `https://github.com/owner/repo`. Trailing slashes, `.git`, and repo-root query fragments are normalized. Copied `tree/...`, `blob/...`, and other GitHub subpath URLs are rejected with a hint to use the repository root URL instead.
 
 Emit JSON for CI or other tooling:
 
@@ -131,7 +131,7 @@ TrustMCP is honest about scope:
 - no runtime sandboxing
 - no private repo support
 - GitHub input is best-effort for small public repositories
-- GitHub input currently supports repo root URLs only, not branch/tree/blob URLs
+- GitHub input supports repository root URLs only; tree/blob/subpath URLs are rejected instead of being scanned ambiguously
 - no auth flows
 - no web UI, registry, or hosted service
 - no guarantee that a target is safe or complete coverage of all MCP risks

@@ -25,44 +25,88 @@ interface GitHubRepositoryMetadata {
   headSha: string;
 }
 
+type GitHubUrlAnalysis =
+  | { kind: "repository"; reference: GitHubRepositoryReference }
+  | { kind: "unsupported-shape"; message: string }
+  | { kind: "not-github" };
+
 const MAX_REDIRECTS = 5;
 const REQUEST_TIMEOUT_MS = 15_000;
 const MAX_RESPONSE_BYTES = 25_000_000;
 
 export function parseGitHubRepositoryUrl(input: string): GitHubRepositoryReference | null {
+  const analysis = analyzeGitHubRepositoryUrl(input);
+  return analysis.kind === "repository" ? analysis.reference : null;
+}
+
+export function getUnsupportedGitHubUrlMessage(input: string): string | null {
+  const analysis = analyzeGitHubRepositoryUrl(input);
+  return analysis.kind === "unsupported-shape" ? analysis.message : null;
+}
+
+function analyzeGitHubRepositoryUrl(input: string): GitHubUrlAnalysis {
   try {
     const url = new URL(input);
     if (url.protocol !== "https:" || url.hostname !== "github.com") {
-      return null;
+      return { kind: "not-github" };
     }
 
     const parts = url.pathname.split("/").filter(Boolean);
-    if (parts.length !== 2) {
-      return null;
-    }
-
     const owner = parts[0];
     const repoPart = parts[1];
 
     if (owner === undefined || repoPart === undefined) {
-      return null;
+      return {
+        kind: "unsupported-shape",
+        message: "GitHub repository URLs must look like https://github.com/<owner>/<repo>."
+      };
     }
 
     const repo = repoPart.replace(/\.git$/, "");
 
     if (owner.length === 0 || repo.length === 0) {
-      return null;
+      return {
+        kind: "unsupported-shape",
+        message: "GitHub repository URLs must look like https://github.com/<owner>/<repo>."
+      };
+    }
+
+    const canonicalUrl = `https://github.com/${owner}/${repo}`;
+
+    if (parts.length !== 2) {
+      const detail = describeUnsupportedGitHubPath(parts[2]);
+      return {
+        kind: "unsupported-shape",
+        message:
+          `${detail} TrustMCP scans GitHub repository roots only and resolves the current default-branch head SHA.` +
+          ` Use the repository root URL instead: ${canonicalUrl}`
+      };
     }
 
     return {
-      owner,
-      repo,
-      canonicalUrl: `https://github.com/${owner}/${repo}`,
-      displayName: `${owner}/${repo}`
+      kind: "repository",
+      reference: {
+        owner,
+        repo,
+        canonicalUrl,
+        displayName: `${owner}/${repo}`
+      }
     };
   } catch {
-    return null;
+    return { kind: "not-github" };
   }
+}
+
+function describeUnsupportedGitHubPath(segment: string | undefined): string {
+  if (segment === "tree") {
+    return "GitHub tree URLs are not supported.";
+  }
+
+  if (segment === "blob") {
+    return "GitHub blob URLs are not supported.";
+  }
+
+  return "GitHub subpath URLs are not supported.";
 }
 
 export async function materializeGitHubRepository(input: string): Promise<MaterializedSource> {
