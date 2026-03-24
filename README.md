@@ -82,6 +82,14 @@ Emit JSON for CI or other tooling:
 node dist/cli/main.js ./fixtures/local-risky --format json
 ```
 
+Fail a CI job when a finding meets or exceeds a severity threshold:
+
+```bash
+node dist/cli/main.js https://github.com/modelcontextprotocol/servers --format json --fail-on high
+```
+
+`--fail-on low` fails on any finding, `--fail-on medium` fails on medium or high findings, and `--fail-on high` fails on high findings only. Threshold matches exit with code `2`; TrustMCP runtime or argument errors exit with code `1`.
+
 Run the included checks:
 
 ```bash
