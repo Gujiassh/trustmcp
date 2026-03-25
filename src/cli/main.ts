@@ -7,7 +7,7 @@ import { isSeverity, shouldFailForThreshold } from "../core/thresholds.js";
 import type { Severity } from "../core/types.js";
 import { TRUSTMCP_VERSION } from "../core/version.js";
 import { loadCliConfig, type CliConfig } from "./config.js";
-import { runDoctor } from "./doctor.js";
+import { renderDoctorResult, runDoctor, type DoctorFormat } from "./doctor.js";
 import { DEFAULT_CONFIG_PATH, writeStarterConfig } from "./init-config.js";
 import { renderRuleList, renderRuleListJson, type RuleListFormat } from "./list-rules.js";
 import { isOutputFormat, renderReport, renderSummaryReport, type OutputFormat } from "../renderers/output.js";
@@ -41,6 +41,7 @@ interface InitConfigCliArguments {
 
 interface DoctorCliArguments {
   doctor: true;
+  format: DoctorFormat;
   target: string;
   configFile?: string;
 }
@@ -87,7 +88,7 @@ export async function runCli(argv: string[], dependencies: CliDependencies = {})
           ? { target: parsed.target }
           : { target: parsed.target, configFile: parsed.configFile }
       );
-      stdout.write(`${result.output}\n`);
+      stdout.write(`${renderDoctorResult(result, parsed.format)}\n`);
       return result.ok ? 0 : 1;
     }
 
@@ -327,6 +328,7 @@ function parseDoctorArguments(argv: string[]): DoctorCliArguments | null {
     return null;
   }
 
+  let format: DoctorFormat = "text";
   let target: string | undefined;
   let configFile: string | undefined;
 
@@ -357,6 +359,32 @@ function parseDoctorArguments(argv: string[]): DoctorCliArguments | null {
       continue;
     }
 
+    if (argument === "--json") {
+      format = "json";
+      continue;
+    }
+
+    if (argument === "--format") {
+      const nextArgument = argv[index + 1];
+      if (nextArgument !== "text" && nextArgument !== "json") {
+        throw new Error("doctor --format expects one of: text, json.");
+      }
+
+      format = nextArgument;
+      index += 1;
+      continue;
+    }
+
+    if (argument.startsWith("--format=")) {
+      const value = argument.slice("--format=".length);
+      if (value !== "text" && value !== "json") {
+        throw new Error("doctor --format expects one of: text, json.");
+      }
+
+      format = value;
+      continue;
+    }
+
     if (argument.startsWith("-")) {
       throw new Error(`Unknown option: ${argument}`);
     }
@@ -374,6 +402,7 @@ function parseDoctorArguments(argv: string[]): DoctorCliArguments | null {
 
   const options: DoctorCliArguments = {
     doctor: true,
+    format,
     target
   };
 
@@ -493,9 +522,9 @@ function usage(): string {
     "  trustmcp version",
     "  trustmcp <target> [--config path] [--format text|json|markdown|sarif] [--summary-only] [--fail-on low|medium|high] [--output-file path]",
     "  trustmcp scan <target> [--config path] [--format text|json|markdown|sarif] [--summary-only] [--fail-on low|medium|high] [--output-file path]",
-    "  trustmcp doctor <target> [--config path]",
+    "  trustmcp doctor <target> [--config path] [--json|--format text|json]",
     "  trustmcp init-config [path]",
-    "  trustmcp list-rules",
+    "  trustmcp list-rules [--json|--format tsv|json]",
     "",
     "Targets:",
     "  - local directory",

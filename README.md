@@ -190,6 +190,12 @@ Validate a target and optional config before your first real scan:
 node dist/cli/main.js doctor gh:modelcontextprotocol/servers --config trustmcp.config.json
 ```
 
+Emit that preflight result as JSON for automation:
+
+```bash
+node dist/cli/main.js doctor gh:modelcontextprotocol/servers --json
+```
+
 If something fails before the scan starts, check [TrustMCP troubleshooting](./docs/troubleshooting.md).
 
 List the currently shipped TrustMCP rules:

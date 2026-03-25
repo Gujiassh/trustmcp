@@ -61,12 +61,16 @@ _trustmcp() {
       if [[ "${words[1]}" == "doctor" ]]; then
         if (( CURRENT == 2 )); then
           _files -/
+        elif [[ "${words[CURRENT-1]}" == "--format" ]]; then
+          compadd -- text json
         elif [[ "${words[CURRENT-1]}" == "--config" ]]; then
           _files
         elif [[ "${words[CURRENT]}" == --config=* ]]; then
           _files
+        elif [[ "${words[CURRENT]}" == --format=* ]]; then
+          compadd -- text json
         else
-          compadd -- --config
+          compadd -- --config --json --format
         fi
         return
       fi

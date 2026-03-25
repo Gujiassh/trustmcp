@@ -3,14 +3,23 @@ import { getUnsupportedGitHubUrlMessage, parseGitHubRepositoryUrl } from "../inp
 import { materializeLocalDirectory } from "../inputs/local.js";
 import { loadCliConfig } from "./config.js";
 
+export type DoctorFormat = "json" | "text";
+
 export interface DoctorOptions {
   target: string;
   configFile?: string;
 }
 
+export interface DoctorCheckResult {
+  ok: boolean;
+  message: string;
+}
+
 export interface DoctorResult {
   ok: boolean;
-  output: string;
+  config: DoctorCheckResult;
+  statusMessage: string;
+  target: DoctorCheckResult;
 }
 
 export async function runDoctor(options: DoctorOptions): Promise<DoctorResult> {
@@ -18,20 +27,37 @@ export async function runDoctor(options: DoctorOptions): Promise<DoctorResult> {
   const targetCheck = await validateTarget(options.target);
   const ok = configCheck.ok && targetCheck.ok;
 
-  const lines = [
-    "TrustMCP doctor",
-    configCheck.ok ? `Config: OK ${configCheck.message}` : `Config: ERROR ${configCheck.message}`,
-    targetCheck.ok ? `Target: OK ${targetCheck.message}` : `Target: ERROR ${targetCheck.message}`,
-    ok ? "Status: ready to scan." : "Status: fix the errors above and run doctor again."
-  ];
-
   return {
     ok,
-    output: lines.join("\n")
+    config: configCheck,
+    statusMessage: ok ? "ready to scan." : "fix the errors above and run doctor again.",
+    target: targetCheck
   };
 }
 
-async function validateConfigFile(configFile?: string): Promise<{ ok: boolean; message: string }> {
+export function renderDoctorResult(result: DoctorResult, format: DoctorFormat): string {
+  if (format === "json") {
+    return JSON.stringify(
+      {
+        ok: result.ok,
+        config: result.config,
+        target: result.target,
+        status: result.statusMessage
+      },
+      null,
+      2
+    );
+  }
+
+  return [
+    "TrustMCP doctor",
+    result.config.ok ? `Config: OK ${result.config.message}` : `Config: ERROR ${result.config.message}`,
+    result.target.ok ? `Target: OK ${result.target.message}` : `Target: ERROR ${result.target.message}`,
+    `Status: ${result.statusMessage}`
+  ].join("\n");
+}
+
+async function validateConfigFile(configFile?: string): Promise<DoctorCheckResult> {
   if (configFile === undefined) {
     return {
       ok: true,
@@ -53,7 +79,7 @@ async function validateConfigFile(configFile?: string): Promise<{ ok: boolean; m
   }
 }
 
-async function validateTarget(target: string): Promise<{ ok: boolean; message: string }> {
+async function validateTarget(target: string): Promise<DoctorCheckResult> {
   const gitHubReference = parseGitHubRepositoryUrl(target);
   if (gitHubReference !== null) {
     return {

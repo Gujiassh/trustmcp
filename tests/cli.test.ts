@@ -93,12 +93,27 @@ describe("parseArguments", () => {
   it("parses doctor with target and optional config", () => {
     expect(parseArguments(["doctor", "gh:modelcontextprotocol/servers"])).toEqual({
       doctor: true,
+      format: "text",
       target: "gh:modelcontextprotocol/servers"
     });
     expect(parseArguments(["doctor", "./fixtures/local-risky", "--config", "trustmcp.config.json"])).toEqual({
       doctor: true,
+      format: "text",
       target: "./fixtures/local-risky",
       configFile: "trustmcp.config.json"
+    });
+  });
+
+  it("parses doctor JSON entry points", () => {
+    expect(parseArguments(["doctor", "gh:modelcontextprotocol/servers", "--json"])).toEqual({
+      doctor: true,
+      format: "json",
+      target: "gh:modelcontextprotocol/servers"
+    });
+    expect(parseArguments(["doctor", "./fixtures/local-risky", "--format", "json"])).toEqual({
+      doctor: true,
+      format: "json",
+      target: "./fixtures/local-risky"
     });
   });
 
@@ -163,6 +178,11 @@ describe("parseArguments", () => {
   it("rejects extra doctor positional arguments", () => {
     expect(() => parseArguments(["doctor", "one", "two"]))
       .toThrowError("doctor accepts exactly one target: a local directory, GitHub repository URL, or gh:owner/repo.");
+  });
+
+  it("rejects invalid doctor format values", () => {
+    expect(() => parseArguments(["doctor", "./fixtures/local-risky", "--format", "markdown"]))
+      .toThrowError("doctor --format expects one of: text, json.");
   });
 
   it("rejects extra list-rules arguments", () => {
@@ -550,6 +570,39 @@ describe("runCli exit thresholds", () => {
     expect(stdout.join("")).toContain(`Config: OK ${configFile}`);
     expect(stdout.join("")).toContain("Target: OK local directory");
     expect(stdout.join("")).toContain("Status: ready to scan.");
+  });
+
+  it("renders doctor as stable JSON when requested", async () => {
+    const configFile = await createConfigFile(JSON.stringify({ format: "json" }));
+    const stdout: string[] = [];
+
+    const exitCode = await runCli([
+      "doctor",
+      "./fixtures/local-risky",
+      "--config",
+      configFile,
+      "--json"
+    ], {
+      auditTarget: async () => {
+        throw new Error("doctor should not invoke the scan engine");
+      },
+      stdout: createWriter(stdout)
+    });
+
+    expect(exitCode).toBe(0);
+    expect(stdout.join("")).toBe(`{
+  "ok": true,
+  "config": {
+    "ok": true,
+    "message": "${configFile}"
+  },
+  "target": {
+    "ok": true,
+    "message": "local directory (/home/cc/code/trustmcp/fixtures/local-risky)"
+  },
+  "status": "ready to scan."
+}
+`);
   });
 
   it("reports unsupported GitHub tree URLs compactly in doctor", async () => {

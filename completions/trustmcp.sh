@@ -77,11 +77,19 @@ _trustmcp() {
         _trustmcp_add_file_matches "" "$cur"
         return
         ;;
+      --format)
+        _trustmcp_add_word_matches "text json" "$cur"
+        return
+        ;;
     esac
 
     case "$cur" in
       --config=*)
         _trustmcp_add_file_matches "--config=" "${cur#--config=}"
+        return
+        ;;
+      --format=*)
+        _trustmcp_add_prefixed_word_matches "--format=" "text json" "${cur#--format=}"
         return
         ;;
     esac
@@ -90,6 +98,9 @@ _trustmcp() {
       _trustmcp_add_directory_matches "$cur"
       return
     fi
+
+    _trustmcp_add_word_matches "--help -h --json --format --config" "$cur"
+    return
   fi
 
   if [[ "${COMP_WORDS[1]}" == "list-rules" ]]; then
