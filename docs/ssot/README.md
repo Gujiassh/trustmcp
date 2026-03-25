@@ -48,6 +48,8 @@ The public repo now also has a lightweight `CHANGELOG.md` as the release-history
 
 The repo now also ships an explicit npm pack validation path so future package distribution can be checked deliberately without publishing.
 
+The repo now also ships a local tarball install smoke check so future package distribution can be validated beyond dry-run pack contents alone.
+
 The repo now also ships a single `publish:check` command that bundles the local release-readiness checks without touching external systems.
 
 The reusable action now exposes machine-readable summary outputs for total findings and low/medium/high severity counts.

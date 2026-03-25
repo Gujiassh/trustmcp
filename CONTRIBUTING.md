@@ -60,6 +60,7 @@ This repository ships a conservative manual release workflow at `.github/workflo
 - make sure `package.json` already matches the same version without the leading `v`
 - add or update the matching entry in `CHANGELOG.md`
 - run `npm run publish:check` before creating the release
+- run `npm run pack:smoke` if you want a higher-confidence local check that the packed tarball can be installed and the CLI can start
 - check [the npm publish checklist](./docs/npm-publish-checklist.md) before the final manual registry step
 
 The workflow validates the version, runs tests and build, and then creates the GitHub tag and release. It does not publish to npm.

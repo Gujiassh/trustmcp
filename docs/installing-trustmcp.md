@@ -72,6 +72,14 @@ npm run pack:check
 
 It only means the repository has a repeatable local check for future packaging.
 
+If you want a stronger local signal before any future publication work, run:
+
+```bash
+npm run pack:smoke
+```
+
+That command packs the repository, installs the tarball into a temporary directory, and verifies the installed CLI can print its version.
+
 If you are preparing for the eventual manual registry step, check out the [npm publish checklist for TrustMCP](./npm-publish-checklist.md).
 
 ## Choose the path that matches what you need
@@ -81,5 +89,6 @@ Use:
 - direct `node dist/cli/main.js ...` when you want the most explicit local path
 - `npm link` when you want a convenient local command name
 - `npm run pack:check` when you want to verify future npm tarball readiness without publishing
+- `npm run pack:smoke` when you want a stronger tarball installability check before any future publication work
 
 If you are unsure whether your target or config is valid before running a real scan, check out [TrustMCP troubleshooting](./troubleshooting.md) and use the `doctor` command.
