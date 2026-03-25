@@ -2,6 +2,7 @@ import { looksLikeUrl } from "../core/rule-helpers.js";
 import { getUnsupportedGitHubUrlMessage, parseGitHubRepositoryUrl } from "../inputs/github.js";
 import { materializeLocalDirectory } from "../inputs/local.js";
 import { loadCliConfig } from "./config.js";
+import { validateCliOptionCompatibility } from "./validate-cli-options.js";
 import { validateOutputFilePath } from "../utils/write-rendered-output.js";
 
 export type DoctorFormat = "json" | "text";
@@ -68,6 +69,7 @@ async function validateConfigFile(configFile?: string): Promise<DoctorCheckResul
 
   try {
     const config = await loadCliConfig(configFile);
+    validateCliOptionCompatibility(config, "Config");
 
     if (config.outputFile !== undefined) {
       await validateOutputFilePath(config.outputFile);

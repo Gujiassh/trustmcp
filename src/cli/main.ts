@@ -10,6 +10,7 @@ import { loadCliConfig, type CliConfig } from "./config.js";
 import { renderDoctorResult, runDoctor, type DoctorFormat } from "./doctor.js";
 import { DEFAULT_CONFIG_PATH, writeStarterConfig } from "./init-config.js";
 import { renderRuleList, renderRuleListJson, type RuleListFormat } from "./list-rules.js";
+import { validateCliOptionCompatibility } from "./validate-cli-options.js";
 import { isOutputFormat, renderReport, renderSummaryReport, type OutputFormat } from "../renderers/output.js";
 import { writeRenderedOutput } from "../utils/write-rendered-output.js";
 
@@ -105,6 +106,7 @@ export async function runCli(argv: string[], dependencies: CliDependencies = {})
 
     const config = await loadCliConfig(parsed.configFile);
     const resolved = resolveCliOptions(parsed, config);
+    validateCliOptionCompatibility(resolved);
 
     const report = await auditTarget(resolved.target);
     const output = resolved.summaryOnly ? renderSummaryReport(report, resolved.format) : renderReport(report, resolved.format);

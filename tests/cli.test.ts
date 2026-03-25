@@ -426,6 +426,34 @@ describe("runCli exit thresholds", () => {
     await expect(readFile(configOutputFile, "utf8")).rejects.toThrow();
   });
 
+  it("lets CLI flags override an otherwise invalid config combination", async () => {
+    const cliOutputFile = await createTempFilePath("report-from-cli.md");
+    const configFile = await createConfigFile(
+      JSON.stringify({
+        format: "sarif",
+        "summary-only": true
+      })
+    );
+    const stdout: string[] = [];
+
+    const exitCode = await runCli([
+      "./fixtures/local-risky",
+      "--config",
+      configFile,
+      "--format",
+      "markdown",
+      "--output-file",
+      cliOutputFile
+    ], {
+      auditTarget: async () => createReport("local-directory", ["medium"]),
+      stdout: createWriter(stdout)
+    });
+
+    expect(exitCode).toBe(0);
+    expect(stdout.join("")).toContain("# TrustMCP Summary");
+    expect(await readFile(cliOutputFile, "utf8")).toContain("# TrustMCP Summary");
+  });
+
   it("writes a starter config file with the supported stable fields", async () => {
     const outputFile = await createTempFilePath("trustmcp.config.json");
     const stdout: string[] = [];
@@ -720,6 +748,27 @@ describe("runCli exit thresholds", () => {
     expect(exitCode).toBe(1);
     expect(stdout.join("")).toContain("Config: ERROR Config file");
     expect(stdout.join("")).toContain("has invalid 'format'. Expected one of: text, json, markdown, sarif.");
+  });
+
+  it("reports invalid config combinations in doctor before a scan runs", async () => {
+    const configFile = await createConfigFile(JSON.stringify({ format: "sarif", "summary-only": true }));
+    const stdout: string[] = [];
+
+    const exitCode = await runCli([
+      "doctor",
+      "./fixtures/local-risky",
+      "--config",
+      configFile,
+      "--json"
+    ], {
+      auditTarget: async () => {
+        throw new Error("doctor should not invoke the scan engine");
+      },
+      stdout: createWriter(stdout)
+    });
+
+    expect(exitCode).toBe(1);
+    expect(stdout.join("")).toContain(`"message": "Invalid option combination in config: --summary-only is not supported with --format sarif."`);
   });
 });
 
