@@ -590,19 +590,22 @@ describe("runCli exit thresholds", () => {
     });
 
     expect(exitCode).toBe(0);
-    expect(stdout.join("")).toBe(`{
-  "ok": true,
-  "config": {
-    "ok": true,
-    "message": "${configFile}"
-  },
-  "target": {
-    "ok": true,
-    "message": "local directory (/home/cc/code/trustmcp/fixtures/local-risky)"
-  },
-  "status": "ready to scan."
-}
-`);
+    const parsed = JSON.parse(stdout.join("")) as {
+      ok: boolean;
+      config: { ok: boolean; message: string };
+      target: { ok: boolean; message: string };
+      status: string;
+    };
+
+    expect(parsed.ok).toBe(true);
+    expect(parsed.config).toEqual({
+      ok: true,
+      message: configFile
+    });
+    expect(parsed.target.ok).toBe(true);
+    expect(parsed.target.message).toContain("local directory (");
+    expect(parsed.target.message).toContain("fixtures/local-risky");
+    expect(parsed.status).toBe("ready to scan.");
   });
 
   it("reports configured output-file paths as valid in doctor when the parent directory exists", async () => {
