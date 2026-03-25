@@ -2,6 +2,7 @@ import { looksLikeUrl } from "../core/rule-helpers.js";
 import { getUnsupportedGitHubUrlMessage, parseGitHubRepositoryUrl } from "../inputs/github.js";
 import { materializeLocalDirectory } from "../inputs/local.js";
 import { loadCliConfig } from "./config.js";
+import { validateNodeRuntimeVersion } from "./node-runtime.js";
 import { validateCliOptionCompatibility } from "./validate-cli-options.js";
 import { validateOutputFilePath } from "../utils/write-rendered-output.js";
 
@@ -20,18 +21,21 @@ export interface DoctorCheckResult {
 export interface DoctorResult {
   ok: boolean;
   config: DoctorCheckResult;
+  runtime: DoctorCheckResult;
   statusMessage: string;
   target: DoctorCheckResult;
 }
 
 export async function runDoctor(options: DoctorOptions): Promise<DoctorResult> {
   const configCheck = await validateConfigFile(options.configFile);
+  const runtimeCheck = await validateRuntime();
   const targetCheck = await validateTarget(options.target);
-  const ok = configCheck.ok && targetCheck.ok;
+  const ok = configCheck.ok && runtimeCheck.ok && targetCheck.ok;
 
   return {
     ok,
     config: configCheck,
+    runtime: runtimeCheck,
     statusMessage: ok ? "ready to scan." : "fix the errors above and run doctor again.",
     target: targetCheck
   };
@@ -43,6 +47,7 @@ export function renderDoctorResult(result: DoctorResult, format: DoctorFormat): 
       {
         ok: result.ok,
         config: result.config,
+        runtime: result.runtime,
         target: result.target,
         status: result.statusMessage
       },
@@ -54,9 +59,21 @@ export function renderDoctorResult(result: DoctorResult, format: DoctorFormat): 
   return [
     "TrustMCP doctor",
     result.config.ok ? `Config: OK ${result.config.message}` : `Config: ERROR ${result.config.message}`,
+    result.runtime.ok ? `Runtime: OK ${result.runtime.message}` : `Runtime: ERROR ${result.runtime.message}`,
     result.target.ok ? `Target: OK ${result.target.message}` : `Target: ERROR ${result.target.message}`,
     `Status: ${result.statusMessage}`
   ].join("\n");
+}
+
+async function validateRuntime(): Promise<DoctorCheckResult> {
+  try {
+    return await validateNodeRuntimeVersion();
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : String(error)
+    };
+  }
 }
 
 async function validateConfigFile(configFile?: string): Promise<DoctorCheckResult> {

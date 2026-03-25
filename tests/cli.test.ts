@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { AuditReport, Severity } from "../src/core/types.js";
+import { validateNodeRuntimeVersion } from "../src/cli/node-runtime.js";
 import { TRUSTMCP_VERSION } from "../src/core/version.js";
 import { parseArguments, runCli } from "../src/cli/main.js";
 
@@ -621,6 +622,7 @@ describe("runCli exit thresholds", () => {
     const parsed = JSON.parse(stdout.join("")) as {
       ok: boolean;
       config: { ok: boolean; message: string };
+      runtime: { ok: boolean; message: string };
       target: { ok: boolean; message: string };
       status: string;
     };
@@ -630,6 +632,8 @@ describe("runCli exit thresholds", () => {
       ok: true,
       message: configFile
     });
+    expect(parsed.runtime.ok).toBe(true);
+    expect(parsed.runtime.message).toContain(`Node.js ${process.versions.node}`);
     expect(parsed.target.ok).toBe(true);
     expect(parsed.target.message).toContain("local directory (");
     expect(parsed.target.message).toContain("fixtures/local-risky");
@@ -769,6 +773,20 @@ describe("runCli exit thresholds", () => {
 
     expect(exitCode).toBe(1);
     expect(stdout.join("")).toContain(`"message": "Invalid option combination in config: --summary-only is not supported with --format sarif."`);
+  });
+
+  it("accepts supported Node.js runtimes for doctor validation", async () => {
+    await expect(validateNodeRuntimeVersion("18.18.0")).resolves.toEqual({
+      ok: true,
+      message: "Node.js 18.18.0 satisfies supported runtime >=18.18."
+    });
+  });
+
+  it("rejects unsupported Node.js runtimes for doctor validation", async () => {
+    await expect(validateNodeRuntimeVersion("18.17.9")).resolves.toEqual({
+      ok: false,
+      message: "Node.js 18.17.9 does not satisfy supported runtime >=18.18."
+    });
   });
 });
 

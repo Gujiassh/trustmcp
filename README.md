@@ -214,6 +214,8 @@ When you pass `--config`, `doctor` also checks config-loaded `output-file` paths
 
 It also flags invalid config combinations early, such as `summary-only: true` with `format: sarif`.
 
+Doctor also verifies that the current Node.js runtime satisfies TrustMCP's supported engine floor.
+
 If something fails before the scan starts, check [TrustMCP troubleshooting](./docs/troubleshooting.md).
 
 List the currently shipped TrustMCP rules:
