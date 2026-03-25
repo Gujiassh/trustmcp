@@ -63,6 +63,13 @@ If you want the current IDs from the CLI, run `node dist/cli/main.js list-rules`
 
 For automation-friendly rule metadata, run `node dist/cli/main.js list-rules --json`.
 
+If you want a copy-paste automation path, for example in shell scripts:
+
+```bash
+node dist/cli/main.js doctor gh:modelcontextprotocol/servers --json | jq '.ok'
+node dist/cli/main.js list-rules --json | jq '.[].ruleId'
+```
+
 Every finding includes:
 
 - `ruleId`
