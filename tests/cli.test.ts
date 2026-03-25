@@ -605,6 +605,52 @@ describe("runCli exit thresholds", () => {
 `);
   });
 
+  it("reports configured output-file paths as valid in doctor when the parent directory exists", async () => {
+    const outputFile = await createTempFilePath("trustmcp.json");
+    const configFile = await createConfigFile(JSON.stringify({ "output-file": outputFile }));
+    const stdout: string[] = [];
+
+    const exitCode = await runCli([
+      "doctor",
+      "./fixtures/local-risky",
+      "--config",
+      configFile,
+      "--json"
+    ], {
+      auditTarget: async () => {
+        throw new Error("doctor should not invoke the scan engine");
+      },
+      stdout: createWriter(stdout)
+    });
+
+    expect(exitCode).toBe(0);
+    expect(stdout.join("")).toContain(`"message": "${configFile} (output-file OK: ${outputFile})"`);
+  });
+
+  it("reports configured output-file paths with missing parent directories in doctor", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "trustmcp-cli-test-"));
+    tempDirectories.push(directory);
+    const missingOutputFile = join(directory, "missing", "trustmcp.json");
+    const configFile = await createConfigFile(JSON.stringify({ "output-file": missingOutputFile }));
+    const stdout: string[] = [];
+
+    const exitCode = await runCli([
+      "doctor",
+      "./fixtures/local-risky",
+      "--config",
+      configFile
+    ], {
+      auditTarget: async () => {
+        throw new Error("doctor should not invoke the scan engine");
+      },
+      stdout: createWriter(stdout)
+    });
+
+    expect(exitCode).toBe(1);
+    expect(stdout.join("")).toContain("Config: ERROR Output file directory does not exist:");
+    expect(stdout.join("")).toContain(join(directory, "missing"));
+  });
+
   it("reports unsupported GitHub tree URLs compactly in doctor", async () => {
     const stdout: string[] = [];
 

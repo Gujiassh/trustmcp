@@ -196,6 +196,8 @@ Emit that preflight result as JSON for automation:
 node dist/cli/main.js doctor gh:modelcontextprotocol/servers --json
 ```
 
+When you pass `--config`, `doctor` also checks config-loaded `output-file` paths and catches missing parent directories before a real scan starts.
+
 If something fails before the scan starts, check [TrustMCP troubleshooting](./docs/troubleshooting.md).
 
 List the currently shipped TrustMCP rules:
