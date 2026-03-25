@@ -578,6 +578,23 @@ describe("runCli exit thresholds", () => {
     expect(commandStdout.join("")).toBe(`${TRUSTMCP_VERSION}\n`);
   });
 
+  it("prints task-grouped help output when no command is provided", async () => {
+    const stdout: string[] = [];
+
+    const exitCode = await runCli([], {
+      stdout: createWriter(stdout)
+    });
+
+    expect(exitCode).toBe(0);
+    const help = stdout.join("");
+    expect(help).toContain("Run a scan:");
+    expect(help).toContain("Validate first:");
+    expect(help).toContain("Set up locally:");
+    expect(help).toContain("Inspect rules:");
+    expect(help).toContain("Inspect version:");
+    expect(help).toContain("Targets:");
+  });
+
   it("runs doctor successfully for a valid local target and config without invoking the scan engine", async () => {
     const configFile = await createConfigFile(JSON.stringify({ format: "json" }));
     const stdout: string[] = [];
