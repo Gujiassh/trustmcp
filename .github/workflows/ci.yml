@@ -31,3 +31,6 @@ jobs:
 
       - name: Build CLI
         run: npm run build
+
+      - name: Run tarball install smoke check
+        run: npm run pack:smoke
