@@ -12,6 +12,14 @@ Canonical repository: https://github.com/Gujiassh/trustmcp
 
 Release history: [CHANGELOG.md](./CHANGELOG.md)
 
+## Current status
+
+- Source install works today (`npm install && npm run build`)
+- GitHub Actions CI runs on Node 18 and 20
+- Package readiness checks exist: `npm run pack:check`, `npm run pack:smoke`, and `npm run publish:check`
+- GitHub release flow exists and stays manual
+- npm publication is **not** live yet
+
 ## Install and release readiness
 
 TrustMCP is usable today from source checkout and local build. It is **not published to npm yet**.
