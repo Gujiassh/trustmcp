@@ -612,7 +612,7 @@ describe("runCli exit thresholds", () => {
     });
 
     expect(exitCode).toBe(0);
-    expect(stdout.join("")).toContain("TrustMCP doctor");
+    expect(stdout.join("")).toContain(`TrustMCP doctor v${TRUSTMCP_VERSION}`);
     expect(stdout.join("")).toContain(`Config: OK ${configFile}`);
     expect(stdout.join("")).toContain("Target: OK local directory");
     expect(stdout.join("")).toContain("Status: ready to scan.");
@@ -638,6 +638,7 @@ describe("runCli exit thresholds", () => {
     expect(exitCode).toBe(0);
     const parsed = JSON.parse(stdout.join("")) as {
       ok: boolean;
+      version: string;
       config: { ok: boolean; message: string };
       runtime: { ok: boolean; message: string };
       target: { ok: boolean; message: string };
@@ -645,6 +646,7 @@ describe("runCli exit thresholds", () => {
     };
 
     expect(parsed.ok).toBe(true);
+    expect(parsed.version).toBe(TRUSTMCP_VERSION);
     expect(parsed.config).toEqual({
       ok: true,
       message: configFile

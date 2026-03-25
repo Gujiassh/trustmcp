@@ -1,6 +1,7 @@
 import { looksLikeUrl } from "../core/rule-helpers.js";
 import { getUnsupportedGitHubUrlMessage, parseGitHubRepositoryUrl } from "../inputs/github.js";
 import { materializeLocalDirectory } from "../inputs/local.js";
+import { TRUSTMCP_VERSION } from "../core/version.js";
 import { loadCliConfig } from "./config.js";
 import { validateNodeRuntimeVersion } from "./node-runtime.js";
 import { validateCliOptionCompatibility } from "./validate-cli-options.js";
@@ -46,6 +47,7 @@ export function renderDoctorResult(result: DoctorResult, format: DoctorFormat): 
     return JSON.stringify(
       {
         ok: result.ok,
+        version: TRUSTMCP_VERSION,
         config: result.config,
         runtime: result.runtime,
         target: result.target,
@@ -57,7 +59,7 @@ export function renderDoctorResult(result: DoctorResult, format: DoctorFormat): 
   }
 
   return [
-    "TrustMCP doctor",
+    `TrustMCP doctor v${TRUSTMCP_VERSION}`,
     result.config.ok ? `Config: OK ${result.config.message}` : `Config: ERROR ${result.config.message}`,
     result.runtime.ok ? `Runtime: OK ${result.runtime.message}` : `Runtime: ERROR ${result.runtime.message}`,
     result.target.ok ? `Target: OK ${result.target.message}` : `Target: ERROR ${result.target.message}`,
