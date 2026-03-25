@@ -30,6 +30,8 @@ Public docs now also include a compact troubleshooting guide for common TrustMCP
 
 Public docs now also include a dedicated install-path guide covering source checkout, direct CLI use, `npm link`, and pack-readiness without implying npm publication.
 
+The package scripts now also include a narrow `bootstrap` command for source-based local setup (`npm install && npm run build`).
+
 Public docs now also include a short future install migration note so source-based install guidance can evolve cleanly if packaged distribution is added later.
 
 Public docs now also include a compact npm publish checklist for the final manual registry step when the project is ready.

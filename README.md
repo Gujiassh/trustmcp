@@ -90,6 +90,12 @@ npm install
 npm run build
 ```
 
+If you want the same source-based setup in one command, run:
+
+```bash
+npm run bootstrap
+```
+
 Validate the future npm tarball contents locally:
 
 ```bash

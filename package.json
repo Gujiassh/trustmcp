@@ -18,6 +18,7 @@
     "node": ">=18.18"
   },
   "scripts": {
+    "bootstrap": "npm install && npm run build",
     "build": "tsc -p tsconfig.json",
     "pack:check": "npm run build && node scripts/pack-check.mjs",
     "pack:smoke": "npm run build && node scripts/pack-smoke.mjs",

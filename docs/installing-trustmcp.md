@@ -15,6 +15,12 @@ npm install
 npm run build
 ```
 
+If you want the same setup in one local command after cloning, run:
+
+```bash
+npm run bootstrap
+```
+
 Then run the CLI directly from the built output:
 
 ```bash
