@@ -25,7 +25,7 @@ describe("completion scripts", () => {
     expect(script).toContain("--output-file");
     expect(script).toContain("text json markdown sarif");
     expect(script).toContain("low medium high");
-    expect(script).toContain("--json --format --config");
+    expect(script).toContain("--help -h --json --format --config --output-file");
     expect(script).toContain("text json");
   });
 
@@ -47,7 +47,7 @@ describe("completion scripts", () => {
     expect(script).toContain("--output-file");
     expect(script).toContain("text json markdown sarif");
     expect(script).toContain("low medium high");
-    expect(script).toContain("--config --json --format");
+    expect(script).toContain("--config --json --format --output-file");
     expect(script).toContain("text json");
   });
 });

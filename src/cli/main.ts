@@ -45,6 +45,7 @@ interface DoctorCliArguments {
   format: DoctorFormat;
   target: string;
   configFile?: string;
+  outputFile?: string;
 }
 
 interface ListRulesCliArguments {
@@ -89,7 +90,9 @@ export async function runCli(argv: string[], dependencies: CliDependencies = {})
           ? { target: parsed.target }
           : { target: parsed.target, configFile: parsed.configFile }
       );
-      stdout.write(`${renderDoctorResult(result, parsed.format)}\n`);
+      const output = renderDoctorResult(result, parsed.format);
+      await writeRenderedOutput(output, parsed.outputFile);
+      stdout.write(`${output}\n`);
       return result.ok ? 0 : 1;
     }
 
@@ -333,6 +336,7 @@ function parseDoctorArguments(argv: string[]): DoctorCliArguments | null {
   let format: DoctorFormat = "text";
   let target: string | undefined;
   let configFile: string | undefined;
+  let outputFile: string | undefined;
 
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
@@ -358,6 +362,27 @@ function parseDoctorArguments(argv: string[]): DoctorCliArguments | null {
       }
 
       configFile = value;
+      continue;
+    }
+
+    if (argument === "--output-file") {
+      const nextArgument = argv[index + 1];
+      if (nextArgument === undefined || nextArgument.startsWith("-")) {
+        throw new Error("doctor --output-file expects a file path.");
+      }
+
+      outputFile = nextArgument;
+      index += 1;
+      continue;
+    }
+
+    if (argument.startsWith("--output-file=")) {
+      const value = argument.slice("--output-file=".length);
+      if (value.length === 0) {
+        throw new Error("doctor --output-file expects a file path.");
+      }
+
+      outputFile = value;
       continue;
     }
 
@@ -410,6 +435,10 @@ function parseDoctorArguments(argv: string[]): DoctorCliArguments | null {
 
   if (configFile !== undefined) {
     options.configFile = configFile;
+  }
+
+  if (outputFile !== undefined) {
+    options.outputFile = outputFile;
   }
 
   return options;
@@ -524,7 +553,7 @@ function usage(): string {
     "  trustmcp scan <target> [--config path] [--format text|json|markdown|sarif] [--summary-only] [--fail-on low|medium|high] [--output-file path]",
     "",
     "Validate first:",
-    "  trustmcp doctor <target> [--config path] [--json|--format text|json]",
+    "  trustmcp doctor <target> [--config path] [--json|--format text|json] [--output-file path]",
     "",
     "Set up locally:",
     "  trustmcp init-config [path]",

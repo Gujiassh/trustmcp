@@ -77,6 +77,10 @@ _trustmcp() {
         _trustmcp_add_file_matches "" "$cur"
         return
         ;;
+      --output-file)
+        _trustmcp_add_file_matches "" "$cur"
+        return
+        ;;
       --format)
         _trustmcp_add_word_matches "text json" "$cur"
         return
@@ -86,6 +90,10 @@ _trustmcp() {
     case "$cur" in
       --config=*)
         _trustmcp_add_file_matches "--config=" "${cur#--config=}"
+        return
+        ;;
+      --output-file=*)
+        _trustmcp_add_file_matches "--output-file=" "${cur#--output-file=}"
         return
         ;;
       --format=*)
@@ -99,9 +107,9 @@ _trustmcp() {
       return
     fi
 
-    _trustmcp_add_word_matches "--help -h --json --format --config" "$cur"
-    return
-  fi
+      _trustmcp_add_word_matches "--help -h --json --format --config --output-file" "$cur"
+      return
+    fi
 
   if [[ "${COMP_WORDS[1]}" == "list-rules" ]]; then
     case "$prev" in

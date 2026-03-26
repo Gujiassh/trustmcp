@@ -65,12 +65,16 @@ _trustmcp() {
           compadd -- text json
         elif [[ "${words[CURRENT-1]}" == "--config" ]]; then
           _files
+        elif [[ "${words[CURRENT-1]}" == "--output-file" ]]; then
+          _files
         elif [[ "${words[CURRENT]}" == --config=* ]]; then
+          _files
+        elif [[ "${words[CURRENT]}" == --output-file=* ]]; then
           _files
         elif [[ "${words[CURRENT]}" == --format=* ]]; then
           compadd -- text json
         else
-          compadd -- --config --json --format
+          compadd -- --config --json --format --output-file
         fi
         return
       fi

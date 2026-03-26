@@ -118,6 +118,22 @@ describe("parseArguments", () => {
     });
   });
 
+  it("parses doctor output-file entry points", () => {
+    expect(parseArguments(["doctor", "./fixtures/local-risky", "--output-file", "doctor.txt"])).toEqual({
+      doctor: true,
+      format: "text",
+      target: "./fixtures/local-risky",
+      outputFile: "doctor.txt"
+    });
+
+    expect(parseArguments(["doctor", "./fixtures/local-risky", "--json", "--output-file=doctor.json"])).toEqual({
+      doctor: true,
+      format: "json",
+      target: "./fixtures/local-risky",
+      outputFile: "doctor.json"
+    });
+  });
+
   it("parses list-rules with no extra arguments", () => {
     expect(parseArguments(["list-rules"])).toEqual({
       listRules: true,
@@ -679,6 +695,49 @@ describe("runCli exit thresholds", () => {
 
     expect(exitCode).toBe(0);
     expect(stdout.join("")).toContain(`"message": "${configFile} (output-file OK: ${outputFile})"`);
+  });
+
+  it("writes doctor text output to a file when requested", async () => {
+    const outputFile = await createTempFilePath("doctor.txt");
+    const stdout: string[] = [];
+
+    const exitCode = await runCli([
+      "doctor",
+      "./fixtures/local-risky",
+      "--output-file",
+      outputFile
+    ], {
+      auditTarget: async () => {
+        throw new Error("doctor should not invoke the scan engine");
+      },
+      stdout: createWriter(stdout)
+    });
+
+    expect(exitCode).toBe(0);
+    expect(stdout.join("")).toContain(`TrustMCP doctor v${TRUSTMCP_VERSION}`);
+    expect(await readFile(outputFile, "utf8")).toContain(`TrustMCP doctor v${TRUSTMCP_VERSION}`);
+  });
+
+  it("writes doctor JSON output to a file when requested", async () => {
+    const outputFile = await createTempFilePath("doctor.json");
+    const stdout: string[] = [];
+
+    const exitCode = await runCli([
+      "doctor",
+      "./fixtures/local-risky",
+      "--json",
+      "--output-file",
+      outputFile
+    ], {
+      auditTarget: async () => {
+        throw new Error("doctor should not invoke the scan engine");
+      },
+      stdout: createWriter(stdout)
+    });
+
+    expect(exitCode).toBe(0);
+    expect(stdout.join("")).toContain(`"version": "${TRUSTMCP_VERSION}"`);
+    expect(await readFile(outputFile, "utf8")).toContain(`"version": "${TRUSTMCP_VERSION}"`);
   });
 
   it("reports configured output-file paths with missing parent directories in doctor", async () => {
