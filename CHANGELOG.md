@@ -10,6 +10,10 @@ This changelog is the lightweight public release history for TrustMCP.
 
 - Add upcoming release notes here before the next GitHub release.
 
+## v0.1.0 — npm published
+
+- Published `trustmcp@0.1.0` to npm.
+
 ## v0.1.0 — 2026-03-24
 
 Initial public release.

@@ -8,26 +8,25 @@ If `npm audit` is the mental model that brought you here, keep the comparison sp
 
 If you want the fuller comparison, check out [What TrustMCP scans, and how it differs from npm audit](./docs/what-trustmcp-scans.md).
 
-Canonical repository: https://github.com/Gujiassh/trustmcp
-
 Release history: [CHANGELOG.md](./CHANGELOG.md)
 
 ## Current status
 
-- Source install works today (`npm install && npm run build`)
+- npm install works today (`npm install -g trustmcp`, `npx trustmcp --version`)
+- Source install still works for contributors (`npm install && npm run build`)
 - GitHub Actions CI runs on Node 18 and 20
 - Package readiness checks exist: `npm run pack:check`, `npm run pack:smoke`, and `npm run publish:check`
 - GitHub release flow exists and stays manual
-- npm publication is **not** live yet
+- npm publication is live: `trustmcp@0.1.0`
 
 ## Install and release readiness
 
-TrustMCP is usable today from source checkout and local build. It is **not published to npm yet**.
+TrustMCP is usable today from npm, `npx`, and source checkout/local build.
 
-- Use [Installing TrustMCP today](./docs/installing-trustmcp.md) for the current supported install paths: direct `node dist/cli/main.js ...` usage and optional `npm link`.
+- Use [Installing TrustMCP today](./docs/installing-trustmcp.md) for the current supported install paths: npm, `npx`, direct `node dist/cli/main.js ...`, and optional `npm link`.
 - Use `npm run pack:check` to validate future npm tarball contents locally.
 - Use `npm run publish:check` to run the local release/package preflight in one command.
-- Use [the npm publish checklist](./docs/npm-publish-checklist.md) and [CONTRIBUTING.md](./CONTRIBUTING.md) when the project is actually ready for the final manual registry and GitHub release steps.
+- Use [the npm publish checklist](./docs/npm-publish-checklist.md) and [CONTRIBUTING.md](./CONTRIBUTING.md) for future package updates and manual GitHub release steps.
 
 ## Why scan MCP servers
 
@@ -92,11 +91,23 @@ Every finding includes:
 
 Requires Node.js 18.18+.
 
-TrustMCP is **not published to npm yet**. The supported path today is source checkout, local build, then either `node dist/cli/main.js ...` or `npm link`. The repository does include a pack-readiness check for future npm distribution, but that does **not** publish anything.
+TrustMCP is published on npm as `trustmcp`. If you want the lowest-friction path, use npm or `npx`. Source checkout is still the right path when you want to contribute or inspect the repository locally.
+
+Install globally:
+
+```bash
+npm install -g trustmcp
+```
+
+Or run it without installing globally:
+
+```bash
+npx trustmcp --version
+```
 
 If you want the install options explained in one place, check out [Installing TrustMCP today](./docs/installing-trustmcp.md).
 
-Install dependencies and build:
+Install from source and build:
 
 ```bash
 npm install
@@ -109,7 +120,7 @@ If you want the same source-based setup in one command, run:
 npm run bootstrap
 ```
 
-Validate the future npm tarball contents locally:
+Validate the packaged tarball contents locally:
 
 ```bash
 npm run pack:check

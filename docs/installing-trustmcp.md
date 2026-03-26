@@ -1,8 +1,30 @@
 # Installing TrustMCP today
 
-TrustMCP is not published to npm yet. The supported installation path today is source checkout, local build, and then either direct `node` usage or optional local linking.
+TrustMCP is published on npm as `trustmcp`. You can use it today via `npm install -g trustmcp`, `npx trustmcp ...`, or a source checkout when you want the local repository in hand.
 
-This page explains what works now, what `npm link` is for, and what `npm run pack:check` means without implying that the package is already available on npm.
+This page explains what works now, what source-based setup is still good for, and what the package-readiness checks mean now that npm publication is live.
+
+## Use npm when you want the fastest install path
+
+Install globally:
+
+```bash
+npm install -g trustmcp
+```
+
+Then run:
+
+```bash
+trustmcp --version
+trustmcp gh:modelcontextprotocol/servers --format text
+```
+
+If you do not want a global install, use `npx`:
+
+```bash
+npx trustmcp --version
+npx trustmcp gh:modelcontextprotocol/servers --format text
+```
 
 ## Use a source checkout today
 
@@ -27,7 +49,7 @@ Then run the CLI directly from the built output:
 node dist/cli/main.js ./path-to-target
 ```
 
-That is the main supported path today.
+That is still a supported path for contributors and people who want the repository checked out locally.
 
 If you want the short future-looking note about how a packaged install path would differ conceptually, check out [Future install migration note for source users](./future-install-migration.md).
 
@@ -72,11 +94,10 @@ npm run pack:check
 
 `npm run pack:check` does **not** mean:
 
-- TrustMCP is already published to npm
 - you can install it today with `npm install trustmcp`
 - a release has been pushed to the registry
 
-It only means the repository has a repeatable local check for future packaging.
+It means the repository has a repeatable local check for package contents, independent of whether you are publishing a new version right now.
 
 If you want a stronger local signal before any future publication work, run:
 
