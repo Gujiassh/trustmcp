@@ -19,12 +19,17 @@ export interface DoctorCheckResult {
   message: string;
 }
 
+export interface DoctorTargetCheckResult extends DoctorCheckResult {
+  kind?: "local-directory" | "public-github-repo";
+  displayName?: string;
+}
+
 export interface DoctorResult {
   ok: boolean;
   config: DoctorCheckResult;
   runtime: DoctorCheckResult;
   statusMessage: string;
-  target: DoctorCheckResult;
+  target: DoctorTargetCheckResult;
 }
 
 export async function runDoctor(options: DoctorOptions): Promise<DoctorResult> {
@@ -106,10 +111,12 @@ async function validateConfigFile(configFile?: string): Promise<DoctorCheckResul
   }
 }
 
-async function validateTarget(target: string): Promise<DoctorCheckResult> {
+async function validateTarget(target: string): Promise<DoctorTargetCheckResult> {
   const gitHubReference = parseGitHubRepositoryUrl(target);
   if (gitHubReference !== null) {
     return {
+      displayName: gitHubReference.displayName,
+      kind: "public-github-repo",
       ok: true,
       message: `GitHub repository input (${gitHubReference.displayName})`
     };
@@ -133,6 +140,8 @@ async function validateTarget(target: string): Promise<DoctorCheckResult> {
   try {
     const source = await materializeLocalDirectory(target);
     return {
+      displayName: source.target.displayName,
+      kind: "local-directory",
       ok: true,
       message: `local directory (${source.target.displayName})`
     };

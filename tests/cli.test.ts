@@ -657,7 +657,7 @@ describe("runCli exit thresholds", () => {
       version: string;
       config: { ok: boolean; message: string };
       runtime: { ok: boolean; message: string };
-      target: { ok: boolean; message: string };
+      target: { ok: boolean; message: string; kind?: string; displayName?: string };
       status: string;
     };
 
@@ -669,10 +669,48 @@ describe("runCli exit thresholds", () => {
     });
     expect(parsed.runtime.ok).toBe(true);
     expect(parsed.runtime.message).toContain(`Node.js ${process.versions.node}`);
-    expect(parsed.target.ok).toBe(true);
+    expect(parsed.target).toMatchObject({
+      ok: true,
+      kind: "local-directory"
+    });
+    expect(parsed.target.displayName).toContain("fixtures/local-risky");
     expect(parsed.target.message).toContain("local directory (");
     expect(parsed.target.message).toContain("fixtures/local-risky");
     expect(parsed.status).toBe("ready to scan.");
+  });
+
+  it("includes structured GitHub target metadata in doctor JSON output", async () => {
+    const stdout: string[] = [];
+
+    const exitCode = await runCli([
+      "doctor",
+      "gh:modelcontextprotocol/servers",
+      "--json"
+    ], {
+      auditTarget: async () => {
+        throw new Error("doctor should not invoke the scan engine");
+      },
+      stdout: createWriter(stdout)
+    });
+
+    const parsed = JSON.parse(stdout.join("")) as {
+      ok: boolean;
+      target: {
+        ok: boolean;
+        kind?: string;
+        displayName?: string;
+        message: string;
+      };
+    };
+
+    expect(exitCode).toBe(0);
+    expect(parsed.ok).toBe(true);
+    expect(parsed.target).toMatchObject({
+      ok: true,
+      kind: "public-github-repo",
+      displayName: "modelcontextprotocol/servers"
+    });
+    expect(parsed.target.message).toBe("GitHub repository input (modelcontextprotocol/servers)");
   });
 
   it("reports configured output-file paths as valid in doctor when the parent directory exists", async () => {
