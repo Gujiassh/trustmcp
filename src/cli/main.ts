@@ -51,6 +51,7 @@ interface DoctorCliArguments {
 interface ListRulesCliArguments {
   listRules: true;
   format: RuleListFormat;
+  outputFile?: string;
 }
 
 interface VersionCliArguments {
@@ -98,6 +99,7 @@ export async function runCli(argv: string[], dependencies: CliDependencies = {})
 
     if (isListRulesCommand(parsed)) {
       const output = parsed.format === "json" ? renderRuleListJson() : renderRuleList();
+      await writeRenderedOutput(output, parsed.outputFile);
       stdout.write(`${output}\n`);
       return 0;
     }
@@ -454,6 +456,7 @@ function parseListRulesArguments(argv: string[]): ListRulesCliArguments | null {
   }
 
   let format: RuleListFormat = "tsv";
+  let outputFile: string | undefined;
 
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
@@ -487,13 +490,40 @@ function parseListRulesArguments(argv: string[]): ListRulesCliArguments | null {
       continue;
     }
 
+    if (argument === "--output-file") {
+      const nextArgument = argv[index + 1];
+      if (nextArgument === undefined || nextArgument.startsWith("-")) {
+        throw new Error("list-rules --output-file expects a file path.");
+      }
+
+      outputFile = nextArgument;
+      index += 1;
+      continue;
+    }
+
+    if (argument.startsWith("--output-file=")) {
+      const value = argument.slice("--output-file=".length);
+      if (value.length === 0) {
+        throw new Error("list-rules --output-file expects a file path.");
+      }
+
+      outputFile = value;
+      continue;
+    }
+
     throw new Error("list-rules does not accept additional arguments.");
   }
 
-  return {
+  const options: ListRulesCliArguments = {
     listRules: true,
     format
   };
+
+  if (outputFile !== undefined) {
+    options.outputFile = outputFile;
+  }
+
+  return options;
 }
 
 function parseVersionArguments(argv: string[]): VersionCliArguments {
@@ -559,7 +589,7 @@ function usage(): string {
     "  trustmcp init-config [path]",
     "",
     "Inspect rules:",
-    "  trustmcp list-rules [--json|--format tsv|json]",
+    "  trustmcp list-rules [--json|--format tsv|json] [--output-file path]",
     "",
     "Inspect version:",
     "  trustmcp --version",

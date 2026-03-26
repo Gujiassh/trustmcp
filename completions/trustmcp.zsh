@@ -82,10 +82,14 @@ _trustmcp() {
       if [[ "${words[1]}" == "list-rules" ]]; then
         if [[ "${words[CURRENT-1]}" == "--format" ]]; then
           compadd -- tsv json
+        elif [[ "${words[CURRENT-1]}" == "--output-file" ]]; then
+          _files
         elif [[ "${words[CURRENT]}" == --format=* ]]; then
           compadd -- tsv json
+        elif [[ "${words[CURRENT]}" == --output-file=* ]]; then
+          _files
         else
-          compadd -- --help -h --json --format
+          compadd -- --help -h --json --format --output-file
         fi
         return
       fi

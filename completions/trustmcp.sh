@@ -117,6 +117,10 @@ _trustmcp() {
         _trustmcp_add_word_matches "tsv json" "$cur"
         return
         ;;
+      --output-file)
+        _trustmcp_add_file_matches "" "$cur"
+        return
+        ;;
     esac
 
     case "$cur" in
@@ -124,9 +128,13 @@ _trustmcp() {
         _trustmcp_add_prefixed_word_matches "--format=" "tsv json" "${cur#--format=}"
         return
         ;;
+      --output-file=*)
+        _trustmcp_add_file_matches "--output-file=" "${cur#--output-file=}"
+        return
+        ;;
     esac
 
-    _trustmcp_add_word_matches "--help -h --json --format" "$cur"
+    _trustmcp_add_word_matches "--help -h --json --format --output-file" "$cur"
     return
   fi
 

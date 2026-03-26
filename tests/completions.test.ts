@@ -27,6 +27,7 @@ describe("completion scripts", () => {
     expect(script).toContain("low medium high");
     expect(script).toContain("--help -h --json --format --config --output-file");
     expect(script).toContain("text json");
+    expect(script).toContain("--help -h --json --format --output-file");
   });
 
   it("ships zsh completion for the stable CLI surface", async () => {
@@ -49,5 +50,6 @@ describe("completion scripts", () => {
     expect(script).toContain("low medium high");
     expect(script).toContain("--config --json --format --output-file");
     expect(script).toContain("text json");
+    expect(script).toContain("--help -h --json --format --output-file");
   });
 });

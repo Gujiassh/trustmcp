@@ -152,6 +152,20 @@ describe("parseArguments", () => {
     });
   });
 
+  it("parses list-rules output-file entry points", () => {
+    expect(parseArguments(["list-rules", "--output-file", "rules.tsv"])).toEqual({
+      listRules: true,
+      format: "tsv",
+      outputFile: "rules.tsv"
+    });
+
+    expect(parseArguments(["list-rules", "--json", "--output-file=rules.json"])).toEqual({
+      listRules: true,
+      format: "json",
+      outputFile: "rules.json"
+    });
+  });
+
   it("parses version entry points", () => {
     expect(parseArguments(["--version"])).toEqual({ version: true });
     expect(parseArguments(["-v"])).toEqual({ version: true });
@@ -776,6 +790,32 @@ describe("runCli exit thresholds", () => {
     expect(exitCode).toBe(0);
     expect(stdout.join("")).toContain(`"version": "${TRUSTMCP_VERSION}"`);
     expect(await readFile(outputFile, "utf8")).toContain(`"version": "${TRUSTMCP_VERSION}"`);
+  });
+
+  it("writes list-rules TSV output to a file when requested", async () => {
+    const outputFile = await createTempFilePath("rules.tsv");
+    const stdout: string[] = [];
+
+    const exitCode = await runCli(["list-rules", "--output-file", outputFile], {
+      stdout: createWriter(stdout)
+    });
+
+    expect(exitCode).toBe(0);
+    expect(stdout.join("")).toContain("mcp/shell-exec");
+    expect(await readFile(outputFile, "utf8")).toContain("mcp/shell-exec");
+  });
+
+  it("writes list-rules JSON output to a file when requested", async () => {
+    const outputFile = await createTempFilePath("rules.json");
+    const stdout: string[] = [];
+
+    const exitCode = await runCli(["list-rules", "--json", "--output-file", outputFile], {
+      stdout: createWriter(stdout)
+    });
+
+    expect(exitCode).toBe(0);
+    expect(stdout.join("")).toContain(`"id": "mcp/shell-exec"`);
+    expect(await readFile(outputFile, "utf8")).toContain(`"id": "mcp/shell-exec"`);
   });
 
   it("reports configured output-file paths with missing parent directories in doctor", async () => {

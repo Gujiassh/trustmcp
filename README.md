@@ -63,6 +63,12 @@ If you want the current IDs from the CLI, run `node dist/cli/main.js list-rules`
 
 For automation-friendly rule metadata, run `node dist/cli/main.js list-rules --json`.
 
+If you want to persist the shipped rule metadata to a file, run:
+
+```bash
+node dist/cli/main.js list-rules --json --output-file rules.json
+```
+
 If you want a copy-paste automation path, for example in shell scripts:
 
 ```bash
