@@ -182,12 +182,20 @@ describe("parseArguments", () => {
       .toThrowError("--config expects a file path.");
     expect(() => parseArguments(["./fixtures/local-risky", "--config", "--format", "json"]))
       .toThrowError("--config expects a file path.");
+    expect(() => parseArguments(["./fixtures/local-risky", "--config", "   "]))
+      .toThrowError("--config expects a file path.");
+    expect(() => parseArguments(["./fixtures/local-risky", "--config=   "]))
+      .toThrowError("--config expects a file path.");
   });
 
   it("rejects missing --output-file values", () => {
     expect(() => parseArguments(["./fixtures/local-risky", "--output-file"]))
       .toThrowError("--output-file expects a file path.");
     expect(() => parseArguments(["./fixtures/local-risky", "--output-file", "--format", "json"]))
+      .toThrowError("--output-file expects a file path.");
+    expect(() => parseArguments(["./fixtures/local-risky", "--output-file", "   "]))
+      .toThrowError("--output-file expects a file path.");
+    expect(() => parseArguments(["./fixtures/local-risky", "--output-file=   "]))
       .toThrowError("--output-file expects a file path.");
   });
 
@@ -216,6 +224,17 @@ describe("parseArguments", () => {
       .toThrowError("doctor --format expects one of: text, json.");
   });
 
+  it("rejects blank doctor path-like option values", () => {
+    expect(() => parseArguments(["doctor", "./fixtures/local-risky", "--config", "   "]))
+      .toThrowError("--config expects a file path.");
+    expect(() => parseArguments(["doctor", "./fixtures/local-risky", "--config=   "]))
+      .toThrowError("--config expects a file path.");
+    expect(() => parseArguments(["doctor", "./fixtures/local-risky", "--output-file", "   "]))
+      .toThrowError("doctor --output-file expects a file path.");
+    expect(() => parseArguments(["doctor", "./fixtures/local-risky", "--output-file=   "]))
+      .toThrowError("doctor --output-file expects a file path.");
+  });
+
   it("rejects extra list-rules arguments", () => {
     expect(() => parseArguments(["list-rules", "extra"]))
       .toThrowError("list-rules does not accept additional arguments.");
@@ -224,6 +243,13 @@ describe("parseArguments", () => {
   it("rejects invalid list-rules format values", () => {
     expect(() => parseArguments(["list-rules", "--format", "markdown"]))
       .toThrowError("list-rules --format expects one of: tsv, json.");
+  });
+
+  it("rejects blank list-rules output-file values", () => {
+    expect(() => parseArguments(["list-rules", "--output-file", "   "]))
+      .toThrowError("list-rules --output-file expects a file path.");
+    expect(() => parseArguments(["list-rules", "--output-file=   "]))
+      .toThrowError("list-rules --output-file expects a file path.");
   });
 
   it("rejects extra version arguments", () => {
