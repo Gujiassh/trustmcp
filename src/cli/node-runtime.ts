@@ -56,7 +56,7 @@ function parseMinimumNodeVersion(range: string): ParsedVersion {
 }
 
 export function parseVersion(version: string): ParsedVersion {
-  const match = /^([0-9]+)\.([0-9]+)\.([0-9]+)$/.exec(version);
+  const match = /^v?([0-9]+)\.([0-9]+)\.([0-9]+)(?:[-+].*)?$/.exec(version);
   if (match === null) {
     throw new Error(`Unsupported Node.js version format: ${version}`);
   }

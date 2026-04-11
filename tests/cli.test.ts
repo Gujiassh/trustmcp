@@ -938,11 +938,22 @@ describe("runCli exit thresholds", () => {
     });
   });
 
+  it("accepts supported Node.js runtimes with v prefix and prerelease suffix", async () => {
+    await expect(validateNodeRuntimeVersion("v18.18.0-rc.1")).resolves.toEqual({
+      ok: true,
+      message: "Node.js v18.18.0-rc.1 satisfies supported runtime >=18.18."
+    });
+  });
+
   it("rejects unsupported Node.js runtimes for doctor validation", async () => {
     await expect(validateNodeRuntimeVersion("18.17.9")).resolves.toEqual({
       ok: false,
       message: "Node.js 18.17.9 does not satisfy supported runtime >=18.18."
     });
+  });
+
+  it("rejects invalid Node.js runtime version formats for doctor validation", async () => {
+    await expect(validateNodeRuntimeVersion("18.18")).rejects.toThrow("Unsupported Node.js version format: 18.18");
   });
 });
 
