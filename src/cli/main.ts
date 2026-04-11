@@ -66,6 +66,10 @@ interface CliDependencies {
   stderr?: OutputWriter;
 }
 
+function isBlankPath(value: string): boolean {
+  return value.trim().length === 0;
+}
+
 export async function runCli(argv: string[], dependencies: CliDependencies = {}): Promise<number> {
   const stdout = dependencies.stdout ?? process.stdout;
   const stderr = dependencies.stderr ?? process.stderr;
@@ -264,6 +268,10 @@ export function parseArguments(argv: string[]): ParsedCommand | null {
       throw new Error("TrustMCP accepts exactly one target: a local directory or a public GitHub repository URL.");
     }
 
+    if (isBlankPath(argument)) {
+      throw new Error("Target must not be blank. Provide a local directory or a public GitHub repository URL.");
+    }
+
     target = argument;
   }
 
@@ -420,6 +428,10 @@ function parseDoctorArguments(argv: string[]): DoctorCliArguments | null {
 
     if (target !== undefined) {
       throw new Error("doctor accepts exactly one target: a local directory, GitHub repository URL, or gh:owner/repo.");
+    }
+
+    if (isBlankPath(argument)) {
+      throw new Error("doctor target must not be blank.");
     }
 
     target = argument;
