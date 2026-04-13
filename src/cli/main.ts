@@ -194,7 +194,7 @@ export function parseArguments(argv: string[]): ParsedCommand | null {
 
     if (argument === "--config") {
       const nextArgument = args[index + 1];
-      if (nextArgument === undefined || nextArgument.startsWith("-")) {
+      if (nextArgument === undefined || nextArgument.startsWith("-") || isBlankPath(nextArgument)) {
         throw new Error("--config expects a file path.");
       }
 
@@ -205,7 +205,7 @@ export function parseArguments(argv: string[]): ParsedCommand | null {
 
     if (argument.startsWith("--config=")) {
       const value = argument.slice("--config=".length);
-      if (value.length === 0) {
+      if (value.length === 0 || isBlankPath(value)) {
         throw new Error("--config expects a file path.");
       }
 
@@ -236,7 +236,7 @@ export function parseArguments(argv: string[]): ParsedCommand | null {
 
     if (argument === "--output-file") {
       const nextArgument = args[index + 1];
-      if (nextArgument === undefined || nextArgument.startsWith("-")) {
+      if (nextArgument === undefined || nextArgument.startsWith("-") || isBlankPath(nextArgument)) {
         throw new Error("--output-file expects a file path.");
       }
 
@@ -247,7 +247,7 @@ export function parseArguments(argv: string[]): ParsedCommand | null {
 
     if (argument.startsWith("--output-file=")) {
       const value = argument.slice("--output-file=".length);
-      if (value.length === 0) {
+      if (value.length === 0 || isBlankPath(value)) {
         throw new Error("--output-file expects a file path.");
       }
 
@@ -356,7 +356,7 @@ function parseDoctorArguments(argv: string[]): DoctorCliArguments | null {
 
     if (argument === "--config") {
       const nextArgument = argv[index + 1];
-      if (nextArgument === undefined || nextArgument.startsWith("-")) {
+      if (nextArgument === undefined || nextArgument.startsWith("-") || isBlankPath(nextArgument)) {
         throw new Error("--config expects a file path.");
       }
 
@@ -367,7 +367,7 @@ function parseDoctorArguments(argv: string[]): DoctorCliArguments | null {
 
     if (argument.startsWith("--config=")) {
       const value = argument.slice("--config=".length);
-      if (value.length === 0) {
+      if (value.length === 0 || isBlankPath(value)) {
         throw new Error("--config expects a file path.");
       }
 
@@ -377,7 +377,7 @@ function parseDoctorArguments(argv: string[]): DoctorCliArguments | null {
 
     if (argument === "--output-file") {
       const nextArgument = argv[index + 1];
-      if (nextArgument === undefined || nextArgument.startsWith("-")) {
+      if (nextArgument === undefined || nextArgument.startsWith("-") || isBlankPath(nextArgument)) {
         throw new Error("doctor --output-file expects a file path.");
       }
 
@@ -388,7 +388,7 @@ function parseDoctorArguments(argv: string[]): DoctorCliArguments | null {
 
     if (argument.startsWith("--output-file=")) {
       const value = argument.slice("--output-file=".length);
-      if (value.length === 0) {
+      if (value.length === 0 || isBlankPath(value)) {
         throw new Error("doctor --output-file expects a file path.");
       }
 
@@ -504,7 +504,7 @@ function parseListRulesArguments(argv: string[]): ListRulesCliArguments | null {
 
     if (argument === "--output-file") {
       const nextArgument = argv[index + 1];
-      if (nextArgument === undefined || nextArgument.startsWith("-")) {
+      if (nextArgument === undefined || nextArgument.startsWith("-") || isBlankPath(nextArgument)) {
         throw new Error("list-rules --output-file expects a file path.");
       }
 
@@ -515,7 +515,7 @@ function parseListRulesArguments(argv: string[]): ListRulesCliArguments | null {
 
     if (argument.startsWith("--output-file=")) {
       const value = argument.slice("--output-file=".length);
-      if (value.length === 0) {
+      if (value.length === 0 || isBlankPath(value)) {
         throw new Error("list-rules --output-file expects a file path.");
       }
 
