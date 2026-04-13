@@ -9,6 +9,7 @@ import {
 } from "../inputs/github.js";
 import { materializeLocalDirectory } from "../inputs/local.js";
 import { runAllRules } from "../rules/index.js";
+import { buildBaselineKey, normalizeRelativePath } from "./baseline-entries.js";
 
 export interface AuditDependencies {
   collectSourceFiles: typeof collectSourceFiles;
@@ -143,7 +144,7 @@ function applyIgnoreFilters(findings: Finding[], options: AuditOptions): Finding
       return true;
     }
 
-    const relativePath = normalizePath(finding.file);
+    const relativePath = normalizeRelativePath(finding.file);
     if (matchers.some((matcher) => matcher(relativePath))) {
       return false;
     }
@@ -154,7 +155,7 @@ function applyIgnoreFilters(findings: Finding[], options: AuditOptions): Finding
 
 function buildPathMatchers(patterns: string[]): ((relativePath: string) => boolean)[] {
   return patterns.map((pattern) => {
-    const normalizedPattern = normalizePathPrefix(pattern);
+    const normalizedPattern = normalizeRelativePath(pattern).replace(/\/+$/, "");
     return (relativePath: string) =>
       relativePath === normalizedPattern || relativePath.startsWith(`${normalizedPattern}/`);
   });
@@ -172,20 +173,6 @@ function applyBaselineFilter(findings: Finding[], baselineEntries?: BaselineEntr
   return findings.filter(
     (finding) => !baselineSet.has(buildBaselineKey(finding.ruleId, finding.file, finding.line))
   );
-}
-
-function normalizePath(relativePath: string): string {
-  return relativePath.replace(/\\/g, "/").replace(/^\.\//, "");
-}
-
-function normalizePathPrefix(pattern: string): string {
-  return normalizePath(pattern).replace(/\/+$/, "");
-}
-
-function buildBaselineKey(ruleId: string, filePath: string, line?: number): string {
-  const normalizedFile = normalizePath(filePath);
-  const linePart = line === undefined ? "" : line.toString();
-  return `${ruleId}|${normalizedFile}|${linePart}`;
 }
 
 function resolveAuditArguments(

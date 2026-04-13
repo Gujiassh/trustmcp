@@ -10,6 +10,8 @@ import { isOutputFormat, renderReport, renderSummaryReport, type OutputFormat } 
 import { writeRenderedOutput } from "../utils/write-rendered-output.js";
 import { loadBaselineEntries, loadCliConfig, type CliConfig } from "../cli/config.js";
 import { validateCliOptionCompatibility } from "../cli/validate-cli-options.js";
+import { findingsToBaselineEntries } from "../core/baseline-entries.js";
+import { writeBaselineFile } from "../utils/baseline-output.js";
 
 interface OutputWriter {
   write(chunk: string): unknown;
@@ -20,6 +22,7 @@ interface ActionOptions {
   format?: OutputFormat;
   failOn?: Severity;
   outputFile?: string;
+  baselineOutput?: string;
   configFile?: string;
   summaryOnly?: boolean;
   baselineFile?: string;
@@ -63,7 +66,14 @@ export async function runAction(
     const report = await auditTarget(resolved.target, auditOptions);
 
     const output = resolved.summaryOnly ? renderSummaryReport(report, resolved.format) : renderReport(report, resolved.format);
+    const baselineOutputPath =
+      resolved.baselineOutput === undefined
+        ? undefined
+        : resolveRelativePath(resolved.baselineOutput, configPath === undefined ? workspaceDir : dirname(configPath));
     await writeRenderedOutput(output, resolved.outputFile);
+    if (baselineOutputPath !== undefined) {
+      await writeBaselineFile(baselineOutputPath, findingsToBaselineEntries(report.findings));
+    }
     stdout.write(`${output}\n`);
     await writeActionOutputs(report, dependencies.githubOutputPath ?? process.env.GITHUB_OUTPUT);
     await writeActionSummary(report, dependencies.githubStepSummaryPath ?? process.env.GITHUB_STEP_SUMMARY);
@@ -107,9 +117,10 @@ function parseActionArguments(argv: string[]): ActionOptions {
   const rawFormat = argv[1];
   const failOn = argv[2];
   const outputFile = argv[3];
-  const configFile = argv[4];
-  const summaryOnlyArg = argv[5];
-  const baselineFileArg = argv[6];
+  const baselineOutputArg = argv[4];
+  const configFile = argv[5];
+  const summaryOnlyArg = argv[6];
+  const baselineFileArg = argv[7];
 
   if (target === undefined || rawFormat === undefined) {
     throw new Error("Action runner expects at least <target> and <format> arguments.");
@@ -137,6 +148,10 @@ function parseActionArguments(argv: string[]): ActionOptions {
     options.outputFile = outputFile;
   }
 
+  if (baselineOutputArg !== undefined && baselineOutputArg !== "") {
+    options.baselineOutput = baselineOutputArg;
+  }
+
   if (configFile !== undefined && configFile !== "") {
     options.configFile = configFile;
   }
@@ -161,6 +176,7 @@ type ResolvedActionOptions = {
   format: OutputFormat;
   failOn?: Severity;
   outputFile?: string;
+  baselineOutput?: string;
   ignoreRules?: string[];
   ignorePaths?: string[];
   summaryOnly?: boolean;
@@ -201,6 +217,11 @@ function resolveActionOptions(options: ActionOptions, config: CliConfig): Resolv
     resolved.outputFile = resolvedOutputFile;
   }
 
+  const resolvedBaselineOutput = options.baselineOutput ?? config.baselineOutput;
+  if (resolvedBaselineOutput !== undefined) {
+    resolved.baselineOutput = resolvedBaselineOutput;
+  }
+
   if (config.ignoreRules !== undefined) {
     resolved.ignoreRules = config.ignoreRules;
   }
@@ -233,6 +254,10 @@ function resolveWorkspaceRelativePath(filePath?: string): string | undefined {
   }
 
   return resolve(workspaceRoot, filePath);
+}
+
+function resolveRelativePath(filePath: string, baseDirectory: string): string {
+  return isAbsolute(filePath) ? filePath : resolve(baseDirectory, filePath);
 }
 
 const isMainModule =

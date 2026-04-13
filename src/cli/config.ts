@@ -4,6 +4,7 @@ import { isAbsolute, resolve } from "node:path";
 import { isSeverity } from "../core/thresholds.js";
 import type { BaselineEntry, Severity } from "../core/types.js";
 import { isOutputFormat, type OutputFormat } from "../renderers/output.js";
+import { normalizeBaselineEntry } from "../core/baseline-entries.js";
 
 const SUPPORTED_CONFIG_FIELDS = [
   "format",
@@ -12,7 +13,8 @@ const SUPPORTED_CONFIG_FIELDS = [
   "output-file",
   "ignore-rules",
   "ignore-paths",
-  "baseline-file"
+  "baseline-file",
+  "baseline-output"
 ] as const;
 
 export interface CliConfig {
@@ -23,6 +25,7 @@ export interface CliConfig {
   ignoreRules?: string[];
   ignorePaths?: string[];
   baselineFile?: string;
+  baselineOutput?: string;
 }
 
 export async function loadCliConfig(configFile?: string): Promise<CliConfig> {
@@ -119,6 +122,15 @@ function validateCliConfig(value: unknown, configFile: string): CliConfig {
     config.baselineFile = baselineFile.trim();
   }
 
+  const baselineOutput = value["baseline-output"];
+  if (baselineOutput !== undefined) {
+    if (typeof baselineOutput !== "string" || baselineOutput.trim().length === 0) {
+      throw new Error(`Config file ${configFile} has invalid 'baseline-output'. Expected a file path string.`);
+    }
+
+    config.baselineOutput = baselineOutput.trim();
+  }
+
   return config;
 }
 
@@ -209,10 +221,10 @@ function validateBaselineEntries(value: unknown, baselinePath: string): Baseline
       );
     }
 
-    return {
+    return normalizeBaselineEntry({
       ruleId,
       file,
       ...(line === undefined ? {} : { line })
-    };
+    });
   });
 }

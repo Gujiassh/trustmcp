@@ -14,6 +14,8 @@ import { renderRuleList, renderRuleListJson, type RuleListFormat } from "./list-
 import { validateCliOptionCompatibility } from "./validate-cli-options.js";
 import { isOutputFormat, renderReport, renderSummaryReport, type OutputFormat } from "../renderers/output.js";
 import { writeRenderedOutput } from "../utils/write-rendered-output.js";
+import { findingsToBaselineEntries } from "../core/baseline-entries.js";
+import { writeBaselineFile } from "../utils/baseline-output.js";
 
 interface OutputWriter {
   write(chunk: string): unknown;
@@ -24,6 +26,7 @@ interface CliOptions {
   format: OutputFormat;
   failOn?: Severity;
   outputFile?: string;
+  baselineOutput?: string;
   summaryOnly?: boolean;
   ignoreRules?: string[];
   ignorePaths?: string[];
@@ -38,6 +41,7 @@ interface ParsedCliArguments {
   summaryOnly?: boolean;
   configFile?: string;
   baselineFile?: string;
+  baselineOutput?: string;
 }
 
 interface InitConfigCliArguments {
@@ -134,8 +138,15 @@ export async function runCli(argv: string[], dependencies: CliDependencies = {})
 
     const report = await auditTarget(resolved.target, auditOptions);
     const output = resolved.summaryOnly ? renderSummaryReport(report, resolved.format) : renderReport(report, resolved.format);
+    const baselineOutputPath =
+      resolved.baselineOutput === undefined
+        ? undefined
+        : resolveConfigRelativePath(resolved.baselineOutput, configPath === undefined ? process.cwd() : dirname(configPath));
 
     await writeRenderedOutput(output, resolved.outputFile);
+    if (baselineOutputPath !== undefined) {
+      await writeBaselineFile(baselineOutputPath, findingsToBaselineEntries(report.findings));
+    }
 
     stdout.write(`${output}\n`);
     return shouldFailForThreshold(report, resolved.failOn) ? 2 : 0;
@@ -175,6 +186,7 @@ export function parseArguments(argv: string[]): ParsedCommand | null {
   let summaryOnly: boolean | undefined;
   let configFile: string | undefined;
   let baselineFile: string | undefined;
+  let baselineOutput: string | undefined;
 
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
@@ -292,6 +304,27 @@ export function parseArguments(argv: string[]): ParsedCommand | null {
       continue;
     }
 
+    if (argument === "--baseline-output") {
+      const nextArgument = args[index + 1];
+      if (nextArgument === undefined || nextArgument.startsWith("-") || isBlankPath(nextArgument)) {
+        throw new Error("--baseline-output expects a file path.");
+      }
+
+      baselineOutput = nextArgument;
+      index += 1;
+      continue;
+    }
+
+    if (argument.startsWith("--baseline-output=")) {
+      const value = argument.slice("--baseline-output=".length);
+      if (value.length === 0 || isBlankPath(value)) {
+        throw new Error("--baseline-output expects a file path.");
+      }
+
+      baselineOutput = value;
+      continue;
+    }
+
     if (argument === "--summary-only") {
       summaryOnly = true;
       continue;
@@ -340,6 +373,10 @@ export function parseArguments(argv: string[]): ParsedCommand | null {
 
   if (baselineFile !== undefined) {
     options.baselineFile = baselineFile;
+  }
+
+  if (baselineOutput !== undefined) {
+    options.baselineOutput = baselineOutput;
   }
 
   return options;
@@ -637,7 +674,16 @@ export function resolveCliOptions(parsed: ParsedCliArguments, config: CliConfig)
     options.baselineFile = baselineFile;
   }
 
+  const baselineOutput = parsed.baselineOutput ?? config.baselineOutput;
+  if (baselineOutput !== undefined) {
+    options.baselineOutput = baselineOutput;
+  }
+
   return options;
+}
+
+function resolveConfigRelativePath(filePath: string, baseDirectory: string): string {
+  return filePath.startsWith("/") ? filePath : resolve(baseDirectory, filePath);
 }
 
 function usage(): string {
@@ -645,8 +691,8 @@ function usage(): string {
     "TrustMCP v0.1.0",
     "",
     "Run a scan:",
-    "  trustmcp <target> [--config path] [--baseline-file path] [--format text|json|markdown|sarif] [--summary-only] [--fail-on low|medium|high] [--output-file path]",
-    "  trustmcp scan <target> [--config path] [--baseline-file path] [--format text|json|markdown|sarif] [--summary-only] [--fail-on low|medium|high] [--output-file path]",
+    "  trustmcp <target> [--config path] [--baseline-file path] [--baseline-output path] [--format text|json|markdown|sarif] [--summary-only] [--fail-on low|medium|high] [--output-file path]",
+    "  trustmcp scan <target> [--config path] [--baseline-file path] [--baseline-output path] [--format text|json|markdown|sarif] [--summary-only] [--fail-on low|medium|high] [--output-file path]",
     "",
     "Validate first:",
     "  trustmcp doctor <target> [--config path] [--json|--format text|json] [--output-file path]",

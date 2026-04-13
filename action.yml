@@ -32,6 +32,10 @@ inputs:
     description: Optional file path for writing the selected rendered report.
     required: false
     default: ""
+  baseline-output:
+    description: Optional file path for writing the current findings as a reusable baseline JSON file.
+    required: false
+    default: ""
   config-file:
     description: Optional path to a `trustmcp.config.json` in the scanned workspace.
     required: false
@@ -61,6 +65,7 @@ runs:
           INPUT_FORMAT: ${{ inputs.format }}
           INPUT_FAIL_ON: ${{ inputs.fail-on }}
           INPUT_OUTPUT_FILE: ${{ inputs.output-file }}
+          INPUT_BASELINE_OUTPUT: ${{ inputs.baseline-output }}
           INPUT_CONFIG_FILE: ${{ inputs.config-file }}
           INPUT_SUMMARY_ONLY: ${{ inputs.summary-only }}
           INPUT_BASELINE_FILE: ${{ inputs.baseline-file }}
@@ -68,6 +73,7 @@ runs:
         set -euo pipefail
         target="$INPUT_TARGET"
         output_file="$INPUT_OUTPUT_FILE"
+        baseline_output="$INPUT_BASELINE_OUTPUT"
         config_file="$INPUT_CONFIG_FILE"
         summary_only="$INPUT_SUMMARY_ONLY"
         baseline_file="$INPUT_BASELINE_FILE"
@@ -85,6 +91,19 @@ runs:
           output_dir=$(dirname "$output_file")
           if [ ! -d "$output_dir" ]; then
             printf '%s\n' "TrustMCP action error: output-file directory does not exist: $output_dir" >&2
+            exit 1
+          fi
+        fi
+
+        if [ -n "$baseline_output" ]; then
+          case "$baseline_output" in
+            /*) ;;
+            *) baseline_output="$GITHUB_WORKSPACE/$baseline_output" ;;
+          esac
+
+          baseline_output_dir=$(dirname "$baseline_output")
+          if [ ! -d "$baseline_output_dir" ]; then
+            printf '%s\n' "TrustMCP action error: baseline-output directory does not exist: $baseline_output_dir" >&2
             exit 1
           fi
         fi
@@ -156,6 +175,7 @@ runs:
         printf 'target=%s\n' "$target" >> "$GITHUB_OUTPUT"
         printf 'format=%s\n' "$INPUT_FORMAT" >> "$GITHUB_OUTPUT"
         printf 'output-file=%s\n' "$output_file" >> "$GITHUB_OUTPUT"
+        printf 'baseline-output=%s\n' "$baseline_output" >> "$GITHUB_OUTPUT"
         printf 'config-file=%s\n' "$config_file" >> "$GITHUB_OUTPUT"
         printf 'summary-only=%s\n' "$summary_only" >> "$GITHUB_OUTPUT"
         printf 'baseline-file=%s\n' "$baseline_file" >> "$GITHUB_OUTPUT"
@@ -179,9 +199,10 @@ runs:
         FORMAT: ${{ steps.resolve.outputs.format }}
         FAIL_ON: ${{ inputs.fail-on }}
         OUTPUT_FILE: ${{ steps.resolve.outputs.output-file }}
+        BASELINE_OUTPUT: ${{ steps.resolve.outputs.baseline-output }}
         CONFIG_FILE: ${{ steps.resolve.outputs.config-file }}
         SUMMARY_ONLY: ${{ steps.resolve.outputs.summary-only }}
         BASELINE_FILE: ${{ steps.resolve.outputs.baseline-file }}
       run: |
         set -euo pipefail
-        node dist/action/main.js "$TARGET" "$FORMAT" "$FAIL_ON" "$OUTPUT_FILE" "$CONFIG_FILE" "$SUMMARY_ONLY" "$BASELINE_FILE"
+        node dist/action/main.js "$TARGET" "$FORMAT" "$FAIL_ON" "$OUTPUT_FILE" "$BASELINE_OUTPUT" "$CONFIG_FILE" "$SUMMARY_ONLY" "$BASELINE_FILE"

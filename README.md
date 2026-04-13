@@ -248,10 +248,17 @@ When you pass `--config`, `doctor` also checks config-loaded `output-file` paths
 - `ignore-rules`: an array of exact rule IDs (`mcp/shell-exec`, `mcp/outbound-fetch`, etc.). Any finding whose `ruleId` matches one of the entries is dropped from the final report, but the heuristic still runs internally, so only use this to silence known noise that you have inspected.
 - `ignore-paths`: an array of slash-separated relative paths (files or directories) inside the audited target. If a finding’s `file` path starts with one of the configured strings, that finding is omitted from the CLI summary output and structured report. There is no globbing or regex support; entries are matched literally and are case-sensitive.
 - `baseline-file`: a JSON file containing previously accepted finding tuples (`ruleId`, `file`, and optional `line`). When provided, TrustMCP still reports the full finding list for visibility, but `--fail-on` only evaluates findings that are not present in the baseline.
+- `baseline-output`: a file path where TrustMCP writes the current finding tuples as reusable baseline JSON. This is the explicit “accept current findings” path for later `baseline-file` runs.
 
 Both `ignore-rules` and `ignore-paths` are best reserved for short-lived noise gating when you already trust the other findings and you are confident that the ignored rows represent accepted risk. They do not change the rule evaluation itself; they only suppress matching findings from the emitted summary and report output.
 
 `baseline-file` solves a different adoption problem: it lets an existing repository keep historical findings visible while failing CI only on newly introduced findings. Baseline matching is exact and literal after the same path normalization TrustMCP uses for report output. There is no globbing, regex matching, or automatic baseline update flow in this first slice.
+
+If you want to create that baseline file from a real scan instead of writing it by hand, run:
+
+```bash
+node dist/cli/main.js ./fixtures/local-risky --baseline-output trustmcp.baseline.json
+```
 
 It also flags invalid config combinations early, such as `summary-only: true` with `format: sarif`.
 
@@ -313,7 +320,7 @@ The reusable action exposes `finding-count`, `low-count`, `medium-count`, and `h
 
 When `GITHUB_STEP_SUMMARY` is available, the reusable action also appends the compact TrustMCP markdown report there automatically for easier job review.
 
-To reuse CLI defaults inside GitHub Actions, pass the new `config-file` input pointing at your `trustmcp.config.json`. The action resolves relative paths against `${{ github.workspace }}` before building, so `config-file: trustmcp.config.json` simply reuses the same config file you use with the CLI and honors the same `format`, `fail-on`, `ignore-rules`, `ignore-paths`, `baseline-file`, and `summary-only` settings. Dedicated `summary-only` and `baseline-file` inputs also let the workflow override those values explicitly; `summary-only` stays empty by default so a config file can keep driving the value. The action enforces the same `summary-only` + `format: sarif` restriction as the CLI, so shared configs behave identically between local and CI runs.
+To reuse CLI defaults inside GitHub Actions, pass the new `config-file` input pointing at your `trustmcp.config.json`. The action resolves relative paths against `${{ github.workspace }}` before building, so `config-file: trustmcp.config.json` simply reuses the same config file you use with the CLI and honors the same `format`, `fail-on`, `ignore-rules`, `ignore-paths`, `baseline-file`, `baseline-output`, and `summary-only` settings. Dedicated `summary-only`, `baseline-file`, and `baseline-output` inputs also let the workflow override those values explicitly; `summary-only` stays empty by default so a config file can keep driving the value. The action enforces the same `summary-only` + `format: sarif` restriction as the CLI, so shared configs behave identically between local and CI runs.
 
 If a later workflow step needs a concrete report file, set `output-file`, for example `output-file: reports/trustmcp.md`. Relative paths are resolved from the checked-out workspace, and the parent directory must already exist.
 

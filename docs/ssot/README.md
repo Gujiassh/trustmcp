@@ -18,6 +18,7 @@ CLI defaults can now also be loaded from an explicit JSON file via `--config`, c
 
 The config file also accepts the new `ignore-rules` and `ignore-paths` fields. Both arrays accept literal strings: `ignore-rules` matches exact rule IDs, and `ignore-paths` matches slash-separated relative paths rooted at the scanned target. These fields only filter findings after the heuristic has already evaluated them, so only introduce entries you have already reviewed and agreed can stay quiet for an audit cycle.
 The config file now also accepts `baseline-file`, a JSON list of previously accepted finding tuples used to keep historical findings visible while gating CI only on new ones.
+The config file now also accepts `baseline-output`, an explicit opt-in path for serializing the current findings into reusable baseline JSON.
 
 The CLI now also ships an explicit `init-config` helper for scaffolding a starter `trustmcp.config.json` without overwriting an existing file.
 
@@ -66,5 +67,6 @@ The reusable action now also accepts `output-file` for writing the selected rend
 The reusable action now accepts the `config-file` input so it can reuse the same `trustmcp.config.json` defaults (including `format`, `fail-on`, `ignore-rules`, and `ignore-paths`) that the CLI uses; relative paths resolve against the workspace root.
 The action now also honors the CLI `summary-only` setting, whether provided through the shared config file or the new `summary-only` input, and it validates the same compatibility rules (e.g., `summary-only: true` cannot pair with `format: sarif`).
 The action now also accepts `baseline-file` directly and honors the same config-driven baseline gating behavior as the CLI.
+The action now also accepts `baseline-output` so workflows can capture a baseline artifact from the current findings without hand-authoring the file.
 
 README now includes pinned real-world scan snapshots for both a finding-producing public example and a no-match public example so visitors can see the tool's behavior more honestly.

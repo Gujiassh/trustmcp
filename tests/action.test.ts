@@ -264,6 +264,37 @@ describe("runAction", () => {
     });
   });
 
+  it("writes current findings to a baseline-output file", async () => {
+    const baselineOutput = await createBaselinePath("trustmcp-action-output.json");
+
+    const exitCode = await runAction(
+      {
+        target: "./fixtures/local-risky",
+        format: "json",
+        baselineOutput
+      },
+      {
+        auditTarget: async () => createReport("local-directory", ["high", "medium"]),
+        stdout: createWriter([])
+      }
+    );
+
+    expect(exitCode).toBe(0);
+    expect(await readFile(baselineOutput, "utf8")).toBe(`[
+  {
+    "ruleId": "rule-1",
+    "file": "src/example-1.ts",
+    "line": 1
+  },
+  {
+    "ruleId": "rule-2",
+    "file": "src/example-2.ts",
+    "line": 2
+  }
+]
+`);
+  });
+
   it("resolves relative config-file paths against the workspace directory", async () => {
     const workspaceDir = await mkdtemp(join(tmpdir(), "trustmcp-action-workspace-test-"));
     tempDirectories.push(workspaceDir);

@@ -470,6 +470,41 @@ describe("runCli exit thresholds", () => {
     expect(stdout.join("")).toContain("1 new finding(s) across 1 rule(s)");
   });
 
+  it("writes current findings to a baseline-output file", async () => {
+    const baselineOutput = await createTempFilePath("trustmcp.baseline.json");
+
+    const exitCode = await runCli(
+      [
+        "./fixtures/local-risky",
+        "--baseline-output",
+        baselineOutput
+      ],
+      {
+        stdout: createWriter([])
+      }
+    );
+
+    expect(exitCode).toBe(0);
+    expect(await readFile(baselineOutput, "utf8")).toBe(`[
+  {
+    "ruleId": "mcp/broad-filesystem",
+    "file": "src/files.ts",
+    "line": 4
+  },
+  {
+    "ruleId": "mcp/shell-exec",
+    "file": "src/shell.ts",
+    "line": 4
+  },
+  {
+    "ruleId": "mcp/outbound-fetch",
+    "file": "src/network.ts",
+    "line": 2
+  }
+]
+`);
+  });
+
   it("trims ignore rule and path entries loaded from config", async () => {
     const configFile = await createConfigFile(
       JSON.stringify({
