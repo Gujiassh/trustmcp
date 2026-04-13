@@ -295,6 +295,77 @@ describe("runAction", () => {
       }
     }
   });
+
+  it("honors summary-only from config when rendering the action output", async () => {
+    const configPath = await createConfigPath("trustmcp.config.json");
+    await writeFile(
+      configPath,
+      JSON.stringify({
+        "format": "markdown",
+        "summary-only": true
+      }),
+      "utf8"
+    );
+
+    const stdout: string[] = [];
+
+    const exitCode = await runAction(
+      {
+        target: "./fixtures/local-risky",
+        configFile: configPath
+      },
+      {
+        auditTarget: async () => createReport("local-directory", ["high"]),
+        stdout: createWriter(stdout)
+      }
+    );
+
+    const output = stdout.join("");
+    expect(exitCode).toBe(0);
+    expect(output).toContain("TrustMCP Summary");
+    expect(output).not.toContain("## Findings");
+  });
+
+  it("honors explicit summary-only input for the action runner", async () => {
+    const stdout: string[] = [];
+
+    const exitCode = await runAction(
+      {
+        target: "./fixtures/local-risky",
+        format: "markdown",
+        summaryOnly: true
+      },
+      {
+        auditTarget: async () => createReport("local-directory", ["medium"]),
+        stdout: createWriter(stdout)
+      }
+    );
+
+    const output = stdout.join("");
+    expect(exitCode).toBe(0);
+    expect(output).toContain("TrustMCP Summary");
+    expect(output).not.toContain("## Findings");
+  });
+
+  it("fails early when summary-only is combined with sarif format", async () => {
+    const stderr: string[] = [];
+
+    const exitCode = await runAction(
+      {
+        target: "./fixtures/local-risky",
+        format: "sarif",
+        summaryOnly: true
+      },
+      {
+        auditTarget: async () => createReport("local-directory", ["high"]),
+        stderr: createWriter(stderr),
+        stdout: createWriter([])
+      }
+    );
+
+    expect(exitCode).toBe(1);
+    expect(stderr.join("")).toContain("Invalid option combination in action inputs: --summary-only is not supported with --format sarif.");
+  });
 });
 
 function createReport(sourceType: "local-directory" | "public-github-repo", severities: Severity[]): AuditReport {

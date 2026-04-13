@@ -45,6 +45,8 @@ node dist/cli/main.js gh:modelcontextprotocol/servers --config trustmcp.config.j
 
 The GitHub Action also supports the same config file through the `config-file` input (e.g., `config-file: trustmcp.config.json`); relative paths resolve against the checked-out workspace before the action runs.
 
+The action also respects the CLI `summary-only` option: leave the new `summary-only` input unset so the config file can drive the behavior, or set it to `true`/`false` explicitly when you want to override. This input enforces the same `summary-only` + `format: sarif` restriction as the CLI runner, so avoid that incompatible combination whether you run locally or in CI.
+
 If you are starting from scratch, generate a safe starter file:
 
 ```bash

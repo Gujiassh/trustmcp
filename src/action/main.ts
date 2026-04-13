@@ -6,9 +6,10 @@ import { auditTarget as defaultAuditTarget } from "../core/audit.js";
 import { shouldFailForThreshold } from "../core/thresholds.js";
 import type { AuditReport, Severity } from "../core/types.js";
 import { renderMarkdownReport } from "../renderers/markdown.js";
-import { isOutputFormat, renderReport, type OutputFormat } from "../renderers/output.js";
+import { isOutputFormat, renderReport, renderSummaryReport, type OutputFormat } from "../renderers/output.js";
 import { writeRenderedOutput } from "../utils/write-rendered-output.js";
 import { loadCliConfig, type CliConfig } from "../cli/config.js";
+import { validateCliOptionCompatibility } from "../cli/validate-cli-options.js";
 
 interface OutputWriter {
   write(chunk: string): unknown;
@@ -20,6 +21,7 @@ interface ActionOptions {
   failOn?: Severity;
   outputFile?: string;
   configFile?: string;
+  summaryOnly?: boolean;
 }
 
 interface ActionDependencies {
@@ -43,13 +45,18 @@ export async function runAction(
     const workspaceDir = dependencies.workspaceDir ?? process.env.GITHUB_WORKSPACE ?? process.cwd();
     const config = await loadActionConfig(options, workspaceDir);
     const resolved = resolveActionOptions(options, config);
+    const compatibilityOptions: Parameters<typeof validateCliOptionCompatibility>[0] = { format: resolved.format };
+    if (resolved.summaryOnly !== undefined) {
+      compatibilityOptions.summaryOnly = resolved.summaryOnly;
+    }
+    validateCliOptionCompatibility(compatibilityOptions, "action inputs");
 
     const report = await auditTarget(resolved.target, {
       ...(resolved.ignoreRules === undefined ? {} : { ignoreRules: resolved.ignoreRules }),
       ...(resolved.ignorePaths === undefined ? {} : { ignorePaths: resolved.ignorePaths })
     });
 
-    const output = renderReport(report, resolved.format);
+    const output = resolved.summaryOnly ? renderSummaryReport(report, resolved.format) : renderReport(report, resolved.format);
     await writeRenderedOutput(output, resolved.outputFile);
     stdout.write(`${output}\n`);
     await writeActionOutputs(report, dependencies.githubOutputPath ?? process.env.GITHUB_OUTPUT);
@@ -95,6 +102,7 @@ function parseActionArguments(argv: string[]): ActionOptions {
   const failOn = argv[2];
   const outputFile = argv[3];
   const configFile = argv[4];
+  const summaryOnlyArg = argv[5];
 
   if (target === undefined || rawFormat === undefined) {
     throw new Error("Action runner expects at least <target> and <format> arguments.");
@@ -126,6 +134,14 @@ function parseActionArguments(argv: string[]): ActionOptions {
     options.configFile = configFile;
   }
 
+  if (summaryOnlyArg !== undefined && summaryOnlyArg !== "") {
+    if (summaryOnlyArg !== "true" && summaryOnlyArg !== "false") {
+      throw new Error("Action runner expects summary-only to be true or false when provided.");
+    }
+
+    options.summaryOnly = summaryOnlyArg === "true";
+  }
+
   return options;
 }
 
@@ -136,6 +152,7 @@ type ResolvedActionOptions = {
   outputFile?: string;
   ignoreRules?: string[];
   ignorePaths?: string[];
+  summaryOnly?: boolean;
 };
 
 async function loadActionConfig(options: ActionOptions, workspaceDir: string): Promise<CliConfig> {
@@ -174,6 +191,11 @@ function resolveActionOptions(options: ActionOptions, config: CliConfig): Resolv
 
   if (config.ignorePaths !== undefined) {
     resolved.ignorePaths = config.ignorePaths;
+  }
+
+  const resolvedSummaryOnly = options.summaryOnly ?? config.summaryOnly;
+  if (resolvedSummaryOnly !== undefined) {
+    resolved.summaryOnly = resolvedSummaryOnly;
   }
 
   return resolved;
