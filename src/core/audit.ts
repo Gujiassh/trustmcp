@@ -1,6 +1,6 @@
 import { collectSourceFiles } from "./source-files.js";
 import { looksLikeUrl, sortFindings } from "./rule-helpers.js";
-import type { AuditReport, Finding, MaterializedSource } from "./types.js";
+import type { AuditReport, AuditOptions, Finding, MaterializedSource } from "./types.js";
 import { TRUSTMCP_VERSION } from "./version.js";
 import {
   getUnsupportedGitHubUrlMessage,
@@ -24,13 +24,15 @@ const DEFAULT_LIMITATIONS = [
 
 export async function auditTarget(
   targetInput: string,
+  optionsOrOverrides?: AuditOptions | Partial<AuditDependencies>,
   overrides: Partial<AuditDependencies> = {}
 ): Promise<AuditReport> {
+  const { options, overrides: dependencyOverrides } = resolveAuditArguments(optionsOrOverrides, overrides);
   const dependencies: AuditDependencies = {
     collectSourceFiles,
     materializeLocalDirectory,
     materializeGitHubRepository,
-    ...overrides
+    ...dependencyOverrides
   };
 
   const materializedSource = await materializeTarget(targetInput, dependencies);
@@ -38,7 +40,8 @@ export async function auditTarget(
   try {
     const files = await dependencies.collectSourceFiles(materializedSource.rootDir);
     const findings = sortFindings(runAllRules(files));
-    return createReport(materializedSource, findings);
+    const filteredFindings = applyIgnoreFilters(findings, options);
+    return createReport(materializedSource, filteredFindings);
   } finally {
     if (materializedSource.cleanup !== undefined) {
       await materializedSource.cleanup();
@@ -103,4 +106,78 @@ function countFindingsBySeverity(findings: Finding[]): AuditReport["summary"]["s
   }
 
   return severityCounts;
+}
+
+function applyIgnoreFilters(findings: Finding[], options: AuditOptions): Finding[] {
+  const { ignoreRules = [], ignorePaths = [] } = options;
+  if (ignoreRules.length === 0 && ignorePaths.length === 0) {
+    return findings;
+  }
+
+  const ruleSet = new Set(ignoreRules);
+  const matchers = buildPathMatchers(ignorePaths);
+
+  return findings.filter((finding) => {
+    if (ruleSet.has(finding.ruleId)) {
+      return false;
+    }
+
+    if (matchers.length === 0) {
+      return true;
+    }
+
+    const relativePath = normalizePath(finding.file);
+    if (matchers.some((matcher) => matcher(relativePath))) {
+      return false;
+    }
+
+    return true;
+  });
+}
+
+function buildPathMatchers(patterns: string[]): ((relativePath: string) => boolean)[] {
+  return patterns.map((pattern) => {
+    const normalizedPattern = normalizePathPrefix(pattern);
+    return (relativePath: string) =>
+      relativePath === normalizedPattern || relativePath.startsWith(`${normalizedPattern}/`);
+  });
+}
+
+function normalizePath(relativePath: string): string {
+  return relativePath.replace(/\\/g, "/").replace(/^\.\//, "");
+}
+
+function normalizePathPrefix(pattern: string): string {
+  return normalizePath(pattern).replace(/\/+$/, "");
+}
+
+function resolveAuditArguments(
+  optionsOrOverrides?: AuditOptions | Partial<AuditDependencies>,
+  overrides: Partial<AuditDependencies> = {}
+): { options: AuditOptions; overrides: Partial<AuditDependencies> } {
+  if (optionsOrOverrides === undefined) {
+    return { options: {}, overrides };
+  }
+
+  if (isAuditDependenciesOverride(optionsOrOverrides)) {
+    return {
+      options: {},
+      overrides: {
+        ...overrides,
+        ...optionsOrOverrides
+      }
+    };
+  }
+
+  return { options: optionsOrOverrides, overrides };
+}
+
+function isAuditDependenciesOverride(
+  value: AuditOptions | Partial<AuditDependencies>
+): value is Partial<AuditDependencies> {
+  return (
+    "collectSourceFiles" in value ||
+    "materializeLocalDirectory" in value ||
+    "materializeGitHubRepository" in value
+  );
 }

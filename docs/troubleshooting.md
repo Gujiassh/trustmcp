@@ -51,6 +51,10 @@ node dist/cli/main.js init-config
 
 Then edit only the supported fields.
 
+### When you need temporary noise gating
+
+`ignore-rules` and `ignore-paths` let you keep TrustMCP running in aggressive repositories without dropping the tool entirely. They do not suppress the underlying heuristic; they only remove specific findings from the emitted report after the rules already evaluated. Use them only for findings you have inspected and agreed are acceptable risk for the time being, because the ignored entries no longer appear in `summary` output, exported JSON/SARIF, or markdown logs.
+
 ## When output files fail
 
 `--output-file` writes the already-rendered report to disk. It does not suppress stdout, and it does not create missing directories.

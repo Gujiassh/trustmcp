@@ -43,6 +43,11 @@ export interface AuditReport {
   findings: Finding[];
 }
 
+export interface AuditOptions {
+  ignoreRules?: string[];
+  ignorePaths?: string[];
+}
+
 export interface ScanFile {
   absolutePath: string;
   relativePath: string;

@@ -74,4 +74,45 @@ describe("auditTarget", () => {
     expect(report.target.input).toBe("gh:example/risky-mcp");
     expect(report.findings).toHaveLength(3);
   });
+
+  it("ignores findings for rules listed in options.ignoreRules", async () => {
+    const report = await auditTarget(localRiskyFixture, {
+      ignoreRules: ["mcp/shell-exec"]
+    });
+
+    expect(report.findings).toHaveLength(2);
+    expect(report.findings.map((finding) => finding.ruleId).sort()).toEqual([
+      "mcp/broad-filesystem",
+      "mcp/outbound-fetch"
+    ]);
+    expect(report.summary.findingCount).toBe(2);
+    expect(report.summary.triggeredRuleCount).toBe(2);
+    expect(report.summary.message).toContain("2 finding(s) across 2 rule(s)");
+  });
+
+  it("ignores findings whose files match options.ignorePaths", async () => {
+    const report = await auditTarget(localRiskyFixture, {
+      ignorePaths: ["src/network.ts"]
+    });
+
+    expect(report.findings).toHaveLength(2);
+    expect(new Set(report.findings.map((finding) => finding.ruleId))).toEqual(
+      new Set(["mcp/broad-filesystem", "mcp/shell-exec"])
+    );
+    expect(report.summary.findingCount).toBe(2);
+    expect(report.summary.triggeredRuleCount).toBe(2);
+    expect(report.summary.severityCounts.medium).toBe(0);
+    expect(report.summary.message).toContain("2 finding(s) across 2 rule(s)");
+  });
+
+  it("treats ignorePaths entries as literal directory prefixes", async () => {
+    const report = await auditTarget(localRiskyFixture, {
+      ignorePaths: ["src"]
+    });
+
+    expect(report.findings).toHaveLength(0);
+    expect(report.summary.findingCount).toBe(0);
+    expect(report.summary.triggeredRuleCount).toBe(0);
+    expect(report.summary.message).toContain("No matching rules were triggered.");
+  });
 });

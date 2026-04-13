@@ -5,7 +5,9 @@ const STARTER_CONFIG = {
   format: "markdown",
   "fail-on": "high",
   "summary-only": false,
-  "output-file": "trustmcp-report.md"
+  "output-file": "trustmcp-report.md",
+  "ignore-rules": [],
+  "ignore-paths": []
 } as const;
 
 export const DEFAULT_CONFIG_PATH = "trustmcp.config.json";

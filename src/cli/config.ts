@@ -4,13 +4,22 @@ import { isSeverity } from "../core/thresholds.js";
 import type { Severity } from "../core/types.js";
 import { isOutputFormat, type OutputFormat } from "../renderers/output.js";
 
-const SUPPORTED_CONFIG_FIELDS = ["format", "fail-on", "summary-only", "output-file"] as const;
+const SUPPORTED_CONFIG_FIELDS = [
+  "format",
+  "fail-on",
+  "summary-only",
+  "output-file",
+  "ignore-rules",
+  "ignore-paths"
+] as const;
 
 export interface CliConfig {
   format?: OutputFormat;
   failOn?: Severity;
   summaryOnly?: boolean;
   outputFile?: string;
+  ignoreRules?: string[];
+  ignorePaths?: string[];
 }
 
 export async function loadCliConfig(configFile?: string): Promise<CliConfig> {
@@ -88,7 +97,39 @@ function validateCliConfig(value: unknown, configFile: string): CliConfig {
     config.outputFile = outputFile;
   }
 
+  const ignoreRules = value["ignore-rules"];
+  if (ignoreRules !== undefined) {
+    config.ignoreRules = normalizeStringArray(ignoreRules, configFile, "ignore-rules");
+  }
+
+  const ignorePaths = value["ignore-paths"];
+  if (ignorePaths !== undefined) {
+    config.ignorePaths = normalizeStringArray(ignorePaths, configFile, "ignore-paths");
+  }
+
   return config;
+}
+
+function normalizeStringArray(value: unknown, configFile: string, field: string): string[] {
+  if (!Array.isArray(value)) {
+    throw new Error(`Config file ${configFile} has invalid '${field}'. Expected an array of non-empty strings.`);
+  }
+
+  const normalized: string[] = [];
+  for (const entry of value) {
+    if (typeof entry !== "string") {
+      throw new Error(`Config file ${configFile} has invalid '${field}'. Expected an array of non-empty strings.`);
+    }
+
+    const trimmed = entry.trim();
+    if (trimmed.length === 0) {
+      throw new Error(`Config file ${configFile} has invalid '${field}'. Expected an array of non-empty strings.`);
+    }
+
+    normalized.push(trimmed);
+  }
+
+  return normalized;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

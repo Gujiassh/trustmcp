@@ -24,6 +24,8 @@ interface CliOptions {
   failOn?: Severity;
   outputFile?: string;
   summaryOnly?: boolean;
+  ignoreRules?: string[];
+  ignorePaths?: string[];
 }
 
 interface ParsedCliArguments {
@@ -117,7 +119,10 @@ export async function runCli(argv: string[], dependencies: CliDependencies = {})
     const resolved = resolveCliOptions(parsed, config);
     validateCliOptionCompatibility(resolved);
 
-    const report = await auditTarget(resolved.target);
+    const report = await auditTarget(resolved.target, {
+      ...(resolved.ignoreRules === undefined ? {} : { ignoreRules: resolved.ignoreRules }),
+      ...(resolved.ignorePaths === undefined ? {} : { ignorePaths: resolved.ignorePaths })
+    });
     const output = resolved.summaryOnly ? renderSummaryReport(report, resolved.format) : renderReport(report, resolved.format);
 
     await writeRenderedOutput(output, resolved.outputFile);
@@ -581,6 +586,14 @@ export function resolveCliOptions(parsed: ParsedCliArguments, config: CliConfig)
   const summaryOnly = parsed.summaryOnly ?? config.summaryOnly;
   if (summaryOnly === true) {
     options.summaryOnly = true;
+  }
+
+  if (config.ignoreRules !== undefined) {
+    options.ignoreRules = config.ignoreRules;
+  }
+
+  if (config.ignorePaths !== undefined) {
+    options.ignorePaths = config.ignorePaths;
   }
 
   return options;

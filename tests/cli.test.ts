@@ -6,8 +6,9 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import type { AuditReport, Severity } from "../src/core/types.js";
 import { validateNodeRuntimeVersion } from "../src/cli/node-runtime.js";
+import { loadCliConfig } from "../src/cli/config.js";
 import { TRUSTMCP_VERSION } from "../src/core/version.js";
-import { parseArguments, runCli } from "../src/cli/main.js";
+import { parseArguments, resolveCliOptions, runCli } from "../src/cli/main.js";
 
 const tempDirectories: string[] = [];
 
@@ -436,6 +437,32 @@ describe("runCli exit thresholds", () => {
     expect(fileContent).not.toContain("## Findings");
   });
 
+  it("loads ignore rules and paths from a config file", async () => {
+    const configFile = await createConfigFile(
+      JSON.stringify({
+        "ignore-rules": ["mcp/shell-exec"],
+        "ignore-paths": ["src/vendor"]
+      })
+    );
+
+    const config = await loadCliConfig(configFile);
+    expect(config.ignoreRules).toEqual(["mcp/shell-exec"]);
+    expect(config.ignorePaths).toEqual(["src/vendor"]);
+  });
+
+  it("trims ignore rule and path entries loaded from config", async () => {
+    const configFile = await createConfigFile(
+      JSON.stringify({
+        "ignore-rules": ["  mcp/shell-exec  "],
+        "ignore-paths": ["  src/vendor  "]
+      })
+    );
+
+    const config = await loadCliConfig(configFile);
+    expect(config.ignoreRules).toEqual(["mcp/shell-exec"]);
+    expect(config.ignorePaths).toEqual(["src/vendor"]);
+  });
+
   it("fails clearly on invalid config values", async () => {
     const configFile = await createConfigFile(JSON.stringify({ format: "html" }));
     const stderr: string[] = [];
@@ -452,6 +479,101 @@ describe("runCli exit thresholds", () => {
 
     expect(exitCode).toBe(1);
     expect(stderr.join("")).toContain("has invalid 'format'. Expected one of: text, json, markdown, sarif.");
+  });
+
+  it("rejects invalid ignore configuration", async () => {
+    const configFile = await createConfigFile(JSON.stringify({ "ignore-rules": "mcp/shell-exec" }));
+    const stderr: string[] = [];
+
+    const exitCode = await runCli(
+      [
+        "./fixtures/local-risky",
+        "--config",
+        configFile
+      ],
+      {
+        auditTarget: async () => createReport("local-directory", ["high"]),
+        stdout: createWriter([]),
+        stderr: createWriter(stderr)
+      }
+    );
+
+    expect(exitCode).toBe(1);
+    expect(stderr.join("")).toContain(
+      "has invalid 'ignore-rules'. Expected an array of non-empty strings."
+    );
+  });
+
+  it("rejects blank ignore entries after trimming", async () => {
+    const configFile = await createConfigFile(
+      JSON.stringify({
+        "ignore-rules": ["   "]
+      })
+    );
+    const stderr: string[] = [];
+
+    const exitCode = await runCli(
+      [
+        "./fixtures/local-risky",
+        "--config",
+        configFile
+      ],
+      {
+        auditTarget: async () => createReport("local-directory", ["high"]),
+        stdout: createWriter([]),
+        stderr: createWriter(stderr)
+      }
+    );
+
+    expect(exitCode).toBe(1);
+    expect(stderr.join("")).toContain(
+      "has invalid 'ignore-rules'. Expected an array of non-empty strings."
+    );
+  });
+
+  it("preserves ignore configuration when resolving CLI options", () => {
+    const parsed = { target: "./fixtures/local-risky" };
+    const config = {
+      ignoreRules: ["mcp/shell-exec"],
+      ignorePaths: ["src/vendor"]
+    };
+
+    const options = resolveCliOptions(parsed, config);
+    expect(options.ignoreRules).toEqual(config.ignoreRules);
+    expect(options.ignorePaths).toEqual(config.ignorePaths);
+  });
+
+  it("passes ignore configuration into auditTarget", async () => {
+    const configFile = await createConfigFile(
+      JSON.stringify({
+        "ignore-rules": ["mcp/shell-exec"],
+        "ignore-paths": ["src/generated"]
+      })
+    );
+    const seen: Array<{ ignoreRules?: string[]; ignorePaths?: string[] }> = [];
+
+    const exitCode = await runCli(
+      [
+        "./fixtures/local-risky",
+        "--config",
+        configFile
+      ],
+      {
+        auditTarget: async (_target, options) => {
+          seen.push(options ?? {});
+          return createReport("local-directory", ["high"]);
+        },
+        stdout: createWriter([])
+      }
+    );
+
+    expect(exitCode).toBe(0);
+    expect(seen).toEqual([
+      {
+        ignoreRules: ["mcp/shell-exec"],
+        ignorePaths: ["src/generated"]
+      }
+    ]);
   });
 
   it("lets CLI flags override config values predictably", async () => {
@@ -533,7 +655,9 @@ describe("runCli exit thresholds", () => {
   "format": "markdown",
   "fail-on": "high",
   "summary-only": false,
-  "output-file": "trustmcp-report.md"
+  "output-file": "trustmcp-report.md",
+  "ignore-rules": [],
+  "ignore-paths": []
 }
 `);
   });

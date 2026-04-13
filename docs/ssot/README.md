@@ -16,6 +16,8 @@ CLI status ergonomics now also include `--summary-only` for compact terminal and
 
 CLI defaults can now also be loaded from an explicit JSON file via `--config`, covering the stable fields `format`, `fail-on`, `summary-only`, and `output-file`.
 
+The config file also accepts the new `ignore-rules` and `ignore-paths` fields. Both arrays accept literal strings: `ignore-rules` matches exact rule IDs, and `ignore-paths` matches slash-separated relative paths rooted at the scanned target. These fields only filter findings after the heuristic has already evaluated them, so only introduce entries you have already reviewed and agreed can stay quiet for an audit cycle.
+
 The CLI now also ships an explicit `init-config` helper for scaffolding a starter `trustmcp.config.json` without overwriting an existing file.
 
 The CLI now also ships an explicit `doctor` command for read-only first-use validation of targets and optional config files.

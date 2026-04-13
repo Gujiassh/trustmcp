@@ -8,6 +8,8 @@ This changelog is the lightweight public release history for TrustMCP.
 
 ## Unreleased
 
+- Document new `ignore-rules` and `ignore-paths` config fields and clarify their intent.
+
 - Add upcoming release notes here before the next GitHub release.
 
 ## v0.1.0 — npm published

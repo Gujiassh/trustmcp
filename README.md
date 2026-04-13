@@ -236,6 +236,19 @@ node dist/cli/main.js doctor gh:modelcontextprotocol/servers --json
 
 When you pass `--config`, `doctor` also checks config-loaded `output-file` paths and catches missing parent directories before a real scan starts.
 
+### Configuration file options
+
+`trustmcp.config.json` is a flat JSON object that mirrors every CLI flag that can be set with `--config` (and the two new helper fields described below). Supported fields are:
+
+- `format`: one of `text`, `json`, `markdown`, or `sarif`.
+- `fail-on`: a severity (`low`, `medium`, `high`) for the CLI exit code.
+- `summary-only`: a boolean that limits console output to the compact summary block.
+- `output-file`: a file path where the rendered report is written in addition to stdout.
+- `ignore-rules`: an array of exact rule IDs (`mcp/shell-exec`, `mcp/outbound-fetch`, etc.). Any finding whose `ruleId` matches one of the entries is dropped from the final report, but the heuristic still runs internally, so only use this to silence known noise that you have inspected.
+- `ignore-paths`: an array of slash-separated relative paths (files or directories) inside the audited target. If a finding’s `file` path starts with one of the configured strings, that finding is omitted from the CLI summary output and structured report. There is no globbing or regex support; entries are matched literally and are case-sensitive.
+
+Both `ignore-rules` and `ignore-paths` are best reserved for short-lived noise gating when you already trust the other findings and you are confident that the ignored rows represent accepted risk. They do not change the rule evaluation itself; they only suppress matching findings from the emitted summary and report output.
+
 It also flags invalid config combinations early, such as `summary-only: true` with `format: sarif`.
 
 Doctor also verifies that the current Node.js runtime satisfies TrustMCP's supported engine floor.
