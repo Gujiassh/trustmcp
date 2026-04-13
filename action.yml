@@ -36,6 +36,10 @@ inputs:
     description: Optional path to a `trustmcp.config.json` in the scanned workspace.
     required: false
     default: ""
+  baseline-file:
+    description: Optional path to a JSON baseline file listing known findings (ruleId, file, line).
+    required: false
+    default: ""
   summary-only:
     description: Optional true/false override for compact summary-only output (empty to let config-file defaults apply).
     required: false
@@ -59,12 +63,14 @@ runs:
           INPUT_OUTPUT_FILE: ${{ inputs.output-file }}
           INPUT_CONFIG_FILE: ${{ inputs.config-file }}
           INPUT_SUMMARY_ONLY: ${{ inputs.summary-only }}
+          INPUT_BASELINE_FILE: ${{ inputs.baseline-file }}
       run: |
         set -euo pipefail
         target="$INPUT_TARGET"
         output_file="$INPUT_OUTPUT_FILE"
         config_file="$INPUT_CONFIG_FILE"
         summary_only="$INPUT_SUMMARY_ONLY"
+        baseline_file="$INPUT_BASELINE_FILE"
 
         if [ -z "$target" ]; then
           target="$GITHUB_WORKSPACE"
@@ -135,11 +141,24 @@ runs:
           fi
         fi
 
+        if [ -n "$baseline_file" ]; then
+          case "$baseline_file" in
+            /*) ;;
+            *) baseline_file="$GITHUB_WORKSPACE/$baseline_file" ;;
+          esac
+
+          if [ ! -e "$baseline_file" ]; then
+            printf '%s\n' "TrustMCP action error: baseline-file does not exist: $baseline_file" >&2
+            exit 1
+          fi
+        fi
+
         printf 'target=%s\n' "$target" >> "$GITHUB_OUTPUT"
         printf 'format=%s\n' "$INPUT_FORMAT" >> "$GITHUB_OUTPUT"
         printf 'output-file=%s\n' "$output_file" >> "$GITHUB_OUTPUT"
         printf 'config-file=%s\n' "$config_file" >> "$GITHUB_OUTPUT"
         printf 'summary-only=%s\n' "$summary_only" >> "$GITHUB_OUTPUT"
+        printf 'baseline-file=%s\n' "$baseline_file" >> "$GITHUB_OUTPUT"
 
     - name: Install dependencies
       shell: bash
@@ -162,6 +181,7 @@ runs:
         OUTPUT_FILE: ${{ steps.resolve.outputs.output-file }}
         CONFIG_FILE: ${{ steps.resolve.outputs.config-file }}
         SUMMARY_ONLY: ${{ steps.resolve.outputs.summary-only }}
+        BASELINE_FILE: ${{ steps.resolve.outputs.baseline-file }}
       run: |
         set -euo pipefail
-        node dist/action/main.js "$TARGET" "$FORMAT" "$FAIL_ON" "$OUTPUT_FILE" "$CONFIG_FILE" "$SUMMARY_ONLY"
+        node dist/action/main.js "$TARGET" "$FORMAT" "$FAIL_ON" "$OUTPUT_FILE" "$CONFIG_FILE" "$SUMMARY_ONLY" "$BASELINE_FILE"

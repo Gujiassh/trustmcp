@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 
+import { dirname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { auditTarget as defaultAuditTarget } from "../core/audit.js";
 import { isSeverity, shouldFailForThreshold } from "../core/thresholds.js";
 import type { Severity } from "../core/types.js";
 import { TRUSTMCP_VERSION } from "../core/version.js";
-import { loadCliConfig, type CliConfig } from "./config.js";
+import { loadBaselineEntries, loadCliConfig, type CliConfig } from "./config.js";
 import { renderDoctorResult, runDoctor, type DoctorFormat } from "./doctor.js";
 import { DEFAULT_CONFIG_PATH, writeStarterConfig } from "./init-config.js";
 import { renderRuleList, renderRuleListJson, type RuleListFormat } from "./list-rules.js";
@@ -26,6 +27,7 @@ interface CliOptions {
   summaryOnly?: boolean;
   ignoreRules?: string[];
   ignorePaths?: string[];
+  baselineFile?: string;
 }
 
 interface ParsedCliArguments {
@@ -35,6 +37,7 @@ interface ParsedCliArguments {
   outputFile?: string;
   summaryOnly?: boolean;
   configFile?: string;
+  baselineFile?: string;
 }
 
 interface InitConfigCliArguments {
@@ -119,10 +122,17 @@ export async function runCli(argv: string[], dependencies: CliDependencies = {})
     const resolved = resolveCliOptions(parsed, config);
     validateCliOptionCompatibility(resolved);
 
-    const report = await auditTarget(resolved.target, {
+    const configPath =
+      parsed.configFile === undefined ? undefined : resolve(process.cwd(), parsed.configFile);
+    const baselineBaseDir = configPath === undefined ? process.cwd() : dirname(configPath);
+    const baselineEntries = await loadBaselineEntries(resolved.baselineFile, baselineBaseDir);
+    const auditOptions = {
       ...(resolved.ignoreRules === undefined ? {} : { ignoreRules: resolved.ignoreRules }),
-      ...(resolved.ignorePaths === undefined ? {} : { ignorePaths: resolved.ignorePaths })
-    });
+      ...(resolved.ignorePaths === undefined ? {} : { ignorePaths: resolved.ignorePaths }),
+      ...(baselineEntries === undefined ? {} : { baselineEntries })
+    };
+
+    const report = await auditTarget(resolved.target, auditOptions);
     const output = resolved.summaryOnly ? renderSummaryReport(report, resolved.format) : renderReport(report, resolved.format);
 
     await writeRenderedOutput(output, resolved.outputFile);
@@ -164,6 +174,7 @@ export function parseArguments(argv: string[]): ParsedCommand | null {
   let outputFile: string | undefined;
   let summaryOnly: boolean | undefined;
   let configFile: string | undefined;
+  let baselineFile: string | undefined;
 
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
@@ -215,6 +226,27 @@ export function parseArguments(argv: string[]): ParsedCommand | null {
       }
 
       configFile = value;
+      continue;
+    }
+
+    if (argument === "--baseline-file") {
+      const nextArgument = args[index + 1];
+      if (nextArgument === undefined || nextArgument.startsWith("-") || isBlankPath(nextArgument)) {
+        throw new Error("--baseline-file expects a file path.");
+      }
+
+      baselineFile = nextArgument;
+      index += 1;
+      continue;
+    }
+
+    if (argument.startsWith("--baseline-file=")) {
+      const value = argument.slice("--baseline-file=".length);
+      if (value.length === 0 || isBlankPath(value)) {
+        throw new Error("--baseline-file expects a file path.");
+      }
+
+      baselineFile = value;
       continue;
     }
 
@@ -304,6 +336,10 @@ export function parseArguments(argv: string[]): ParsedCommand | null {
 
   if (configFile !== undefined) {
     options.configFile = configFile;
+  }
+
+  if (baselineFile !== undefined) {
+    options.baselineFile = baselineFile;
   }
 
   return options;
@@ -596,6 +632,11 @@ export function resolveCliOptions(parsed: ParsedCliArguments, config: CliConfig)
     options.ignorePaths = config.ignorePaths;
   }
 
+  const baselineFile = parsed.baselineFile ?? config.baselineFile;
+  if (baselineFile !== undefined) {
+    options.baselineFile = baselineFile;
+  }
+
   return options;
 }
 
@@ -604,8 +645,8 @@ function usage(): string {
     "TrustMCP v0.1.0",
     "",
     "Run a scan:",
-    "  trustmcp <target> [--config path] [--format text|json|markdown|sarif] [--summary-only] [--fail-on low|medium|high] [--output-file path]",
-    "  trustmcp scan <target> [--config path] [--format text|json|markdown|sarif] [--summary-only] [--fail-on low|medium|high] [--output-file path]",
+    "  trustmcp <target> [--config path] [--baseline-file path] [--format text|json|markdown|sarif] [--summary-only] [--fail-on low|medium|high] [--output-file path]",
+    "  trustmcp scan <target> [--config path] [--baseline-file path] [--format text|json|markdown|sarif] [--summary-only] [--fail-on low|medium|high] [--output-file path]",
     "",
     "Validate first:",
     "  trustmcp doctor <target> [--config path] [--json|--format text|json] [--output-file path]",

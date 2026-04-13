@@ -16,7 +16,8 @@ node dist/cli/main.js doctor <target> [--config trustmcp.config.json]
 | `GitHub shorthand inputs must look like gh:<owner>/<repo>.` | The `gh:` shorthand is malformed. | Use `gh:owner/repo`. Do not include extra path segments like `tree/main` or `blob/...`. |
 | `Local directory not found:` | The local path does not exist from your current shell location. | Check the path, or pass an absolute path. `doctor` is the fastest way to confirm the target shape before a real scan. |
 | `Local path is not a directory:` | The path exists, but it points to a file instead of a directory. | Point TrustMCP at the repository or folder root, not an individual file. |
-| `Config file ... must contain valid JSON` or `Config file ... has invalid ...` | The config file exists, but its JSON or supported field values are invalid. | Keep the config to the supported fields only: `format`, `fail-on`, `summary-only`, `output-file`, `ignore-rules`, and `ignore-paths`. If you want a clean starting point, run `node dist/cli/main.js init-config`. |
+| `Config file ... must contain valid JSON` or `Config file ... has invalid ...` | The config file exists, but its JSON or supported field values are invalid. | Keep the config to the supported fields only: `format`, `fail-on`, `summary-only`, `output-file`, `ignore-rules`, `ignore-paths`, and `baseline-file`. If you want a clean starting point, run `node dist/cli/main.js init-config`. |
+| `Baseline file ... must contain valid JSON` or `Baseline file ... entry at index ...` | The baseline file exists, but its JSON or entry shape is invalid. | Keep the baseline file as a JSON array of objects with exact `ruleId`, `file`, and optional positive-integer `line` values. TrustMCP does not support globs or regexes in baseline entries. |
 | `Output file directory does not exist:` | You used `--output-file` with a parent directory that is missing. | Create the parent directory first, then run TrustMCP again. TrustMCP writes the report file, but it does not scaffold report directories for you. |
 | `No matching rules were triggered.` | The current shipped rules did not match the current repository snapshot. | Treat this as a narrow no-match result, not a safety verdict. Check [What TrustMCP scans, and how it differs from npm audit](./what-trustmcp-scans.md) if you want the scope explanation. |
 
@@ -46,6 +47,8 @@ node dist/cli/main.js gh:modelcontextprotocol/servers --config trustmcp.config.j
 The GitHub Action also supports the same config file through the `config-file` input (e.g., `config-file: trustmcp.config.json`); relative paths resolve against the checked-out workspace before the action runs.
 
 The action also respects the CLI `summary-only` option: leave the new `summary-only` input unset so the config file can drive the behavior, or set it to `true`/`false` explicitly when you want to override. This input enforces the same `summary-only` + `format: sarif` restriction as the CLI runner, so avoid that incompatible combination whether you run locally or in CI.
+
+For staged adoption on an existing repository, add `baseline-file` to either the CLI invocation or the shared config file. Baseline entries are exact finding tuples, so use the same `ruleId`, normalized `file`, and optional `line` values that TrustMCP already emits. When a baseline is active, TrustMCP still prints the full finding list, but `--fail-on` only evaluates the findings that are not already present in that baseline.
 
 If you are starting from scratch, generate a safe starter file:
 

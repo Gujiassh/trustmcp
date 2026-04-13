@@ -23,8 +23,14 @@ export interface AuditTarget {
 
 export interface AuditSummary {
   findingCount: number;
+  newFindingCount: number;
   triggeredRuleCount: number;
   severityCounts: {
+    low: number;
+    medium: number;
+    high: number;
+  };
+  newSeverityCounts: {
     low: number;
     medium: number;
     high: number;
@@ -41,11 +47,19 @@ export interface AuditReport {
   limitations: string[];
   summary: AuditSummary;
   findings: Finding[];
+  newFindings: Finding[];
+}
+
+export interface BaselineEntry {
+  ruleId: string;
+  file: string;
+  line?: number;
 }
 
 export interface AuditOptions {
   ignoreRules?: string[];
   ignorePaths?: string[];
+  baselineEntries?: BaselineEntry[];
 }
 
 export interface ScanFile {

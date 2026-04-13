@@ -12,7 +12,8 @@ export function shouldFailForThreshold(report: AuditReport, failOn?: Severity): 
   }
 
   const thresholdLevel = SEVERITY_LEVELS[failOn];
-  return report.findings.some((finding) => SEVERITY_LEVELS[finding.severity] >= thresholdLevel);
+  const gatedFindings = report.newFindings ?? report.findings;
+  return gatedFindings.some((finding) => SEVERITY_LEVELS[finding.severity] >= thresholdLevel);
 }
 
 export function isSeverity(value: string | undefined): value is Severity {

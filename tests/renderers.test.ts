@@ -147,8 +147,14 @@ No matching rules were triggered.`);
   },
   "summary": {
     "findingCount": 0,
+    "newFindingCount": 0,
     "triggeredRuleCount": 0,
     "severityCounts": {
+      "low": 0,
+      "medium": 0,
+      "high": 0
+    },
+    "newSeverityCounts": {
       "low": 0,
       "medium": 0,
       "high": 0
@@ -290,8 +296,14 @@ function createReport(severities: Array<"high" | "medium" | "low">): AuditReport
     ],
     summary: {
       findingCount: severities.length,
+      newFindingCount: severities.length,
       triggeredRuleCount: severities.length,
       severityCounts: {
+        low: severities.filter((severity) => severity === "low").length,
+        medium: severities.filter((severity) => severity === "medium").length,
+        high: severities.filter((severity) => severity === "high").length
+      },
+      newSeverityCounts: {
         low: severities.filter((severity) => severity === "low").length,
         medium: severities.filter((severity) => severity === "medium").length,
         high: severities.filter((severity) => severity === "high").length
@@ -301,6 +313,21 @@ function createReport(severities: Array<"high" | "medium" | "low">): AuditReport
         : `${severities.length} finding(s) across ${severities.length} rule(s). Static heuristics only.`
     },
     findings: severities.map((severity, index) => ({
+      ruleId: severity === "high" ? "mcp/shell-exec" : severity === "medium" ? "mcp/outbound-fetch" : "mcp/example-low",
+      severity,
+      confidence: "high",
+      title: severity === "high"
+        ? "Shell execution capability detected"
+        : severity === "medium"
+          ? "Outbound network request capability detected"
+          : "Low severity placeholder finding",
+      file: `src/example-${index + 1}.ts`,
+      line: index + 1,
+      evidence: `evidence-${index + 1}`,
+      whyItMatters: `why-${index + 1}`,
+      remediation: `remediation-${index + 1}`
+    })),
+    newFindings: severities.map((severity, index) => ({
       ruleId: severity === "high" ? "mcp/shell-exec" : severity === "medium" ? "mcp/outbound-fetch" : "mcp/example-low",
       severity,
       confidence: "high",

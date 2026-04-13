@@ -1,0 +1,12 @@
+[
+  {
+    "ruleId": "mcp/shell-exec",
+    "file": "src/shell.ts",
+    "line": 4
+  },
+  {
+    "ruleId": "mcp/broad-filesystem",
+    "file": "src/files.ts",
+    "line": 4
+  }
+]

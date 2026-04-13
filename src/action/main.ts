@@ -1,5 +1,5 @@
 import { appendFile } from "node:fs/promises";
-import { isAbsolute, resolve } from "node:path";
+import { dirname, isAbsolute, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { auditTarget as defaultAuditTarget } from "../core/audit.js";
@@ -8,7 +8,7 @@ import type { AuditReport, Severity } from "../core/types.js";
 import { renderMarkdownReport } from "../renderers/markdown.js";
 import { isOutputFormat, renderReport, renderSummaryReport, type OutputFormat } from "../renderers/output.js";
 import { writeRenderedOutput } from "../utils/write-rendered-output.js";
-import { loadCliConfig, type CliConfig } from "../cli/config.js";
+import { loadBaselineEntries, loadCliConfig, type CliConfig } from "../cli/config.js";
 import { validateCliOptionCompatibility } from "../cli/validate-cli-options.js";
 
 interface OutputWriter {
@@ -22,6 +22,7 @@ interface ActionOptions {
   outputFile?: string;
   configFile?: string;
   summaryOnly?: boolean;
+  baselineFile?: string;
 }
 
 interface ActionDependencies {
@@ -43,7 +44,7 @@ export async function runAction(
 
   try {
     const workspaceDir = dependencies.workspaceDir ?? process.env.GITHUB_WORKSPACE ?? process.cwd();
-    const config = await loadActionConfig(options, workspaceDir);
+    const { config, configPath } = await loadActionConfig(options, workspaceDir);
     const resolved = resolveActionOptions(options, config);
     const compatibilityOptions: Parameters<typeof validateCliOptionCompatibility>[0] = { format: resolved.format };
     if (resolved.summaryOnly !== undefined) {
@@ -51,10 +52,15 @@ export async function runAction(
     }
     validateCliOptionCompatibility(compatibilityOptions, "action inputs");
 
-    const report = await auditTarget(resolved.target, {
+    const baselineBaseDir = configPath === undefined ? workspaceDir : dirname(configPath);
+    const baselineEntries = await loadBaselineEntries(resolved.baselineFile, baselineBaseDir);
+    const auditOptions = {
       ...(resolved.ignoreRules === undefined ? {} : { ignoreRules: resolved.ignoreRules }),
-      ...(resolved.ignorePaths === undefined ? {} : { ignorePaths: resolved.ignorePaths })
-    });
+      ...(resolved.ignorePaths === undefined ? {} : { ignorePaths: resolved.ignorePaths }),
+      ...(baselineEntries === undefined ? {} : { baselineEntries })
+    };
+
+    const report = await auditTarget(resolved.target, auditOptions);
 
     const output = resolved.summaryOnly ? renderSummaryReport(report, resolved.format) : renderReport(report, resolved.format);
     await writeRenderedOutput(output, resolved.outputFile);
@@ -103,6 +109,7 @@ function parseActionArguments(argv: string[]): ActionOptions {
   const outputFile = argv[3];
   const configFile = argv[4];
   const summaryOnlyArg = argv[5];
+  const baselineFileArg = argv[6];
 
   if (target === undefined || rawFormat === undefined) {
     throw new Error("Action runner expects at least <target> and <format> arguments.");
@@ -142,6 +149,10 @@ function parseActionArguments(argv: string[]): ActionOptions {
     options.summaryOnly = summaryOnlyArg === "true";
   }
 
+  if (baselineFileArg !== undefined && baselineFileArg !== "") {
+    options.baselineFile = baselineFileArg;
+  }
+
   return options;
 }
 
@@ -153,15 +164,20 @@ type ResolvedActionOptions = {
   ignoreRules?: string[];
   ignorePaths?: string[];
   summaryOnly?: boolean;
+  baselineFile?: string;
 };
 
-async function loadActionConfig(options: ActionOptions, workspaceDir: string): Promise<CliConfig> {
+async function loadActionConfig(
+  options: ActionOptions,
+  workspaceDir: string
+): Promise<{ config: CliConfig; configPath?: string }> {
   if (options.configFile === undefined) {
-    return {};
+    return { config: {} };
   }
 
   const configPath = resolveConfigPath(options.configFile, workspaceDir);
-  return loadCliConfig(configPath);
+  const config = await loadCliConfig(configPath);
+  return { config, configPath };
 }
 
 function resolveConfigPath(configFile: string, workspaceDir: string): string {
@@ -191,6 +207,11 @@ function resolveActionOptions(options: ActionOptions, config: CliConfig): Resolv
 
   if (config.ignorePaths !== undefined) {
     resolved.ignorePaths = config.ignorePaths;
+  }
+
+  const baselineFile = options.baselineFile ?? config.baselineFile;
+  if (baselineFile !== undefined) {
+    resolved.baselineFile = baselineFile;
   }
 
   const resolvedSummaryOnly = options.summaryOnly ?? config.summaryOnly;

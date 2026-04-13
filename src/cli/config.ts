@@ -1,7 +1,8 @@
 import { readFile } from "node:fs/promises";
+import { isAbsolute, resolve } from "node:path";
 
 import { isSeverity } from "../core/thresholds.js";
-import type { Severity } from "../core/types.js";
+import type { BaselineEntry, Severity } from "../core/types.js";
 import { isOutputFormat, type OutputFormat } from "../renderers/output.js";
 
 const SUPPORTED_CONFIG_FIELDS = [
@@ -10,7 +11,8 @@ const SUPPORTED_CONFIG_FIELDS = [
   "summary-only",
   "output-file",
   "ignore-rules",
-  "ignore-paths"
+  "ignore-paths",
+  "baseline-file"
 ] as const;
 
 export interface CliConfig {
@@ -20,6 +22,7 @@ export interface CliConfig {
   outputFile?: string;
   ignoreRules?: string[];
   ignorePaths?: string[];
+  baselineFile?: string;
 }
 
 export async function loadCliConfig(configFile?: string): Promise<CliConfig> {
@@ -107,6 +110,15 @@ function validateCliConfig(value: unknown, configFile: string): CliConfig {
     config.ignorePaths = normalizeStringArray(ignorePaths, configFile, "ignore-paths");
   }
 
+  const baselineFile = value["baseline-file"];
+  if (baselineFile !== undefined) {
+    if (typeof baselineFile !== "string" || baselineFile.trim().length === 0) {
+      throw new Error(`Config file ${configFile} has invalid 'baseline-file'. Expected a file path string.`);
+    }
+
+    config.baselineFile = baselineFile.trim();
+  }
+
   return config;
 }
 
@@ -134,4 +146,73 @@ function normalizeStringArray(value: unknown, configFile: string, field: string)
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+export async function loadBaselineEntries(
+  baselineFile: string | undefined,
+  baseDirectory: string = process.cwd()
+): Promise<BaselineEntry[] | undefined> {
+  if (baselineFile === undefined || baselineFile.length === 0) {
+    return undefined;
+  }
+
+  const resolvedPath = isAbsolute(baselineFile) ? baselineFile : resolve(baseDirectory, baselineFile);
+  let content: string;
+  try {
+    content = await readFile(resolvedPath, "utf8");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to read baseline file ${resolvedPath}: ${message}`);
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(content);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Baseline file ${resolvedPath} must contain valid JSON: ${message}`);
+  }
+
+  return validateBaselineEntries(parsed, resolvedPath);
+}
+
+function validateBaselineEntries(value: unknown, baselinePath: string): BaselineEntry[] {
+  if (!Array.isArray(value)) {
+    throw new Error(`Baseline file ${baselinePath} must contain a JSON array of baseline entries.`);
+  }
+
+  return value.map((entry, index) => {
+    if (!isRecord(entry)) {
+      throw new Error(
+        `Baseline file ${baselinePath}: entry at index ${index} must be an object with ruleId and file.`
+      );
+    }
+
+    const ruleId = entry.ruleId;
+    if (typeof ruleId !== "string" || ruleId.length === 0) {
+      throw new Error(
+        `Baseline file ${baselinePath}: entry at index ${index} has invalid 'ruleId'. Expected a non-empty string.`
+      );
+    }
+
+    const file = entry.file;
+    if (typeof file !== "string" || file.length === 0) {
+      throw new Error(
+        `Baseline file ${baselinePath}: entry at index ${index} has invalid 'file'. Expected a non-empty string.`
+      );
+    }
+
+    const line = entry.line;
+    if (line !== undefined && (typeof line !== "number" || !Number.isInteger(line) || line <= 0)) {
+      throw new Error(
+        `Baseline file ${baselinePath}: entry at index ${index} has invalid 'line'. Expected a positive integer.`
+      );
+    }
+
+    return {
+      ruleId,
+      file,
+      ...(line === undefined ? {} : { line })
+    };
+  });
 }

@@ -182,14 +182,22 @@ describe("runAction", () => {
 
   it("loads config file to honor ignore lists and fail-on threshold", async () => {
     const configPath = await createConfigPath("trustmcp.config.json");
+    const baselinePath = await createBaselinePath("trustmcp.baseline.json");
+    const configPayload = {
+      "format": "markdown",
+      "fail-on": "medium",
+      "ignore-rules": ["rule-1"],
+      "ignore-paths": ["src/vendor"],
+      "baseline-file": baselinePath
+    };
+
+    await writeFile(configPath, JSON.stringify(configPayload), "utf8");
+
     await writeFile(
-      configPath,
-      JSON.stringify({
-        "format": "markdown",
-        "fail-on": "medium",
-        "ignore-rules": ["rule-1"],
-        "ignore-paths": ["src/vendor"]
-      }),
+      baselinePath,
+      JSON.stringify([
+        { ruleId: "rule-1", file: "src/example-1.ts", line: 1 }
+      ]),
       "utf8"
     );
 
@@ -213,9 +221,47 @@ describe("runAction", () => {
     expect(exitCode).toBe(2);
     expect(receivedOptions).toEqual({
       ignoreRules: ["rule-1"],
-      ignorePaths: ["src/vendor"]
+      ignorePaths: ["src/vendor"],
+      baselineEntries: [
+        { ruleId: "rule-1", file: "src/example-1.ts", line: 1 }
+      ]
     });
     expect(stdout.join("")).toContain("# TrustMCP Report");
+  });
+
+  it("accepts an explicit baseline-file input", async () => {
+    const baselinePath = await createBaselinePath("trustmcp-action-baseline.json");
+    await writeFile(
+      baselinePath,
+      JSON.stringify([
+        { ruleId: "rule-1", file: "src/example-1.ts", line: 1 }
+      ]),
+      "utf8"
+    );
+
+    let receivedOptions: Record<string, unknown> | undefined;
+
+    const exitCode = await runAction(
+      {
+        target: "./fixtures/local-risky",
+        format: "json",
+        baselineFile: baselinePath
+      },
+      {
+        auditTarget: async (_target, options) => {
+          receivedOptions = options;
+          return createReport("local-directory", ["medium"]);
+        },
+        stdout: createWriter([])
+      }
+    );
+
+    expect(exitCode).toBe(0);
+    expect(receivedOptions).toEqual({
+      baselineEntries: [
+        { ruleId: "rule-1", file: "src/example-1.ts", line: 1 }
+      ]
+    });
   });
 
   it("resolves relative config-file paths against the workspace directory", async () => {
@@ -386,7 +432,13 @@ function createReport(sourceType: "local-directory" | "public-github-repo", seve
     ],
     summary: {
       findingCount: severities.length,
+      newFindingCount: severities.length,
       triggeredRuleCount: severities.length,
+      newSeverityCounts: {
+        low: severities.filter((severity) => severity === "low").length,
+        medium: severities.filter((severity) => severity === "medium").length,
+        high: severities.filter((severity) => severity === "high").length
+      },
       severityCounts: {
         low: severities.filter((severity) => severity === "low").length,
         medium: severities.filter((severity) => severity === "medium").length,
@@ -397,6 +449,21 @@ function createReport(sourceType: "local-directory" | "public-github-repo", seve
         : `${severities.length} finding(s) across ${severities.length} rule(s). Static heuristics only.`
     },
     findings: severities.map((severity, index) => ({
+      ruleId: `rule-${index + 1}`,
+      severity,
+      confidence: "high",
+      title: severity === "high"
+        ? "Shell execution capability detected"
+        : severity === "medium"
+          ? "Outbound network request capability detected"
+          : "Low severity placeholder finding",
+      file: `src/example-${index + 1}.ts`,
+      line: index + 1,
+      evidence: `evidence-${index + 1}`,
+      whyItMatters: `why-${index + 1}`,
+      remediation: `remediation-${index + 1}`
+    })),
+    newFindings: severities.map((severity, index) => ({
       ruleId: `rule-${index + 1}`,
       severity,
       confidence: "high",
@@ -446,6 +513,12 @@ async function createReportPath(): Promise<string> {
 
 async function createConfigPath(fileName: string): Promise<string> {
   const directory = await mkdtemp(join(tmpdir(), "trustmcp-action-config-test-"));
+  tempDirectories.push(directory);
+  return join(directory, fileName);
+}
+
+async function createBaselinePath(fileName: string): Promise<string> {
+  const directory = await mkdtemp(join(tmpdir(), "trustmcp-action-baseline-test-"));
   tempDirectories.push(directory);
   return join(directory, fileName);
 }

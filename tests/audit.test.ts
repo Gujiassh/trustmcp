@@ -115,4 +115,21 @@ describe("auditTarget", () => {
     expect(report.summary.triggeredRuleCount).toBe(0);
     expect(report.summary.message).toContain("No matching rules were triggered.");
   });
+
+  it("treats baseline entries as known findings without dropping the overall list", async () => {
+    const report = await auditTarget(localRiskyFixture, {
+      baselineEntries: [
+        { ruleId: "mcp/shell-exec", file: "src/shell.ts", line: 4 }
+      ]
+    });
+
+    expect(report.findings).toHaveLength(3);
+    expect(report.summary.findingCount).toBe(3);
+    expect(report.summary.newFindingCount).toBe(2);
+    expect(report.newFindings.map((finding) => finding.ruleId).sort()).toEqual([
+      "mcp/broad-filesystem",
+      "mcp/outbound-fetch"
+    ]);
+    expect(report.summary.message).toContain("2 new finding(s) across 2 rule(s)");
+  });
 });

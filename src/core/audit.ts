@@ -1,6 +1,6 @@
 import { collectSourceFiles } from "./source-files.js";
 import { looksLikeUrl, sortFindings } from "./rule-helpers.js";
-import type { AuditReport, AuditOptions, Finding, MaterializedSource } from "./types.js";
+import type { AuditReport, AuditOptions, BaselineEntry, Finding, MaterializedSource } from "./types.js";
 import { TRUSTMCP_VERSION } from "./version.js";
 import {
   getUnsupportedGitHubUrlMessage,
@@ -41,7 +41,9 @@ export async function auditTarget(
     const files = await dependencies.collectSourceFiles(materializedSource.rootDir);
     const findings = sortFindings(runAllRules(files));
     const filteredFindings = applyIgnoreFilters(findings, options);
-    return createReport(materializedSource, filteredFindings);
+    const newFindings = applyBaselineFilter(filteredFindings, options.baselineEntries);
+    const baselineApplied = options.baselineEntries !== undefined && options.baselineEntries.length > 0;
+    return createReport(materializedSource, filteredFindings, newFindings, baselineApplied);
   } finally {
     if (materializedSource.cleanup !== undefined) {
       await materializedSource.cleanup();
@@ -69,13 +71,25 @@ async function materializeTarget(
   return dependencies.materializeLocalDirectory(targetInput);
 }
 
-function createReport(materializedSource: MaterializedSource, findings: Finding[]): AuditReport {
+function createReport(
+  materializedSource: MaterializedSource,
+  findings: Finding[],
+  newFindings: Finding[],
+  baselineApplied: boolean
+): AuditReport {
   const triggeredRuleCount = new Set(findings.map((finding) => finding.ruleId)).size;
   const severityCounts = countFindingsBySeverity(findings);
-  const summaryMessage =
+  const newSeverityCounts = countFindingsBySeverity(newFindings);
+  const newTriggeredRuleCount = new Set(newFindings.map((finding) => finding.ruleId)).size;
+  const baseMessage =
     findings.length === 0
       ? "No matching rules were triggered. Static heuristics only; this does not mean the target is safe."
       : `${findings.length} finding(s) across ${triggeredRuleCount} rule(s). Static heuristics only.`;
+  const newMessage =
+    newFindings.length === 0
+      ? "No new findings."
+      : `${newFindings.length} new finding(s) across ${newTriggeredRuleCount} rule(s).`;
+  const summaryMessage = baselineApplied ? `${baseMessage} ${newMessage}` : baseMessage;
 
   return {
     tool: {
@@ -85,12 +99,15 @@ function createReport(materializedSource: MaterializedSource, findings: Finding[
     target: materializedSource.target,
     limitations: DEFAULT_LIMITATIONS,
     summary: {
+      newFindingCount: newFindings.length,
+      newSeverityCounts,
       findingCount: findings.length,
       triggeredRuleCount,
       severityCounts,
       message: summaryMessage
     },
-    findings
+    findings,
+    newFindings
   };
 }
 
@@ -143,12 +160,32 @@ function buildPathMatchers(patterns: string[]): ((relativePath: string) => boole
   });
 }
 
+function applyBaselineFilter(findings: Finding[], baselineEntries?: BaselineEntry[]): Finding[] {
+  if (baselineEntries === undefined || baselineEntries.length === 0) {
+    return findings;
+  }
+
+  const baselineSet = new Set(
+    baselineEntries.map((entry) => buildBaselineKey(entry.ruleId, entry.file, entry.line))
+  );
+
+  return findings.filter(
+    (finding) => !baselineSet.has(buildBaselineKey(finding.ruleId, finding.file, finding.line))
+  );
+}
+
 function normalizePath(relativePath: string): string {
   return relativePath.replace(/\\/g, "/").replace(/^\.\//, "");
 }
 
 function normalizePathPrefix(pattern: string): string {
   return normalizePath(pattern).replace(/\/+$/, "");
+}
+
+function buildBaselineKey(ruleId: string, filePath: string, line?: number): string {
+  const normalizedFile = normalizePath(filePath);
+  const linePart = line === undefined ? "" : line.toString();
+  return `${ruleId}|${normalizedFile}|${linePart}`;
 }
 
 function resolveAuditArguments(

@@ -450,6 +450,26 @@ describe("runCli exit thresholds", () => {
     expect(config.ignorePaths).toEqual(["src/vendor"]);
   });
 
+  it("honors baseline files passed via the CLI", async () => {
+    const stdout: string[] = [];
+
+    const exitCode = await runCli(
+      [
+        "./fixtures/local-risky",
+        "--fail-on",
+        "high",
+        "--baseline-file",
+        "fixtures/baseline-local-risky.json"
+      ],
+      {
+        stdout: createWriter(stdout)
+      }
+    );
+
+    expect(exitCode).toBe(0);
+    expect(stdout.join("")).toContain("1 new finding(s) across 1 rule(s)");
+  });
+
   it("trims ignore rule and path entries loaded from config", async () => {
     const configFile = await createConfigFile(
       JSON.stringify({
@@ -657,7 +677,8 @@ describe("runCli exit thresholds", () => {
   "summary-only": false,
   "output-file": "trustmcp-report.md",
   "ignore-rules": [],
-  "ignore-paths": []
+  "ignore-paths": [],
+  "baseline-file": "trustmcp.baseline.json"
 }
 `);
   });
@@ -1132,8 +1153,14 @@ function createReport(sourceType: "local-directory" | "public-github-repo", seve
     ],
     summary: {
       findingCount: severities.length,
+      newFindingCount: severities.length,
       triggeredRuleCount: severities.length,
       severityCounts: {
+        low: severities.filter((severity) => severity === "low").length,
+        medium: severities.filter((severity) => severity === "medium").length,
+        high: severities.filter((severity) => severity === "high").length
+      },
+      newSeverityCounts: {
         low: severities.filter((severity) => severity === "low").length,
         medium: severities.filter((severity) => severity === "medium").length,
         high: severities.filter((severity) => severity === "high").length
@@ -1143,6 +1170,21 @@ function createReport(sourceType: "local-directory" | "public-github-repo", seve
         : `${severities.length} finding(s) across ${severities.length} rule(s). Static heuristics only.`
     },
     findings: severities.map((severity, index) => ({
+      ruleId: `rule-${index + 1}`,
+      severity,
+      confidence: "high",
+      title: severity === "high"
+        ? "Shell execution capability detected"
+        : severity === "medium"
+          ? "Outbound network request capability detected"
+          : "Low severity placeholder finding",
+      file: `src/example-${index + 1}.ts`,
+      line: index + 1,
+      evidence: `evidence-${index + 1}`,
+      whyItMatters: `why-${index + 1}`,
+      remediation: `remediation-${index + 1}`
+    })),
+    newFindings: severities.map((severity, index) => ({
       ruleId: `rule-${index + 1}`,
       severity,
       confidence: "high",
