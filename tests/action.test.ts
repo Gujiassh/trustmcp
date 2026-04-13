@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -179,6 +179,85 @@ describe("runAction", () => {
 
     expect(exitCode).toBe(0);
   });
+
+  it("loads config file to honor ignore lists and fail-on threshold", async () => {
+    const configPath = await createConfigPath("trustmcp.config.json");
+    await writeFile(
+      configPath,
+      JSON.stringify({
+        "format": "markdown",
+        "fail-on": "medium",
+        "ignore-rules": ["rule-1"],
+        "ignore-paths": ["src/vendor"]
+      }),
+      "utf8"
+    );
+
+    let receivedOptions: Record<string, unknown> | undefined;
+    const stdout: string[] = [];
+
+    const exitCode = await runAction(
+      {
+        target: "./fixtures/local-risky",
+        configFile: configPath
+      },
+      {
+        auditTarget: async (_target, options) => {
+          receivedOptions = options;
+          return createReport("local-directory", ["medium"]);
+        },
+        stdout: createWriter(stdout)
+      }
+    );
+
+    expect(exitCode).toBe(2);
+    expect(receivedOptions).toEqual({
+      ignoreRules: ["rule-1"],
+      ignorePaths: ["src/vendor"]
+    });
+    expect(stdout.join("")).toContain("# TrustMCP Report");
+  });
+
+  it("resolves config output-file paths relative to GITHUB_WORKSPACE", async () => {
+    const workspace = await createTempDirectory("trustmcp-action-workspace-test-");
+    const configPath = join(workspace, "trustmcp.config.json");
+    const reportDirectory = join(workspace, "reports");
+    const reportPath = join(reportDirectory, "trustmcp.md");
+    await mkdir(reportDirectory, { recursive: true });
+    await writeFile(
+      configPath,
+      JSON.stringify({
+        "format": "markdown",
+        "output-file": "reports/trustmcp.md"
+      }),
+      "utf8"
+    );
+
+    const previousWorkspace = process.env.GITHUB_WORKSPACE;
+    process.env.GITHUB_WORKSPACE = workspace;
+
+    try {
+      const exitCode = await runAction(
+        {
+          target: "./fixtures/local-clean",
+          configFile: configPath
+        },
+        {
+          auditTarget: async () => createReport("local-directory", []),
+          stdout: createWriter([])
+        }
+      );
+
+      expect(exitCode).toBe(0);
+      expect(await readFile(reportPath, "utf8")).toContain("# TrustMCP Report");
+    } finally {
+      if (previousWorkspace === undefined) {
+        delete process.env.GITHUB_WORKSPACE;
+      } else {
+        process.env.GITHUB_WORKSPACE = previousWorkspace;
+      }
+    }
+  });
 });
 
 function createReport(sourceType: "local-directory" | "public-github-repo", severities: Severity[]): AuditReport {
@@ -255,6 +334,18 @@ async function createReportPath(): Promise<string> {
   const directory = await mkdtemp(join(tmpdir(), "trustmcp-action-report-test-"));
   tempDirectories.push(directory);
   return join(directory, "trustmcp-report.md");
+}
+
+async function createConfigPath(fileName: string): Promise<string> {
+  const directory = await mkdtemp(join(tmpdir(), "trustmcp-action-config-test-"));
+  tempDirectories.push(directory);
+  return join(directory, fileName);
+}
+
+async function createTempDirectory(prefix: string): Promise<string> {
+  const directory = await mkdtemp(join(tmpdir(), prefix));
+  tempDirectories.push(directory);
+  return directory;
 }
 
 async function readOutputs(outputPath: string): Promise<Record<string, string>> {

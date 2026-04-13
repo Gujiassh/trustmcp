@@ -23,13 +23,17 @@ inputs:
   format:
     description: Report output format (text, json, markdown, or sarif).
     required: false
-    default: json
+    default: ""
   fail-on:
     description: Exit non-zero when a finding at or above this severity exists.
     required: false
     default: ""
   output-file:
     description: Optional file path for writing the selected rendered report.
+    required: false
+    default: ""
+  config-file:
+    description: Optional path to a `trustmcp.config.json` in the scanned workspace.
     required: false
     default: ""
 
@@ -45,14 +49,16 @@ runs:
       id: resolve
       shell: bash
       env:
-        INPUT_TARGET: ${{ inputs.target }}
-        INPUT_FORMAT: ${{ inputs.format }}
-        INPUT_FAIL_ON: ${{ inputs.fail-on }}
-        INPUT_OUTPUT_FILE: ${{ inputs.output-file }}
+          INPUT_TARGET: ${{ inputs.target }}
+          INPUT_FORMAT: ${{ inputs.format }}
+          INPUT_FAIL_ON: ${{ inputs.fail-on }}
+          INPUT_OUTPUT_FILE: ${{ inputs.output-file }}
+          INPUT_CONFIG_FILE: ${{ inputs.config-file }}
       run: |
         set -euo pipefail
         target="$INPUT_TARGET"
         output_file="$INPUT_OUTPUT_FILE"
+        config_file="$INPUT_CONFIG_FILE"
 
         if [ -z "$target" ]; then
           target="$GITHUB_WORKSPACE"
@@ -71,13 +77,15 @@ runs:
           fi
         fi
 
-        case "$INPUT_FORMAT" in
-          text|json|markdown|sarif) ;;
-          *)
-            printf '%s\n' "TrustMCP action error: format must be 'text', 'json', 'markdown', or 'sarif'." >&2
-            exit 1
-            ;;
-        esac
+        if [ -n "$INPUT_FORMAT" ]; then
+          case "$INPUT_FORMAT" in
+            text|json|markdown|sarif) ;;
+            *)
+              printf '%s\n' "TrustMCP action error: format must be 'text', 'json', 'markdown', or 'sarif'." >&2
+              exit 1
+              ;;
+          esac
+        fi
 
         if [ -n "$INPUT_FAIL_ON" ]; then
           case "$INPUT_FAIL_ON" in
@@ -99,8 +107,22 @@ runs:
             ;;
         esac
 
+        if [ -n "$config_file" ]; then
+          case "$config_file" in
+            /*) ;;
+            *) config_file="$GITHUB_WORKSPACE/$config_file" ;;
+          esac
+
+          if [ ! -e "$config_file" ]; then
+            printf '%s\n' "TrustMCP action error: config-file does not exist: $config_file" >&2
+            exit 1
+          fi
+        fi
+
         printf 'target=%s\n' "$target" >> "$GITHUB_OUTPUT"
+        printf 'format=%s\n' "$INPUT_FORMAT" >> "$GITHUB_OUTPUT"
         printf 'output-file=%s\n' "$output_file" >> "$GITHUB_OUTPUT"
+        printf 'config-file=%s\n' "$config_file" >> "$GITHUB_OUTPUT"
 
     - name: Install dependencies
       shell: bash
@@ -118,9 +140,10 @@ runs:
       working-directory: ${{ github.action_path }}
       env:
         TARGET: ${{ steps.resolve.outputs.target }}
-        FORMAT: ${{ inputs.format }}
+        FORMAT: ${{ steps.resolve.outputs.format }}
         FAIL_ON: ${{ inputs.fail-on }}
         OUTPUT_FILE: ${{ steps.resolve.outputs.output-file }}
+        CONFIG_FILE: ${{ steps.resolve.outputs.config-file }}
       run: |
         set -euo pipefail
-        node dist/action/main.js "$TARGET" "$FORMAT" "$FAIL_ON" "$OUTPUT_FILE"
+        node dist/action/main.js "$TARGET" "$FORMAT" "$FAIL_ON" "$OUTPUT_FILE" "$CONFIG_FILE"
