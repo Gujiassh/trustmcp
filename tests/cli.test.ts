@@ -211,6 +211,13 @@ describe("parseArguments", () => {
       .toThrowError("doctor accepts exactly one target: a local directory, GitHub repository URL, or gh:owner/repo.");
   });
 
+  it("rejects blank target arguments", () => {
+    expect(() => parseArguments(["   "]))
+      .toThrowError("Target must not be blank. Provide a local directory or a public GitHub repository URL.");
+    expect(() => parseArguments(["doctor", "   "]))
+      .toThrowError("doctor target must not be blank.");
+  });
+
   it("rejects invalid doctor format values", () => {
     expect(() => parseArguments(["doctor", "./fixtures/local-risky", "--format", "markdown"]))
       .toThrowError("doctor --format expects one of: text, json.");
