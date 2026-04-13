@@ -218,6 +218,43 @@ describe("runAction", () => {
     expect(stdout.join("")).toContain("# TrustMCP Report");
   });
 
+  it("resolves relative config-file paths against the workspace directory", async () => {
+    const workspaceDir = await mkdtemp(join(tmpdir(), "trustmcp-action-workspace-test-"));
+    tempDirectories.push(workspaceDir);
+    const configPath = join(workspaceDir, "trustmcp.config.json");
+    await writeFile(
+      configPath,
+      JSON.stringify({
+        "ignore-rules": ["rule-2"],
+        "ignore-paths": ["src/vendor"]
+      }),
+      "utf8"
+    );
+
+    let receivedOptions: Record<string, unknown> | undefined;
+
+    const exitCode = await runAction(
+      {
+        target: "./fixtures/local-risky",
+        configFile: "trustmcp.config.json"
+      },
+      {
+        workspaceDir,
+        auditTarget: async (_target, options) => {
+          receivedOptions = options;
+          return createReport("local-directory", ["medium"]);
+        },
+        stdout: createWriter([])
+      }
+    );
+
+    expect(exitCode).toBe(0);
+    expect(receivedOptions).toEqual({
+      ignoreRules: ["rule-2"],
+      ignorePaths: ["src/vendor"]
+    });
+  });
+
   it("resolves config output-file paths relative to GITHUB_WORKSPACE", async () => {
     const workspace = await createTempDirectory("trustmcp-action-workspace-test-");
     const configPath = join(workspace, "trustmcp.config.json");
