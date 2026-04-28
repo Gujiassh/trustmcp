@@ -424,6 +424,38 @@ describe("runAction", () => {
     expect(output).not.toContain("## Findings");
   });
 
+  it("lets an explicit summary-only=false input override config summary-only=true", async () => {
+    const configPath = await createConfigPath("trustmcp.config.json");
+    await writeFile(
+      configPath,
+      JSON.stringify({
+        "format": "markdown",
+        "summary-only": true
+      }),
+      "utf8"
+    );
+
+    const stdout: string[] = [];
+
+    const exitCode = await runAction(
+      {
+        target: "./fixtures/local-risky",
+        configFile: configPath,
+        summaryOnly: false
+      },
+      {
+        auditTarget: async () => createReport("local-directory", ["medium"]),
+        stdout: createWriter(stdout)
+      }
+    );
+
+    const output = stdout.join("");
+    expect(exitCode).toBe(0);
+    expect(output).toContain("# TrustMCP Report");
+    expect(output).toContain("## Findings");
+    expect(output).not.toContain("TrustMCP Summary");
+  });
+
   it("fails early when summary-only is combined with sarif format", async () => {
     const stderr: string[] = [];
 
