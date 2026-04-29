@@ -40,7 +40,11 @@ describe("runAction", () => {
       "finding-count": "3",
       "low-count": "0",
       "medium-count": "1",
-      "high-count": "2"
+      "high-count": "2",
+      "new-finding-count": "3",
+      "new-low-count": "0",
+      "new-medium-count": "1",
+      "new-high-count": "2"
     });
     expect(await readFile(summaryPath, "utf8")).toBe(`# TrustMCP Report
 
@@ -102,7 +106,11 @@ describe("runAction", () => {
       "finding-count": "0",
       "low-count": "0",
       "medium-count": "0",
-      "high-count": "0"
+      "high-count": "0",
+      "new-finding-count": "0",
+      "new-low-count": "0",
+      "new-medium-count": "0",
+      "new-high-count": "0"
     });
   });
 
@@ -137,7 +145,11 @@ describe("runAction", () => {
       "finding-count": "2",
       "low-count": "0",
       "medium-count": "1",
-      "high-count": "1"
+      "high-count": "1",
+      "new-finding-count": "2",
+      "new-low-count": "0",
+      "new-medium-count": "1",
+      "new-high-count": "1"
     });
     expect(await readFile(summaryPath, "utf8")).toContain("# TrustMCP Report");
   });
@@ -261,6 +273,51 @@ describe("runAction", () => {
       baselineEntries: [
         { ruleId: "rule-1", file: "src/example-1.ts", line: 1 }
       ]
+    });
+  });
+
+  it("writes total and new finding counts separately when a baseline is applied", async () => {
+    const outputPath = await createOutputPath();
+    const baselinePath = await createBaselinePath("trustmcp-action-baseline.json");
+    await writeFile(
+      baselinePath,
+      JSON.stringify([{ ruleId: "rule-3", file: "src/example-3.ts", line: 3 }]),
+      "utf8"
+    );
+
+    const report = createReport("local-directory", ["high", "medium", "low"]);
+    report.newFindings = report.findings.slice(0, 2);
+    report.summary.newFindingCount = 2;
+    report.summary.newSeverityCounts = {
+      low: 0,
+      medium: 1,
+      high: 1
+    };
+    report.summary.message = "3 finding(s) across 3 rule(s). Static heuristics only. 2 new finding(s) across 2 rule(s).";
+
+    const exitCode = await runAction(
+      {
+        target: "./fixtures/local-risky",
+        format: "json",
+        baselineFile: baselinePath
+      },
+      {
+        auditTarget: async () => report,
+        stdout: createWriter([]),
+        githubOutputPath: outputPath
+      }
+    );
+
+    expect(exitCode).toBe(0);
+    expect(await readOutputs(outputPath)).toEqual({
+      "finding-count": "3",
+      "low-count": "1",
+      "medium-count": "1",
+      "high-count": "1",
+      "new-finding-count": "2",
+      "new-low-count": "0",
+      "new-medium-count": "1",
+      "new-high-count": "1"
     });
   });
 

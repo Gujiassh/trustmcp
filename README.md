@@ -312,11 +312,12 @@ jobs:
       - run: |
           echo "findings=${{ steps.trustmcp.outputs.finding-count }}"
           echo "high=${{ steps.trustmcp.outputs.high-count }}"
+          echo "new_findings=${{ steps.trustmcp.outputs.new-finding-count }}"
 ```
 
 The action builds TrustMCP from its own source tree on each run and then scans the checked-out target path or public GitHub URL you pass in. It does not rely on a published npm package or marketplace wrapper. The example above uses the current stable tag `v0.1.0`; if you need stricter supply-chain pinning, use a specific commit SHA.
 
-The reusable action exposes `finding-count`, `low-count`, `medium-count`, and `high-count` outputs derived from the same report summary that the CLI emits in JSON.
+The reusable action exposes `finding-count`, `low-count`, `medium-count`, and `high-count` outputs for total findings, plus `new-finding-count`, `new-low-count`, `new-medium-count`, and `new-high-count` for the baseline-filtered "new findings" subset when you use baseline gating.
 
 When `GITHUB_STEP_SUMMARY` is available, the reusable action also appends the compact TrustMCP markdown report there automatically for easier job review.
 

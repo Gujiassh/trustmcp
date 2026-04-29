@@ -14,6 +14,18 @@ outputs:
   high-count:
     description: Count of high-severity findings.
     value: ${{ steps.scan.outputs.high-count }}
+  new-finding-count:
+    description: Count of findings that are not present in the supplied baseline.
+    value: ${{ steps.scan.outputs.new-finding-count }}
+  new-low-count:
+    description: Count of new low-severity findings after baseline filtering.
+    value: ${{ steps.scan.outputs.new-low-count }}
+  new-medium-count:
+    description: Count of new medium-severity findings after baseline filtering.
+    value: ${{ steps.scan.outputs.new-medium-count }}
+  new-high-count:
+    description: Count of new high-severity findings after baseline filtering.
+    value: ${{ steps.scan.outputs.new-high-count }}
 
 inputs:
   target:
