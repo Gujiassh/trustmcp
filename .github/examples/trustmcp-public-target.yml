@@ -24,3 +24,5 @@ jobs:
           echo "high=${{ steps.trustmcp.outputs.high-count }}"
           echo "new_findings=${{ steps.trustmcp.outputs.new-finding-count }}"
           echo "new_rules=${{ steps.trustmcp.outputs.new-rule-count }}"
+          echo "baseline_applied=${{ steps.trustmcp.outputs.baseline-applied }}"
+          echo "summary=${{ steps.trustmcp.outputs.summary-message }}"

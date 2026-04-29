@@ -75,7 +75,11 @@ export async function runAction(
       await writeBaselineFile(baselineOutputPath, findingsToBaselineEntries(report.findings));
     }
     stdout.write(`${output}\n`);
-    await writeActionOutputs(report, dependencies.githubOutputPath ?? process.env.GITHUB_OUTPUT);
+    await writeActionOutputs(
+      report,
+      baselineEntries !== undefined && baselineEntries.length > 0,
+      dependencies.githubOutputPath ?? process.env.GITHUB_OUTPUT
+    );
     await writeActionSummary(report, dependencies.githubStepSummaryPath ?? process.env.GITHUB_STEP_SUMMARY);
     return shouldFailForThreshold(report, resolved.failOn) ? 2 : 0;
   } catch (error) {
@@ -85,7 +89,11 @@ export async function runAction(
   }
 }
 
-export async function writeActionOutputs(report: AuditReport, githubOutputPath?: string): Promise<void> {
+export async function writeActionOutputs(
+  report: AuditReport,
+  baselineApplied: boolean,
+  githubOutputPath?: string
+): Promise<void> {
   if (githubOutputPath === undefined || githubOutputPath.length === 0) {
     return;
   }
@@ -100,7 +108,9 @@ export async function writeActionOutputs(report: AuditReport, githubOutputPath?:
     `new-rule-count=${report.summary.newTriggeredRuleCount}`,
     `new-low-count=${report.summary.newSeverityCounts.low}`,
     `new-medium-count=${report.summary.newSeverityCounts.medium}`,
-    `new-high-count=${report.summary.newSeverityCounts.high}`
+    `new-high-count=${report.summary.newSeverityCounts.high}`,
+    `baseline-applied=${baselineApplied ? "true" : "false"}`,
+    `summary-message=${sanitizeGitHubOutputValue(report.summary.message)}`
   ];
 
   await appendFile(githubOutputPath, `${outputLines.join("\n")}\n`);
@@ -264,6 +274,10 @@ function resolveWorkspaceRelativePath(filePath?: string): string | undefined {
 
 function resolveRelativePath(filePath: string, baseDirectory: string): string {
   return isAbsolute(filePath) ? filePath : resolve(baseDirectory, filePath);
+}
+
+function sanitizeGitHubOutputValue(value: string): string {
+  return value.replace(/\r/g, "%0D").replace(/\n/g, "%0A");
 }
 
 const isMainModule =

@@ -32,6 +32,12 @@ outputs:
   new-high-count:
     description: Count of new high-severity findings after baseline filtering.
     value: ${{ steps.scan.outputs.new-high-count }}
+  baseline-applied:
+    description: Whether the action loaded at least one baseline entry for this scan.
+    value: ${{ steps.scan.outputs.baseline-applied }}
+  summary-message:
+    description: Single-line summary text for the completed scan.
+    value: ${{ steps.scan.outputs.summary-message }}
 
 inputs:
   target:

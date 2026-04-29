@@ -61,6 +61,7 @@ The repo now also ships a single `publish:check` command that bundles the local 
 The reusable action now exposes machine-readable summary outputs for total findings and low/medium/high severity counts.
 The reusable action now also exposes baseline-aware machine-readable outputs for new finding totals and new low/medium/high severity counts, so workflows can distinguish overall inventory from newly introduced findings.
 The reusable action now also exposes total triggered-rule counts and baseline-aware new triggered-rule counts, so workflows can branch on rule breadth without reparsing JSON reports.
+The reusable action now also exposes `baseline-applied` and the final one-line `summary-message`, so downstream workflow steps can tell whether baseline gating was actually active and can reuse the human-readable summary text directly.
 
 When running inside GitHub Actions with `GITHUB_STEP_SUMMARY` available, the reusable action also appends the existing markdown report there.
 

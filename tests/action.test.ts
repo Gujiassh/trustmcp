@@ -46,7 +46,9 @@ describe("runAction", () => {
       "new-rule-count": "3",
       "new-low-count": "0",
       "new-medium-count": "1",
-      "new-high-count": "2"
+      "new-high-count": "2",
+      "baseline-applied": "false",
+      "summary-message": "3 finding(s) across 3 rule(s). Static heuristics only."
     });
     expect(await readFile(summaryPath, "utf8")).toBe(`# TrustMCP Report
 
@@ -114,7 +116,9 @@ describe("runAction", () => {
       "new-rule-count": "0",
       "new-low-count": "0",
       "new-medium-count": "0",
-      "new-high-count": "0"
+      "new-high-count": "0",
+      "baseline-applied": "false",
+      "summary-message": "No matching rules were triggered. Static heuristics only; this does not mean the target is safe."
     });
   });
 
@@ -155,7 +159,9 @@ describe("runAction", () => {
       "new-rule-count": "2",
       "new-low-count": "0",
       "new-medium-count": "1",
-      "new-high-count": "1"
+      "new-high-count": "1",
+      "baseline-applied": "false",
+      "summary-message": "2 finding(s) across 2 rule(s). Static heuristics only."
     });
     expect(await readFile(summaryPath, "utf8")).toContain("# TrustMCP Report");
   });
@@ -326,7 +332,9 @@ describe("runAction", () => {
       "new-rule-count": "2",
       "new-low-count": "0",
       "new-medium-count": "1",
-      "new-high-count": "1"
+      "new-high-count": "1",
+      "baseline-applied": "true",
+      "summary-message": "3 finding(s) across 3 rule(s). Static heuristics only. 2 new finding(s) across 2 rule(s)."
     });
   });
 
