@@ -38,10 +38,12 @@ describe("runAction", () => {
     expect(stdout.join("")).toContain('"findingCount": 3');
     expect(await readOutputs(outputPath)).toEqual({
       "finding-count": "3",
+      "rule-count": "3",
       "low-count": "0",
       "medium-count": "1",
       "high-count": "2",
       "new-finding-count": "3",
+      "new-rule-count": "3",
       "new-low-count": "0",
       "new-medium-count": "1",
       "new-high-count": "2"
@@ -104,10 +106,12 @@ describe("runAction", () => {
     expect(exitCode).toBe(0);
     expect(await readOutputs(outputPath)).toEqual({
       "finding-count": "0",
+      "rule-count": "0",
       "low-count": "0",
       "medium-count": "0",
       "high-count": "0",
       "new-finding-count": "0",
+      "new-rule-count": "0",
       "new-low-count": "0",
       "new-medium-count": "0",
       "new-high-count": "0"
@@ -143,10 +147,12 @@ describe("runAction", () => {
     expect(stdout.join("")).toBe(reportContent);
     expect(await readOutputs(outputPath)).toEqual({
       "finding-count": "2",
+      "rule-count": "2",
       "low-count": "0",
       "medium-count": "1",
       "high-count": "1",
       "new-finding-count": "2",
+      "new-rule-count": "2",
       "new-low-count": "0",
       "new-medium-count": "1",
       "new-high-count": "1"
@@ -288,6 +294,7 @@ describe("runAction", () => {
     const report = createReport("local-directory", ["high", "medium", "low"]);
     report.newFindings = report.findings.slice(0, 2);
     report.summary.newFindingCount = 2;
+    report.summary.newTriggeredRuleCount = 2;
     report.summary.newSeverityCounts = {
       low: 0,
       medium: 1,
@@ -311,10 +318,12 @@ describe("runAction", () => {
     expect(exitCode).toBe(0);
     expect(await readOutputs(outputPath)).toEqual({
       "finding-count": "3",
+      "rule-count": "3",
       "low-count": "1",
       "medium-count": "1",
       "high-count": "1",
       "new-finding-count": "2",
+      "new-rule-count": "2",
       "new-low-count": "0",
       "new-medium-count": "1",
       "new-high-count": "1"
@@ -554,6 +563,7 @@ function createReport(sourceType: "local-directory" | "public-github-repo", seve
       findingCount: severities.length,
       newFindingCount: severities.length,
       triggeredRuleCount: severities.length,
+      newTriggeredRuleCount: severities.length,
       newSeverityCounts: {
         low: severities.filter((severity) => severity === "low").length,
         medium: severities.filter((severity) => severity === "medium").length,

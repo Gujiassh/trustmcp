@@ -101,6 +101,7 @@ function createReport(
     limitations: DEFAULT_LIMITATIONS,
     summary: {
       newFindingCount: newFindings.length,
+      newTriggeredRuleCount,
       newSeverityCounts,
       findingCount: findings.length,
       triggeredRuleCount,

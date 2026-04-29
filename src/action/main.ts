@@ -92,10 +92,12 @@ export async function writeActionOutputs(report: AuditReport, githubOutputPath?:
 
   const outputLines = [
     `finding-count=${report.summary.findingCount}`,
+    `rule-count=${report.summary.triggeredRuleCount}`,
     `low-count=${report.summary.severityCounts.low}`,
     `medium-count=${report.summary.severityCounts.medium}`,
     `high-count=${report.summary.severityCounts.high}`,
     `new-finding-count=${report.summary.newFindingCount}`,
+    `new-rule-count=${report.summary.newTriggeredRuleCount}`,
     `new-low-count=${report.summary.newSeverityCounts.low}`,
     `new-medium-count=${report.summary.newSeverityCounts.medium}`,
     `new-high-count=${report.summary.newSeverityCounts.high}`

@@ -20,5 +20,7 @@ jobs:
 
       - run: |
           echo "findings=${{ steps.trustmcp.outputs.finding-count }}"
+          echo "rules=${{ steps.trustmcp.outputs.rule-count }}"
           echo "high=${{ steps.trustmcp.outputs.high-count }}"
           echo "new_findings=${{ steps.trustmcp.outputs.new-finding-count }}"
+          echo "new_rules=${{ steps.trustmcp.outputs.new-rule-count }}"

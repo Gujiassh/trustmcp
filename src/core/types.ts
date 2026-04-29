@@ -25,6 +25,7 @@ export interface AuditSummary {
   findingCount: number;
   newFindingCount: number;
   triggeredRuleCount: number;
+  newTriggeredRuleCount: number;
   severityCounts: {
     low: number;
     medium: number;

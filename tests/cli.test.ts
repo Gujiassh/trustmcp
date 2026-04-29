@@ -1190,6 +1190,7 @@ function createReport(sourceType: "local-directory" | "public-github-repo", seve
       findingCount: severities.length,
       newFindingCount: severities.length,
       triggeredRuleCount: severities.length,
+      newTriggeredRuleCount: severities.length,
       severityCounts: {
         low: severities.filter((severity) => severity === "low").length,
         medium: severities.filter((severity) => severity === "medium").length,

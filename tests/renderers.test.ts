@@ -149,6 +149,7 @@ No matching rules were triggered.`);
     "findingCount": 0,
     "newFindingCount": 0,
     "triggeredRuleCount": 0,
+    "newTriggeredRuleCount": 0,
     "severityCounts": {
       "low": 0,
       "medium": 0,
@@ -298,6 +299,7 @@ function createReport(severities: Array<"high" | "medium" | "low">): AuditReport
       findingCount: severities.length,
       newFindingCount: severities.length,
       triggeredRuleCount: severities.length,
+      newTriggeredRuleCount: severities.length,
       severityCounts: {
         low: severities.filter((severity) => severity === "low").length,
         medium: severities.filter((severity) => severity === "medium").length,

@@ -5,6 +5,9 @@ outputs:
   finding-count:
     description: Total findings reported by TrustMCP.
     value: ${{ steps.scan.outputs.finding-count }}
+  rule-count:
+    description: Count of unique rules triggered across all findings.
+    value: ${{ steps.scan.outputs.rule-count }}
   low-count:
     description: Count of low-severity findings.
     value: ${{ steps.scan.outputs.low-count }}
@@ -17,6 +20,9 @@ outputs:
   new-finding-count:
     description: Count of findings that are not present in the supplied baseline.
     value: ${{ steps.scan.outputs.new-finding-count }}
+  new-rule-count:
+    description: Count of unique rules triggered by findings not present in the supplied baseline.
+    value: ${{ steps.scan.outputs.new-rule-count }}
   new-low-count:
     description: Count of new low-severity findings after baseline filtering.
     value: ${{ steps.scan.outputs.new-low-count }}
