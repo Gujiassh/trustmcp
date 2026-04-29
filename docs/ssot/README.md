@@ -59,6 +59,7 @@ The repo now also ships a local tarball install smoke check so future package di
 The repo now also ships a single `publish:check` command that bundles the local release-readiness checks without touching external systems.
 
 The reusable action now exposes machine-readable summary outputs for total findings and low/medium/high severity counts.
+The reusable action now also exposes baseline-aware machine-readable outputs for new finding totals and new low/medium/high severity counts, so workflows can distinguish overall inventory from newly introduced findings.
 
 When running inside GitHub Actions with `GITHUB_STEP_SUMMARY` available, the reusable action also appends the existing markdown report there.
 
