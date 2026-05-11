@@ -58,7 +58,7 @@ Please do not expand TrustMCP into a hosted platform, web UI, account system, or
 This repository ships a conservative manual release workflow at `.github/workflows/release.yml`.
 
 - run it with `workflow_dispatch`
-- provide a tag like `v0.1.1`
+- provide a tag like `v0.2.0`
 - run it from the default branch
 - make sure `package.json` already matches the same version without the leading `v`
 - if the repo is on a development suffix such as `0.2.0-dev`, bump it to the final release version before running the workflow
