@@ -8,6 +8,7 @@ const troubleshootingPath = fileURLToPath(new URL("../docs/troubleshooting.md", 
 const whatScansPath = fileURLToPath(new URL("../docs/what-trustmcp-scans.md", import.meta.url));
 const longTermSpecPath = fileURLToPath(new URL("../docs/ssot/long-term-development-spec.md", import.meta.url));
 const executionBreakdownPath = fileURLToPath(new URL("../docs/ssot/execution-breakdown.md", import.meta.url));
+const publishChecklistPath = fileURLToPath(new URL("../docs/npm-publish-checklist.md", import.meta.url));
 
 describe("docs coherence", () => {
   it("keeps the public scanner-surface docs aligned with the twelve-rule baseline", async () => {
@@ -36,5 +37,12 @@ describe("docs coherence", () => {
 
     expect(longTermSpec).not.toContain("three capability-focused rules");
     expect(executionBreakdown).toContain("Finish refreshing roadmap and public docs so they no longer describe the original three-rule baseline.");
+  });
+
+  it("keeps the publish checklist aligned with the current full release gate", async () => {
+    const publishChecklist = await readFile(publishChecklistPath, "utf8");
+
+    expect(publishChecklist).toContain("npm run release:check");
+    expect(publishChecklist).toContain("If you only need the packaging-oriented subset, run:");
   });
 });
