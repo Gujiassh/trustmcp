@@ -67,7 +67,7 @@ jobs:
         run: npm ci
 
       - name: Run local release checks
-        run: npm run publish:check
+        run: npm run release:check
 
       - name: Create GitHub release
         env:

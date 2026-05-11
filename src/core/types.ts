@@ -2,11 +2,18 @@ export type Severity = "high" | "medium" | "low";
 export type Confidence = "high" | "medium" | "low";
 export type SourceType = "local-directory" | "public-github-repo";
 
+export interface ConfidenceGuidance {
+  level: Confidence;
+  reason: string;
+  description: string;
+}
+
 export interface Finding {
   fingerprint: string;
   ruleId: string;
   severity: Severity;
   confidence: Confidence;
+  confidenceReason?: string;
   title: string;
   file: string;
   line?: number;
@@ -90,5 +97,8 @@ export interface Rule {
   defaultSeverity: Severity;
   id: string;
   title: string;
+  confidenceLevels?: Confidence[];
+  confidenceReasons?: string[];
+  confidenceGuidance?: ConfidenceGuidance[];
   evaluate(files: ScanFile[]): Finding[];
 }

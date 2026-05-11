@@ -25,6 +25,7 @@ export function createFinding(input: {
   ruleId: string;
   severity: Severity;
   confidence: Confidence;
+  confidenceReason?: string;
   title: string;
   file: string;
   line?: number;
@@ -38,6 +39,7 @@ export function createFinding(input: {
     ruleId: input.ruleId,
     severity: input.severity,
     confidence: input.confidence,
+    ...(input.confidenceReason === undefined ? {} : { confidenceReason: input.confidenceReason }),
     title: input.title,
     file: input.file,
     evidence: normalizedEvidence,

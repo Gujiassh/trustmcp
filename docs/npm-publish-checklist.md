@@ -9,6 +9,7 @@ This page is intentionally narrow. It does **not** publish anything for you, and
 - [ ] `package.json` has the exact version you intend to publish
 - [ ] `CHANGELOG.md` has a matching release entry or release notes are ready
 - [ ] `npm run publish:check` passes locally
+- [ ] `npm run reference:check` passes locally when the release changes scanner behavior or examples
 - [ ] the manual GitHub release workflow is ready to run from the default branch
 - [ ] you are logged in to the correct npm account for the target package namespace
 - [ ] you have confirmed the package name and access level you intend to publish
@@ -26,6 +27,14 @@ That command validates the current local release gates without publishing:
 - tests pass
 - the TypeScript build succeeds
 - `npm pack --dry-run` succeeds through the repo's pack validation path
+
+If the release also changes scanner behavior, examples, or machine-readable output guidance, run:
+
+```bash
+npm run release:check
+```
+
+That bundles `reference:check` plus `publish:check` in one local command, and it now matches the repo's GitHub release workflow.
 
 ## What this checklist does not mean
 

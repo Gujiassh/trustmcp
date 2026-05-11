@@ -10,6 +10,25 @@ const USER_CONTROLLED_URL_PATTERN =
   /(?:args|params|input|request|toolInput|toolArgs|resource)\.[A-Za-z0-9_]*url\b/i;
 
 export const outboundFetchRule: Rule = {
+  confidenceGuidance: [
+    {
+      level: "medium",
+      reason: "literal-fetch-call",
+      description: "A plain fetch call was matched without clear tool-controlled destination evidence."
+    },
+    {
+      level: "high",
+      reason: "non-fetch-network-client",
+      description: "A stronger network client surface such as axios, http(s), got, or undici was matched."
+    },
+    {
+      level: "high",
+      reason: "tool-controlled-url",
+      description: "The destination URL appears to come from tool or request input."
+    }
+  ],
+  confidenceLevels: ["medium", "high"],
+  confidenceReasons: ["literal-fetch-call", "non-fetch-network-client", "tool-controlled-url"],
   defaultSeverity: "medium",
   id: "mcp/outbound-fetch",
   title: "Outbound network request capability detected",
@@ -26,12 +45,18 @@ export const outboundFetchRule: Rule = {
         const confidence = USER_CONTROLLED_URL_PATTERN.test(line) || matchedPattern !== "fetch"
           ? "high"
           : "medium";
+        const confidenceReason = USER_CONTROLLED_URL_PATTERN.test(line)
+          ? "tool-controlled-url"
+          : matchedPattern !== "fetch"
+            ? "non-fetch-network-client"
+            : "literal-fetch-call";
 
         findings.push(
           createFinding({
             ruleId: "mcp/outbound-fetch",
             severity: "medium",
             confidence,
+            confidenceReason,
             title: outboundFetchRule.title,
             file: file.relativePath,
             line: index + 1,

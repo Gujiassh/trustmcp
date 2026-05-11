@@ -29,14 +29,20 @@ As of the current public baseline, TrustMCP already provides:
 - local directory and public GitHub repository inputs
 - text, JSON, Markdown, summary-only, and SARIF output paths
 - baseline, ignore, config, doctor, init-config, and list-rules workflows
-- three capability-focused rules:
-  - `mcp/shell-exec`
-  - `mcp/outbound-fetch`
-  - `mcp/broad-filesystem`
+- twelve capability-focused rules covering:
+  - command execution
+  - outbound fetch and exfiltration chains
+  - broad filesystem and sensitive local data access
+  - dynamic code execution
+  - download/write/execute chains
+  - archive extraction
+  - local listener startup
+  - environment secret exposure
+  - risky tool metadata
 
 This is a usable `v0.1` product, but it is still early in four important ways:
 
-1. Rule coverage is intentionally narrow.
+1. Rule coverage is materially stronger than the initial baseline, but not yet complete enough to remove all first-pass review gaps.
 2. Finding quality and suppression ergonomics are good enough for early adopters, but not yet strong enough for broad CI standardization.
 3. Workflow outputs are improving, but not yet complete as a stable automation contract.
 4. Project-level trust still depends heavily on docs clarity and regression discipline, not just feature count.

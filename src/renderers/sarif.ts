@@ -1,9 +1,13 @@
 import type { AuditReport, Finding } from "../core/types.js";
+import { listRules } from "../rules/index.js";
 
 const SARIF_SCHEMA = "https://json.schemastore.org/sarif-2.1.0.json";
 const SARIF_VERSION = "2.1.0";
 
 export function renderSarifReport(report: AuditReport): string {
+  const newFindingFingerprints = new Set(report.newFindings.map((finding) => finding.fingerprint));
+  const baselineApplied = report.summary.baselineApplied;
+
   return JSON.stringify(
     {
       $schema: SARIF_SCHEMA,
@@ -18,7 +22,10 @@ export function renderSarifReport(report: AuditReport): string {
               rules: buildSarifRules(report.findings)
             }
           },
-          results: report.findings.map((finding) => buildSarifResult(finding))
+          results: report.findings.map((finding) => buildSarifResult(finding, {
+            baselineApplied,
+            isNewFinding: newFindingFingerprints.has(finding.fingerprint)
+          }))
         }
       ]
     },
@@ -29,6 +36,7 @@ export function renderSarifReport(report: AuditReport): string {
 
 function buildSarifRules(findings: Finding[]) {
   const rulesById = new Map<string, Finding>();
+  const listedRules = new Map(listRules().map((rule) => [rule.id, rule]));
 
   for (const finding of findings) {
     if (!rulesById.has(finding.ruleId)) {
@@ -38,7 +46,9 @@ function buildSarifRules(findings: Finding[]) {
 
   return [...rulesById.entries()]
     .sort(([leftId], [rightId]) => leftId.localeCompare(rightId))
-    .map(([, finding]) => ({
+    .map(([, finding]) => {
+      const listedRule = listedRules.get(finding.ruleId);
+      return {
       id: finding.ruleId,
       shortDescription: {
         text: finding.title
@@ -53,18 +63,31 @@ function buildSarifRules(findings: Finding[]) {
         text: finding.remediation
       },
       properties: {
+        ruleId: finding.ruleId,
         confidence: finding.confidence,
-        severity: finding.severity
+        severity: finding.severity,
+        ...(listedRule?.confidenceLevels === undefined ? {} : { confidenceLevels: listedRule.confidenceLevels }),
+        ...(listedRule?.confidenceReasons === undefined ? {} : { confidenceReasons: listedRule.confidenceReasons }),
+        ...(listedRule?.confidenceGuidance === undefined ? {} : { confidenceGuidance: listedRule.confidenceGuidance })
       }
-    }));
+    };});
 }
 
-function buildSarifResult(finding: Finding) {
+function buildSarifResult(
+  finding: Finding,
+  options: {
+    baselineApplied: boolean;
+    isNewFinding: boolean;
+  }
+) {
   const result = {
     ruleId: finding.ruleId,
     level: toSarifLevel(finding.severity),
     message: {
       text: finding.title
+    },
+    partialFingerprints: {
+      primaryLocationLineHash: finding.fingerprint
     },
     locations: [
       {
@@ -77,7 +100,12 @@ function buildSarifResult(finding: Finding) {
       }
     ],
     properties: {
+      fingerprint: finding.fingerprint,
+      baselineApplied: options.baselineApplied,
+      isNewFinding: options.isNewFinding,
+      isGatedFinding: options.baselineApplied ? options.isNewFinding : true,
       confidence: finding.confidence,
+      ...(finding.confidenceReason === undefined ? {} : { confidenceReason: finding.confidenceReason }),
       severity: finding.severity,
       evidence: finding.evidence,
       whyItMatters: finding.whyItMatters,

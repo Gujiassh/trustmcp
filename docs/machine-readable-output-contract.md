@@ -110,7 +110,7 @@ Stable fields:
 ### Summary semantics
 
 - `baselineApplied`
-  - `true` when baseline entries were loaded for the scan
+  - `true` when baseline entries were supplied for the scan, including an empty baseline file
   - `false` otherwise
 - `findingCount`
   - total visible findings after ignore filtering
@@ -143,6 +143,7 @@ Each item in `findings` and `newFindings` has these stable fields:
 - `ruleId`
 - `severity`
 - `confidence`
+- `confidenceReason`
 - `title`
 - `file`
 - `line`
@@ -163,6 +164,9 @@ Each item in `findings` and `newFindings` has these stable fields:
   - one of `low`, `medium`, `high`
 - `confidence`
   - one of `low`, `medium`, `high`
+- `confidenceReason`
+  - optional stable classifier describing why the current confidence level was assigned
+  - current values are rule-specific strings such as `tool-controlled-url`, `vm-execution-api`, or `recursive-filesystem-operation`
 - `title`
   - human-readable finding title
 - `file`
@@ -232,6 +236,38 @@ The reusable action emits these stable output keys:
 - `baseline-applied`
 - `summary-message`
 
+## `list-rules --json` contract
+
+The JSON form of `list-rules` emits one object per shipped rule.
+
+Stable fields:
+
+- `id`
+- `severity`
+- `title`
+- `confidenceLevels`
+- `confidenceReasons`
+- `confidenceGuidance`
+
+Field semantics:
+
+- `id`
+  - shipped rule identifier
+- `severity`
+  - default severity for this rule
+- `title`
+  - human-readable rule title
+- `confidenceLevels`
+  - optional list of confidence levels this rule may emit in findings
+- `confidenceReasons`
+  - optional list of stable `confidenceReason` values this rule may emit in findings
+- `confidenceGuidance`
+  - optional list of machine-readable objects describing each confidence reason
+  - each item carries:
+    - `level`
+    - `reason`
+    - `description`
+
 ### Action output semantics
 
 - `finding-count`
@@ -253,7 +289,7 @@ The reusable action emits these stable output keys:
 - `gated-low-count`, `gated-medium-count`, `gated-high-count`
   - severity counts used for policy gating
 - `baseline-applied`
-  - `"true"` when baseline entries were loaded
+  - `"true"` when baseline entries were supplied for the scan, including an empty baseline file
   - `"false"` otherwise
 - `summary-message`
   - the same one-line summary exposed in `summary.message`
@@ -293,3 +329,40 @@ If you want the smallest stable automation surface, prefer:
 - `findings[].fingerprint`
 - `findings[].ruleId`
 - GitHub Action output keys listed above
+
+## SARIF mapping note
+
+SARIF is still a rendered projection of the core TrustMCP finding model, not the primary contract source of truth.
+
+Current stable SARIF expectations:
+
+- each SARIF rule entry carries:
+  - `properties.ruleId`
+  - `properties.confidence`
+  - `properties.confidenceLevels`
+  - `properties.confidenceReasons`
+  - `properties.confidenceGuidance`
+  - `properties.severity`
+- each SARIF result entry carries:
+  - `partialFingerprints.primaryLocationLineHash`
+  - `properties.fingerprint`
+  - `properties.baselineApplied`
+  - `properties.isNewFinding`
+  - `properties.isGatedFinding`
+  - `properties.confidence`
+  - `properties.confidenceReason`
+  - `properties.severity`
+  - `properties.evidence`
+  - `properties.whyItMatters`
+  - `properties.remediation`
+
+`partialFingerprints.primaryLocationLineHash` and `properties.fingerprint` currently carry the same stable TrustMCP finding identity. Consumers may use either, but SARIF-native consumers should prefer `partialFingerprints` when available.
+
+Current SARIF policy-state semantics:
+
+- `properties.baselineApplied`
+  - `true` when the scan ran with baseline gating enabled
+- `properties.isNewFinding`
+  - `true` when the finding is still in `newFindings`
+- `properties.isGatedFinding`
+  - `true` when the finding is part of the exact set used for TrustMCP policy failure

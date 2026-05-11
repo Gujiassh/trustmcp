@@ -24,6 +24,7 @@ export interface DoctorCheckResult {
 export interface DoctorTargetCheckResult extends DoctorCheckResult {
   kind?: "local-directory" | "public-github-repo";
   displayName?: string;
+  resolvedRef?: string;
 }
 
 export interface DoctorResult {
@@ -135,7 +136,11 @@ async function validateTarget(target: string): Promise<DoctorTargetCheckResult> 
       displayName: gitHubReference.displayName,
       kind: "public-github-repo",
       ok: true,
-      message: `GitHub repository input (${gitHubReference.displayName})`
+      ...(gitHubReference.requestedRef === undefined ? {} : { resolvedRef: gitHubReference.requestedRef }),
+      message:
+        gitHubReference.requestedRef === undefined
+          ? `GitHub repository input (${gitHubReference.displayName})`
+          : `GitHub repository input (${gitHubReference.displayName} @ ${gitHubReference.requestedRef})`
     };
   }
 
@@ -150,7 +155,8 @@ async function validateTarget(target: string): Promise<DoctorTargetCheckResult> 
   if (looksLikeUrl(target)) {
     return {
       ok: false,
-      message: "Unsupported URL. TrustMCP doctor accepts local directories, GitHub repository root URLs, or gh:owner/repo."
+      message:
+        "Unsupported URL. TrustMCP doctor accepts local directories, GitHub repository root URLs, or gh:owner/repo, optionally with an explicit ref."
     };
   }
 

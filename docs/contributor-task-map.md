@@ -7,12 +7,15 @@ Use this page when you know the job you need to do, but do not remember which fi
 - Check out [What TrustMCP scans, and how it differs from npm audit](./what-trustmcp-scans.md) for the capability-scanning scope and non-goals.
 - Check out [TrustMCP rules explained](./trustmcp-rules.md) for the current shipped rules and what each one is trying to catch.
 - Run `node dist/cli/main.js list-rules` if you want the current shipped rule IDs from the CLI.
+- Run `node dist/cli/main.js list-rules --json` if you need machine-readable rule metadata such as severity, `confidenceLevels`, `confidenceReasons`, or `confidenceGuidance`.
 
 ## Check or explain the current rule set
 
 - Use [TrustMCP rules explained](./trustmcp-rules.md) when you need the public rule intent and boundaries.
 - Use `node dist/cli/main.js list-rules` when you need a compact machine-friendly list.
+- Use `node dist/cli/main.js list-rules --json` when a consumer needs stable rule metadata instead of just IDs and titles.
 - When changing a rule, follow the rule-change notes in [CONTRIBUTING.md](../CONTRIBUTING.md).
+- Use [TrustMCP rule contribution and regression corpus](./rule-contribution-and-regression-corpus.md) when you need the full maintainer checklist for fixtures, tests, docs, and contract-safe rule changes.
 
 ## Troubleshoot setup or target problems
 
@@ -28,7 +31,7 @@ Use this page when you know the job you need to do, but do not remember which fi
 ## Validate package readiness
 
 - Run `npm run pack:check` to validate the future npm tarball contents locally.
-- Run `npm run publish:check` to bundle the current local release/package gates in one command.
+- Run `npm run publish:check` when you only need the packaging-oriented local release/package gates.
 - Check out [Installing TrustMCP today](./installing-trustmcp.md) if you need the honest explanation of what pack readiness does and does not mean.
 
 ## Prepare a release
@@ -36,11 +39,20 @@ Use this page when you know the job you need to do, but do not remember which fi
 - Check out [CHANGELOG.md](../CHANGELOG.md) for the public release history and the `Unreleased` section.
 - Follow the manual GitHub release notes in [CONTRIBUTING.md](../CONTRIBUTING.md).
 - Check out [the npm publish checklist](./npm-publish-checklist.md) for the final manual registry preflight when the project is actually ready to publish.
+- Use [TrustMCP release confidence and reference targets](./release-confidence-and-reference-targets.md) when the release changes scanning behavior, machine-readable outputs, or SARIF.
+- Run `npm run reference:check` when you want to validate the checked-in reference-target manifest before a release-confidence pass.
+- Run `npm run reference:scan` when you want to replay the current scans for those checked-in public reference targets.
+- Run `npm run release:check` when you want the full local release-confidence + packaging gate in one command.
 
 ## Work on GitHub Actions examples or release utilities
 
-- Look in `.github/examples/` for reusable-action workflows by job-to-be-done: workspace scans, public targets, artifacts, and SARIF upload.
+- Look in `.github/examples/` for reusable-action workflows by job-to-be-done: workspace scans, public targets, PR comments, artifacts, and SARIF upload.
 - Look in `.github/workflows/` for repo-owned automation such as CI and the manual GitHub release workflow.
+
+## Add or tighten a rule safely
+
+- Start with [TrustMCP rule contribution and regression corpus](./rule-contribution-and-regression-corpus.md).
+- Then update the smallest relevant fixture, unit tests, aggregate tests, and public docs together.
 
 ## When you need the public story, not maintainer workflow
 

@@ -14,6 +14,25 @@ const USER_CONTROLLED_CODE_PATTERN =
   /(?:args|params|input|request|toolInput|toolArgs|resource)\.[A-Za-z0-9_]*(?:code|script|source|template|expression)\b/i;
 
 export const dynamicCodeExecRule: Rule = {
+  confidenceGuidance: [
+    {
+      level: "medium",
+      reason: "literal-dynamic-eval",
+      description: "A direct eval or Function-style primitive was matched without clear tool-controlled code input."
+    },
+    {
+      level: "high",
+      reason: "vm-execution-api",
+      description: "A vm execution API was matched, which is treated as a stronger dynamic execution surface."
+    },
+    {
+      level: "high",
+      reason: "tool-controlled-code-input",
+      description: "The executed code string appears to come from tool or request input."
+    }
+  ],
+  confidenceLevels: ["medium", "high"],
+  confidenceReasons: ["literal-dynamic-eval", "vm-execution-api", "tool-controlled-code-input"],
   defaultSeverity: "high",
   id: "mcp/dynamic-code-exec",
   title: "Dynamic code execution capability detected",
@@ -37,12 +56,18 @@ export const dynamicCodeExecRule: Rule = {
         const confidence = USER_CONTROLLED_CODE_PATTERN.test(evidence) || matchedVmExecution
           ? "high"
           : "medium";
+        const confidenceReason = USER_CONTROLLED_CODE_PATTERN.test(evidence)
+          ? "tool-controlled-code-input"
+          : matchedVmExecution
+            ? "vm-execution-api"
+            : "literal-dynamic-eval";
 
         findings.push(
           createFinding({
             ruleId: "mcp/dynamic-code-exec",
             severity: "high",
             confidence,
+            confidenceReason,
             title: dynamicCodeExecRule.title,
             file: file.relativePath,
             line: index + 1,

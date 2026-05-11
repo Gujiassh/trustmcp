@@ -207,6 +207,7 @@ Target slices:
 
 - Slice 1: Dynamic Code Execution Rule
 - Slice 2: Output Contract Spec
+- Slice 3: Finding Fingerprint And Baseline Identity Design
 - Slice 4: SARIF Parity Hardening
 - one scoped subset of Slice 5 where docs are currently weakest
 
@@ -220,9 +221,9 @@ Release intent:
 
 Target slices:
 
-- Slice 3: Finding Fingerprint And Baseline Identity Design
 - remaining Slice 5 work
 - first half of Slice 6
+- clearer confidence / rule metadata semantics
 
 Release intent:
 
@@ -258,8 +259,8 @@ Choose the next PR using these rules:
 
 If execution starts immediately, the best next three PRs are:
 
-1. Dynamic code execution rule.
-2. Public machine-readable output contract doc.
-3. SARIF parity hardening plus doc refresh.
+1. Finish refreshing roadmap and public docs so they no longer describe the original three-rule baseline.
+2. Extend rule metadata ergonomics further, for example richer `list-rules --json` guidance and consumer-facing examples.
+3. Keep tightening contributor guardrails and release/reference-target documentation so the larger shipped rule set stays maintainable.
 
-That sequence keeps momentum high without taking on the harder baseline identity work too early.
+That sequence keeps the repo's process memory aligned with the code that now exists, while continuing to improve automation and contributor safety without reopening product-scope drift.

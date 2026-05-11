@@ -1,0 +1,22 @@
+{
+  "targets": [
+    {
+      "id": "finding-producing",
+      "target": "https://github.com/microsoft/playwright-mcp?ref=eed21856dcf0defa23394909e27125311fed246f",
+      "expectedCategory": "finding-producing",
+      "notes": "Pinned real-world example expected to produce at least one finding."
+    },
+    {
+      "id": "mostly-clean",
+      "target": "https://github.com/github/github-mcp-server?ref=b1575edfefde09e3cf7c805aea79a92131271659",
+      "expectedCategory": "mostly-clean",
+      "notes": "Pinned real-world example expected to stay mostly or entirely clean."
+    },
+    {
+      "id": "sarif-relevant",
+      "target": "https://github.com/modelcontextprotocol/servers",
+      "expectedCategory": "sarif-relevant",
+      "notes": "Public MCP repository useful for visual SARIF inspection after renderer changes."
+    }
+  ]
+}

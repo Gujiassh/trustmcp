@@ -48,7 +48,7 @@ outputs:
     description: Count of gated high-severity findings.
     value: ${{ steps.scan.outputs.gated-high-count }}
   baseline-applied:
-    description: Whether the action loaded at least one baseline entry for this scan.
+    description: Whether the action ran with baseline entries supplied for this scan, including an empty baseline file.
     value: ${{ steps.scan.outputs.baseline-applied }}
   summary-message:
     description: Single-line summary text for the completed scan.
@@ -180,6 +180,10 @@ runs:
         case "$target" in
           gh:*|http://*|https://*) ;;
           *)
+            case "$target" in
+              /*) ;;
+              *) target="$GITHUB_WORKSPACE/$target" ;;
+            esac
             if [ ! -e "$target" ]; then
               printf '%s\n' "TrustMCP action error: target does not exist: $target" >&2
               exit 1

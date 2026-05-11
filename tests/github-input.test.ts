@@ -22,6 +22,12 @@ describe("parseGitHubRepositoryUrl", () => {
     expect(parsed?.canonicalUrl).toBe("https://github.com/modelcontextprotocol/servers");
   });
 
+  it("parses explicit ref selectors for gh shorthand and repository URLs", () => {
+    expect(parseGitHubRepositoryUrl("gh:modelcontextprotocol/servers@main")?.requestedRef).toBe("main");
+    expect(parseGitHubRepositoryUrl("https://github.com/modelcontextprotocol/servers?ref=main")?.requestedRef)
+      .toBe("main");
+  });
+
   it("parses supported repository root variants", () => {
     expect(parseGitHubRepositoryUrl("https://github.com/modelcontextprotocol/servers/")?.canonicalUrl)
       .toBe("https://github.com/modelcontextprotocol/servers");
@@ -65,7 +71,7 @@ describe("getUnsupportedGitHubUrlMessage", () => {
     );
 
     expect(blobMessage).toContain("GitHub blob URLs are not supported.");
-    expect(blobMessage).toContain("default-branch head SHA");
+    expect(blobMessage).toContain("default-branch head SHA or an explicit requested ref");
     expect(subpathMessage).toContain("GitHub subpath URLs are not supported.");
   });
 
@@ -80,7 +86,7 @@ describe("auditTarget GitHub URL ergonomics", () => {
   it("fails early with a specific message for unsupported GitHub URL shapes", async () => {
     await expect(auditTarget("https://github.com/modelcontextprotocol/servers/blob/main/README.md"))
       .rejects.toThrowError(
-        "GitHub blob URLs are not supported. TrustMCP scans GitHub repository roots only and resolves the current default-branch head SHA. Use the repository root URL instead: https://github.com/modelcontextprotocol/servers"
+        "GitHub blob URLs are not supported. TrustMCP scans GitHub repository roots only and resolves the default-branch head SHA or an explicit requested ref. Use the repository root URL instead: https://github.com/modelcontextprotocol/servers"
       );
   });
 

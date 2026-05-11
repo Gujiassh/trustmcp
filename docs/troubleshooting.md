@@ -28,6 +28,8 @@ TrustMCP accepts GitHub repository roots only:
 
 - `https://github.com/owner/repo`
 - `gh:owner/repo`
+- `https://github.com/owner/repo?ref=<branch-or-sha>`
+- `gh:owner/repo@<branch-or-sha>`
 
 It does **not** accept:
 
@@ -45,7 +47,7 @@ TrustMCP does not auto-discover config files. If you use config-backed defaults,
 node dist/cli/main.js gh:modelcontextprotocol/servers --config trustmcp.config.json
 ```
 
-The GitHub Action also supports the same config file through the `config-file` input (e.g., `config-file: trustmcp.config.json`); relative paths resolve against the checked-out workspace before the action runs.
+The GitHub Action also supports the same config file through the `config-file` input (e.g., `config-file: trustmcp.config.json`); the config file path itself resolves from the checked-out workspace, while relative paths inside that config file resolve from the config file's own directory, matching the CLI.
 
 The action also respects the CLI `summary-only` option: leave the new `summary-only` input unset so the config file can drive the behavior, or set it to `true`/`false` explicitly when you want to override. This input enforces the same `summary-only` + `format: sarif` restriction as the CLI runner, so avoid that incompatible combination whether you run locally or in CI.
 
@@ -86,12 +88,18 @@ node dist/cli/main.js gh:modelcontextprotocol/servers --format json --output-fil
 
 ## When you are not sure what TrustMCP is checking
 
-TrustMCP currently ships four rules.
+TrustMCP currently ships twelve rules.
 
 To list them from the CLI:
 
 ```bash
 node dist/cli/main.js list-rules
+```
+
+If you want the machine-readable rule metadata, including current `confidenceLevels`, `confidenceReasons`, and `confidenceGuidance`, run:
+
+```bash
+node dist/cli/main.js list-rules --json
 ```
 
 For the rule-by-rule explanation, check out [TrustMCP rules explained](./trustmcp-rules.md).

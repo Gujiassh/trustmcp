@@ -140,7 +140,7 @@ jobs:
       - run: mkdir -p reports
 
       - id: trustmcp
-        uses: Gujiassh/trustmcp@v0.1.0
+        uses: Gujiassh/trustmcp@main
         with:
           target: ${{ github.workspace }}
           config-file: trustmcp.config.json
@@ -162,7 +162,7 @@ jobs:
 - `gated-finding-count`
   - the set currently used for policy failure
 - `baseline-applied`
-  - whether the baseline was actually loaded
+  - whether baseline gating was enabled for the run, even if the current baseline file is empty
 
 ## Policy recommendations
 

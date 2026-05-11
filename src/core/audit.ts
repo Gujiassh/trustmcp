@@ -43,7 +43,7 @@ export async function auditTarget(
     const findings = sortFindings(runAllRules(files));
     const filteredFindings = applyIgnoreFilters(findings, options);
     const newFindings = applyBaselineFilter(filteredFindings, options.baselineEntries);
-    const baselineApplied = options.baselineEntries !== undefined && options.baselineEntries.length > 0;
+    const baselineApplied = options.baselineEntries !== undefined;
     return createReport(materializedSource, filteredFindings, newFindings, baselineApplied);
   } finally {
     if (materializedSource.cleanup !== undefined) {
