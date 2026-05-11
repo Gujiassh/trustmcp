@@ -9,6 +9,7 @@ const whatScansPath = fileURLToPath(new URL("../docs/what-trustmcp-scans.md", im
 const longTermSpecPath = fileURLToPath(new URL("../docs/ssot/long-term-development-spec.md", import.meta.url));
 const executionBreakdownPath = fileURLToPath(new URL("../docs/ssot/execution-breakdown.md", import.meta.url));
 const publishChecklistPath = fileURLToPath(new URL("../docs/npm-publish-checklist.md", import.meta.url));
+const installingPath = fileURLToPath(new URL("../docs/installing-trustmcp.md", import.meta.url));
 
 describe("docs coherence", () => {
   it("keeps the public scanner-surface docs aligned with the twelve-rule baseline", async () => {
@@ -44,5 +45,14 @@ describe("docs coherence", () => {
 
     expect(publishChecklist).toContain("npm run release:check");
     expect(publishChecklist).toContain("If you only need the packaging-oriented subset, run:");
+  });
+
+  it("keeps install guidance aligned with current source-checkout release gates", async () => {
+    const installing = await readFile(installingPath, "utf8");
+
+    expect(installing).toContain("npm run reference:check");
+    expect(installing).toContain("npm run reference:scan");
+    expect(installing).toContain("npm run release:check");
+    expect(installing).toContain("Those commands are source-checkout release-confidence gates, not install commands.");
   });
 });
