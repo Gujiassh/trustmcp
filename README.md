@@ -324,6 +324,14 @@ node dist/cli/main.js https://github.com/modelcontextprotocol/servers --format j
 
 TrustMCP now ships a reusable composite action at the repository root. For copy-pasteable workflows, start from [`./.github/examples/trustmcp-gate.yml`](./.github/examples/trustmcp-gate.yml) for the checked-out workspace case, [`./.github/examples/trustmcp-public-target.yml`](./.github/examples/trustmcp-public-target.yml) for an explicit public GitHub target, [`./.github/examples/trustmcp-artifact.yml`](./.github/examples/trustmcp-artifact.yml) to retain a rendered markdown report, [`./.github/examples/trustmcp-pr-comment.yml`](./.github/examples/trustmcp-pr-comment.yml) to keep a sticky PR comment updated with the current markdown report, [`./.github/examples/trustmcp-json-artifact.yml`](./.github/examples/trustmcp-json-artifact.yml) for a retained JSON report, [`./.github/examples/trustmcp-sarif-artifact.yml`](./.github/examples/trustmcp-sarif-artifact.yml) for a retained SARIF file, or [`./.github/examples/trustmcp-upload-sarif.yml`](./.github/examples/trustmcp-upload-sarif.yml) for the GitHub code-scanning upload path.
 
+If you are choosing between those examples:
+
+- use `trustmcp-gate.yml` when you only need CI pass/fail behavior
+- use `trustmcp-baseline-gate.yml` when historical findings should stay visible but only new findings should fail CI
+- use `trustmcp-artifact.yml` or `trustmcp-json-artifact.yml` when later workflow steps need a saved report
+- use `trustmcp-pr-comment.yml` when reviewers should see the markdown report directly on the PR
+- use `trustmcp-sarif-artifact.yml` or `trustmcp-upload-sarif.yml` when a security workflow or code-scanning consumer expects SARIF
+
 Minimal external usage looks like this:
 
 ```yaml
