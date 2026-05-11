@@ -328,6 +328,7 @@ If you want the smallest stable automation surface, prefer:
 - `summary.*` numeric fields
 - `findings[].fingerprint`
 - `findings[].ruleId`
+- `node dist/cli/main.js list-rules --json`
 - GitHub Action output keys listed above
 
 ## SARIF mapping note
