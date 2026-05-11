@@ -20,6 +20,8 @@ Release history: [CHANGELOG.md](./CHANGELOG.md)
 - npm publication is live: the latest published package line starts at `trustmcp@0.1.0`
 - current unreleased repository surface is tracking the next development line: `0.2.0-dev`
 
+That development suffix is intentional: before running the manual GitHub release workflow for the next public tag, move `package.json`, `package-lock.json`, and the related release notes from `0.2.0-dev` to the final release version.
+
 ## Install and release readiness
 
 TrustMCP is usable today from npm, `npx`, and source checkout/local build.

@@ -61,6 +61,7 @@ This repository ships a conservative manual release workflow at `.github/workflo
 - provide a tag like `v0.1.1`
 - run it from the default branch
 - make sure `package.json` already matches the same version without the leading `v`
+- if the repo is on a development suffix such as `0.2.0-dev`, bump it to the final release version before running the workflow
 - add or update the matching entry in `CHANGELOG.md`
 - run `npm run release:check` before creating the release
 - run `npm run pack:smoke` if you want a higher-confidence local check that the packed tarball can be installed and the CLI can start

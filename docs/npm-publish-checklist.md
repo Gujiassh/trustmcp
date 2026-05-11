@@ -7,6 +7,7 @@ This page is intentionally narrow. It does **not** publish anything for you, and
 ## Run this checklist before the final manual publish step
 
 - [ ] `package.json` has the exact version you intend to publish
+- [ ] the repository is no longer on a development suffix such as `0.2.0-dev`
 - [ ] `CHANGELOG.md` has a matching release entry or release notes are ready
 - [ ] `npm run release:check` passes locally
 - [ ] the manual GitHub release workflow is ready to run from the default branch
