@@ -10,6 +10,7 @@ const longTermSpecPath = fileURLToPath(new URL("../docs/ssot/long-term-developme
 const executionBreakdownPath = fileURLToPath(new URL("../docs/ssot/execution-breakdown.md", import.meta.url));
 const publishChecklistPath = fileURLToPath(new URL("../docs/npm-publish-checklist.md", import.meta.url));
 const installingPath = fileURLToPath(new URL("../docs/installing-trustmcp.md", import.meta.url));
+const contributingPath = fileURLToPath(new URL("../CONTRIBUTING.md", import.meta.url));
 
 describe("docs coherence", () => {
   it("keeps the public scanner-surface docs aligned with the twelve-rule baseline", async () => {
@@ -54,5 +55,14 @@ describe("docs coherence", () => {
     expect(installing).toContain("npm run reference:scan");
     expect(installing).toContain("npm run release:check");
     expect(installing).toContain("Those commands are source-checkout release-confidence gates, not install commands.");
+  });
+
+  it("keeps release-version examples aligned with the current next public tag", async () => {
+    const contributing = await readFile(contributingPath, "utf8");
+    const readme = await readFile(readmePath, "utf8");
+
+    expect(contributing).toContain("provide a tag like `v0.2.0`");
+    expect(readme).toContain("0.2.0-dev");
+    expect(readme).toContain("before running the manual GitHub release workflow for the next public tag");
   });
 });
