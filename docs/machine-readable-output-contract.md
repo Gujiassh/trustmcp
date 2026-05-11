@@ -268,6 +268,68 @@ Field semantics:
     - `reason`
     - `description`
 
+## Reference-target harness contract
+
+The checked-in reference-target tools now expose two JSON surfaces:
+
+- `node scripts/reference-target-check.mjs --json`
+- `node scripts/reference-target-check.mjs --scan --json`
+
+### Manifest JSON
+
+Stable top-level field:
+
+- `targets`
+
+Each manifest entry carries:
+
+- `id`
+- `target`
+- `expectedCategory`
+- `notes`
+
+Field semantics:
+
+- `id`
+  - stable identifier for the checked-in reference target
+- `target`
+  - public GitHub repository root URL, optionally pinned with `?ref=`
+- `expectedCategory`
+  - one of:
+    - `finding-producing`
+    - `mostly-clean`
+    - `sarif-relevant`
+- `notes`
+  - short maintainer-facing explanation of why this target exists in the set
+
+### Scan JSON
+
+Stable top-level fields:
+
+- `ok`
+- `failures`
+- `targets`
+
+Field semantics:
+
+- `ok`
+  - `true` when all scanned targets still satisfy their declared `expectedCategory`
+- `failures`
+  - array of human-readable expectation failures
+- `targets`
+  - one object per scanned reference target
+
+Each scan result carries:
+
+- `id`
+- `target`
+- `expectedCategory`
+- `displayName`
+- `resolvedRef`
+- `findingCount`
+- `ruleCount`
+- `summaryMessage`
+
 ### Action output semantics
 
 - `finding-count`
