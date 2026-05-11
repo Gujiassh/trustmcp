@@ -438,7 +438,7 @@ TrustMCP is honest about scope:
 - no web UI, registry, or hosted service
 - no guarantee that a target is safe or complete coverage of all MCP risks
 
-This first release is designed for a 60-second demo and a practical first pass, not a full security review.
+The current TrustMCP surface is designed for a fast first pass and practical CI/review use, not a full security review.
 
 ## Contribution path
 
