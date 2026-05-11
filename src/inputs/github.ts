@@ -32,7 +32,7 @@ type GitHubUrlAnalysis =
   | { kind: "not-github" };
 
 const MAX_REDIRECTS = 5;
-const REQUEST_TIMEOUT_MS = 15_000;
+const REQUEST_TIMEOUT_MS = 45_000;
 const MAX_RESPONSE_BYTES = 25_000_000;
 const GITHUB_SHORTHAND_PREFIX = "gh:";
 const GITHUB_SHORTHAND_MESSAGE = "GitHub shorthand inputs must look like gh:<owner>/<repo>.";
