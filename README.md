@@ -17,8 +17,8 @@ Release history: [CHANGELOG.md](./CHANGELOG.md)
 - GitHub Actions CI runs on Node 18 and 20
 - Package readiness checks exist: `npm run pack:check`, `npm run pack:smoke`, and `npm run publish:check`
 - GitHub release flow exists and stays manual
-- npm publication is live: `trustmcp@0.1.0`
-- current unreleased repo surface is tracking the next development line: `0.2.0-dev`
+- npm publication is live: the latest published package line starts at `trustmcp@0.1.0`
+- current unreleased repository surface is tracking the next development line: `0.2.0-dev`
 
 ## Install and release readiness
 
@@ -91,7 +91,7 @@ If you want a copy-paste automation path, for example in shell scripts:
 
 ```bash
 node dist/cli/main.js doctor gh:modelcontextprotocol/servers --json | jq '.ok'
-node dist/cli/main.js list-rules --json | jq '.[].ruleId'
+node dist/cli/main.js list-rules --json | jq '.[].id'
 ```
 
 Every finding includes:
