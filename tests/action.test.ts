@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { runAction } from "../src/action/main.js";
 import type { AuditReport, Severity } from "../src/core/types.js";
+import { TRUSTMCP_VERSION } from "../src/core/version.js";
 
 const tempDirectories: string[] = [];
 
@@ -783,7 +784,7 @@ function createReport(sourceType: "local-directory" | "public-github-repo", seve
   return {
     tool: {
       name: "TrustMCP",
-      version: "0.1.0"
+      version: TRUSTMCP_VERSION
     },
     target: {
       input: sourceType === "local-directory" ? "./fixtures/local-risky" : "https://github.com/example/risky-mcp",

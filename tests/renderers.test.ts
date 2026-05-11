@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { auditTarget } from "../src/core/audit.js";
 import type { AuditReport } from "../src/core/types.js";
+import { TRUSTMCP_VERSION } from "../src/core/version.js";
 import { renderJsonReport } from "../src/renderers/json.js";
 import { renderMarkdownReport } from "../src/renderers/markdown.js";
 import { renderSummaryReport } from "../src/renderers/output.js";
@@ -139,7 +140,7 @@ No matching rules were triggered.`);
     expect(renderSummaryReport(createReport([]), "json")).toBe(`{
   "tool": {
     "name": "TrustMCP",
-    "version": "0.1.0"
+    "version": "${TRUSTMCP_VERSION}"
   },
   "target": {
     "input": "https://github.com/example/risky-mcp",
@@ -184,7 +185,7 @@ No matching rules were triggered.`);
       "tool": {
         "driver": {
           "name": "TrustMCP",
-          "version": "0.1.0",
+          "version": "${TRUSTMCP_VERSION}",
           "informationUri": "https://github.com/Gujiassh/trustmcp",
           "rules": [
             {
@@ -403,7 +404,7 @@ function createReport(severities: Array<"high" | "medium" | "low">): AuditReport
   return {
     tool: {
       name: "TrustMCP",
-      version: "0.1.0"
+      version: TRUSTMCP_VERSION
     },
     target: {
       input: "https://github.com/example/risky-mcp",
