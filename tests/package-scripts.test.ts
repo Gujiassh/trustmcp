@@ -15,5 +15,6 @@ describe("package scripts", () => {
     expect(parsed.scripts?.["reference:scan"]).toBe("npm run build && node scripts/reference-target-check.mjs --scan");
     expect(parsed.scripts?.["publish:check"]).toBe("npm test && npm run build && npm run pack:check && npm run pack:smoke");
     expect(parsed.scripts?.["release:check"]).toBe("npm run reference:check && npm run publish:check");
+    expect(parsed.scripts?.["release:check:strict"]).toBe("npm run reference:scan && npm run release:check");
   });
 });

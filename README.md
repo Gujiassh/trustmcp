@@ -30,6 +30,7 @@ TrustMCP is usable today from npm, `npx`, and source checkout/local build.
 - Use `npm run pack:check` to validate future npm tarball contents locally.
 - Use `npm run publish:check` when you only want the packaging-oriented local release preflight.
 - Use `npm run release:check` when you want the full local release-confidence + packaging gate in one command.
+- Use `npm run release:check:strict` when you also want to require real reference-target scans before release.
 - Use [the npm publish checklist](./docs/npm-publish-checklist.md) and [CONTRIBUTING.md](./CONTRIBUTING.md) for future package updates and manual GitHub release steps.
 
 ## Why scan MCP servers
@@ -408,6 +409,7 @@ npm run smoke
 npm run reference:check
 npm run reference:scan
 npm run release:check
+npm run release:check:strict
 ```
 
 ## Example output

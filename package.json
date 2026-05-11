@@ -26,6 +26,7 @@
     "reference:check": "npm run build && node scripts/reference-target-check.mjs",
     "reference:scan": "npm run build && node scripts/reference-target-check.mjs --scan",
     "release:check": "npm run reference:check && npm run publish:check",
+    "release:check:strict": "npm run reference:scan && npm run release:check",
     "test": "vitest run",
     "smoke": "npm run build && node scripts/smoke.mjs"
   },

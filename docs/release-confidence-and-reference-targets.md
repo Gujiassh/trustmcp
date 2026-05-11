@@ -65,6 +65,12 @@ If you want a single local pre-release gate that combines the reference-target m
 npm run release:check
 ```
 
+If you also want to require the current public reference-target scans themselves to pass before release, run:
+
+```bash
+npm run release:check:strict
+```
+
 ## Minimum release-confidence checklist
 
 Run these for any release slice that changes scanning behavior or machine-readable outputs:

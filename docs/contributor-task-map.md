@@ -43,6 +43,7 @@ Use this page when you know the job you need to do, but do not remember which fi
 - Run `npm run reference:check` when you want to validate the checked-in reference-target manifest before a release-confidence pass.
 - Run `npm run reference:scan` when you want to replay the current scans for those checked-in public reference targets.
 - Run `npm run release:check` when you want the full local release-confidence + packaging gate in one command.
+- Run `npm run release:check:strict` when you want the stricter gate that also requires current public reference targets to still match their declared categories.
 
 ## Work on GitHub Actions examples or release utilities
 

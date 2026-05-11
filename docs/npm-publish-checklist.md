@@ -40,6 +40,12 @@ That narrower command validates:
 - `npm pack --dry-run` succeeds through the repo's pack validation path
 - `npm run pack:smoke` still installs and starts the tarball
 
+If you want the strictest local pre-release gate, including current public reference-target scans, run:
+
+```bash
+npm run release:check:strict
+```
+
 ## What this checklist does not mean
 
 This checklist does **not** mean:
