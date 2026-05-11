@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { ScanFile } from "../src/core/types.js";
 import { broadFilesystemRule } from "../src/rules/broad-filesystem.js";
+import { dynamicCodeExecRule } from "../src/rules/dynamic-code-exec.js";
 import { outboundFetchRule } from "../src/rules/outbound-fetch.js";
 
 function createScanFile(relativePath: string, content: string): ScanFile {
@@ -48,5 +49,27 @@ describe("rule boundaries", () => {
     expect(findings).toHaveLength(1);
     expect(findings[0]?.title).toContain("tool-controlled paths");
     expect(findings[0]?.confidence).toBe("medium");
+  });
+
+  it("keeps literal eval usage at medium confidence", () => {
+    const findings = dynamicCodeExecRule.evaluate([
+      createScanFile("src/eval.ts", 'export function parseExpression() { return eval("1 + 1"); }')
+    ]);
+
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.confidence).toBe("medium");
+  });
+
+  it("raises tool-controlled vm execution to high confidence", () => {
+    const findings = dynamicCodeExecRule.evaluate([
+      createScanFile(
+        "src/dynamic.ts",
+        'import vm from "node:vm";\nexport function run(input: { code: string }) { return vm.runInNewContext(input.code, {}); }'
+      )
+    ]);
+
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.title).toContain("Dynamic code execution");
+    expect(findings[0]?.confidence).toBe("high");
   });
 });

@@ -9,12 +9,13 @@ const localRiskyFixture = fileURLToPath(new URL("../fixtures/local-risky", impor
 const localCleanFixture = fileURLToPath(new URL("../fixtures/local-clean", import.meta.url));
 
 describe("auditTarget", () => {
-  it("reports the three required rules for the risky fixture", async () => {
+  it("reports the four required rules for the risky fixture", async () => {
     const report = await auditTarget(localRiskyFixture);
 
-    expect(report.findings).toHaveLength(3);
+    expect(report.findings).toHaveLength(4);
     expect(report.findings.map((finding) => finding.ruleId)).toEqual([
       "mcp/broad-filesystem",
+      "mcp/dynamic-code-exec",
       "mcp/shell-exec",
       "mcp/outbound-fetch"
     ]);
@@ -51,9 +52,9 @@ describe("auditTarget", () => {
 
     expect(report.target.sourceType).toBe("public-github-repo");
     expect(report.target.resolvedRef).toBe("main@abc123def456");
-    expect(report.findings).toHaveLength(3);
+    expect(report.findings).toHaveLength(4);
     expect(new Set(report.findings.map((finding) => finding.ruleId))).toEqual(
-      new Set(["mcp/shell-exec", "mcp/outbound-fetch", "mcp/broad-filesystem"])
+      new Set(["mcp/shell-exec", "mcp/outbound-fetch", "mcp/broad-filesystem", "mcp/dynamic-code-exec"])
     );
   });
 
@@ -72,7 +73,7 @@ describe("auditTarget", () => {
 
     expect(report.target.sourceType).toBe("public-github-repo");
     expect(report.target.input).toBe("gh:example/risky-mcp");
-    expect(report.findings).toHaveLength(3);
+    expect(report.findings).toHaveLength(4);
   });
 
   it("ignores findings for rules listed in options.ignoreRules", async () => {
@@ -80,14 +81,15 @@ describe("auditTarget", () => {
       ignoreRules: ["mcp/shell-exec"]
     });
 
-    expect(report.findings).toHaveLength(2);
+    expect(report.findings).toHaveLength(3);
     expect(report.findings.map((finding) => finding.ruleId).sort()).toEqual([
       "mcp/broad-filesystem",
+      "mcp/dynamic-code-exec",
       "mcp/outbound-fetch"
     ]);
-    expect(report.summary.findingCount).toBe(2);
-    expect(report.summary.triggeredRuleCount).toBe(2);
-    expect(report.summary.message).toContain("2 finding(s) across 2 rule(s)");
+    expect(report.summary.findingCount).toBe(3);
+    expect(report.summary.triggeredRuleCount).toBe(3);
+    expect(report.summary.message).toContain("3 finding(s) across 3 rule(s)");
   });
 
   it("ignores findings whose files match options.ignorePaths", async () => {
@@ -95,14 +97,14 @@ describe("auditTarget", () => {
       ignorePaths: ["src/network.ts"]
     });
 
-    expect(report.findings).toHaveLength(2);
+    expect(report.findings).toHaveLength(3);
     expect(new Set(report.findings.map((finding) => finding.ruleId))).toEqual(
-      new Set(["mcp/broad-filesystem", "mcp/shell-exec"])
+      new Set(["mcp/broad-filesystem", "mcp/dynamic-code-exec", "mcp/shell-exec"])
     );
-    expect(report.summary.findingCount).toBe(2);
-    expect(report.summary.triggeredRuleCount).toBe(2);
+    expect(report.summary.findingCount).toBe(3);
+    expect(report.summary.triggeredRuleCount).toBe(3);
     expect(report.summary.severityCounts.medium).toBe(0);
-    expect(report.summary.message).toContain("2 finding(s) across 2 rule(s)");
+    expect(report.summary.message).toContain("3 finding(s) across 3 rule(s)");
   });
 
   it("treats ignorePaths entries as literal directory prefixes", async () => {
@@ -119,17 +121,62 @@ describe("auditTarget", () => {
   it("treats baseline entries as known findings without dropping the overall list", async () => {
     const report = await auditTarget(localRiskyFixture, {
       baselineEntries: [
-        { ruleId: "mcp/shell-exec", file: "src/shell.ts", line: 4 }
+        {
+          fingerprint: "mcp/shell-exec|src/shell.ts|exec(args.command);",
+          ruleId: "mcp/shell-exec",
+          file: "src/shell.ts",
+          line: 4
+        }
       ]
     });
 
-    expect(report.findings).toHaveLength(3);
-    expect(report.summary.findingCount).toBe(3);
-    expect(report.summary.newFindingCount).toBe(2);
+    expect(report.findings).toHaveLength(4);
+    expect(report.summary.findingCount).toBe(4);
+    expect(report.summary.newFindingCount).toBe(3);
     expect(report.newFindings.map((finding) => finding.ruleId).sort()).toEqual([
       "mcp/broad-filesystem",
+      "mcp/dynamic-code-exec",
       "mcp/outbound-fetch"
     ]);
-    expect(report.summary.message).toContain("2 new finding(s) across 2 rule(s)");
+    expect(report.summary.message).toContain("3 new finding(s) across 3 rule(s)");
+  });
+
+  it("matches baseline entries by fingerprint even when the stored line drifts", async () => {
+    const report = await auditTarget(localRiskyFixture, {
+      baselineEntries: [
+        {
+          fingerprint: "mcp/shell-exec|src/shell.ts|exec(args.command);",
+          ruleId: "mcp/shell-exec",
+          file: "src/shell.ts",
+          line: 999
+        }
+      ]
+    });
+
+    expect(report.findings).toHaveLength(4);
+    expect(report.newFindings.map((finding) => finding.ruleId).sort()).toEqual([
+      "mcp/broad-filesystem",
+      "mcp/dynamic-code-exec",
+      "mcp/outbound-fetch"
+    ]);
+  });
+
+  it("still honors legacy baseline entries without fingerprints", async () => {
+    const report = await auditTarget(localRiskyFixture, {
+      baselineEntries: [
+        {
+          ruleId: "mcp/shell-exec",
+          file: "src/shell.ts",
+          line: 4
+        }
+      ]
+    });
+
+    expect(report.findings).toHaveLength(4);
+    expect(report.newFindings.map((finding) => finding.ruleId).sort()).toEqual([
+      "mcp/broad-filesystem",
+      "mcp/dynamic-code-exec",
+      "mcp/outbound-fetch"
+    ]);
   });
 });

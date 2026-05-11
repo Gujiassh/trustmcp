@@ -487,16 +487,25 @@ describe("runCli exit thresholds", () => {
     expect(exitCode).toBe(0);
     expect(await readFile(baselineOutput, "utf8")).toBe(`[
   {
+    "fingerprint": "mcp/broad-filesystem|src/files.ts|return fs.readdir(input.path, { recursive: true }); }",
     "ruleId": "mcp/broad-filesystem",
     "file": "src/files.ts",
     "line": 4
   },
   {
+    "fingerprint": "mcp/dynamic-code-exec|src/dynamic.ts|return vm.runInNewContext(input.code, {}); }",
+    "ruleId": "mcp/dynamic-code-exec",
+    "file": "src/dynamic.ts",
+    "line": 4
+  },
+  {
+    "fingerprint": "mcp/shell-exec|src/shell.ts|exec(args.command);",
     "ruleId": "mcp/shell-exec",
     "file": "src/shell.ts",
     "line": 4
   },
   {
+    "fingerprint": "mcp/outbound-fetch|src/network.ts|return fetch(input.url);",
     "ruleId": "mcp/outbound-fetch",
     "file": "src/network.ts",
     "line": 2
@@ -747,6 +756,7 @@ describe("runCli exit thresholds", () => {
     expect(stdout.join("")).toBe(
       "ruleId\tseverity\ttitle\n" +
       "mcp/broad-filesystem\thigh\tFilesystem access using broad or tool-controlled paths detected\n" +
+      "mcp/dynamic-code-exec\thigh\tDynamic code execution capability detected\n" +
       "mcp/outbound-fetch\tmedium\tOutbound network request capability detected\n" +
       "mcp/shell-exec\thigh\tShell execution capability detected\n"
     );
@@ -768,6 +778,11 @@ describe("runCli exit thresholds", () => {
     "id": "mcp/broad-filesystem",
     "severity": "high",
     "title": "Filesystem access using broad or tool-controlled paths detected"
+  },
+  {
+    "id": "mcp/dynamic-code-exec",
+    "severity": "high",
+    "title": "Dynamic code execution capability detected"
   },
   {
     "id": "mcp/outbound-fetch",
@@ -962,6 +977,33 @@ describe("runCli exit thresholds", () => {
     expect(stdout.join("")).toContain(`"message": "${configFile} (output-file OK: ${outputFile})"`);
   });
 
+  it("reports configured baseline paths as valid in doctor when the file exists and is readable", async () => {
+    const baselineFile = await createTempFilePath("trustmcp.baseline.json");
+    const configFile = await createConfigFile(JSON.stringify({ "baseline-file": baselineFile }));
+    const stdout: string[] = [];
+    await writeFile(
+      baselineFile,
+      JSON.stringify([{ fingerprint: "mcp/shell-exec|src/shell.ts|exec(args.command);", ruleId: "mcp/shell-exec", file: "src/shell.ts", line: 4 }]),
+      "utf8"
+    );
+
+    const exitCode = await runCli([
+      "doctor",
+      "./fixtures/local-risky",
+      "--config",
+      configFile,
+      "--json"
+    ], {
+      auditTarget: async () => {
+        throw new Error("doctor should not invoke the scan engine");
+      },
+      stdout: createWriter(stdout)
+    });
+
+    expect(exitCode).toBe(0);
+    expect(stdout.join("")).toContain(`"message": "${configFile} (baseline-file OK: ${baselineFile})"`);
+  });
+
   it("writes doctor text output to a file when requested", async () => {
     const outputFile = await createTempFilePath("doctor.txt");
     const stdout: string[] = [];
@@ -1053,6 +1095,29 @@ describe("runCli exit thresholds", () => {
     expect(exitCode).toBe(1);
     expect(stdout.join("")).toContain("Config: ERROR Output file directory does not exist:");
     expect(stdout.join("")).toContain(join(directory, "missing"));
+  });
+
+  it("reports invalid baseline files in doctor before a scan runs", async () => {
+    const baselineFile = await createTempFilePath("trustmcp.baseline.json");
+    const configFile = await createConfigFile(JSON.stringify({ "baseline-file": baselineFile }));
+    const stdout: string[] = [];
+    await writeFile(baselineFile, JSON.stringify([{ ruleId: "", file: "src/example.ts" }]), "utf8");
+
+    const exitCode = await runCli([
+      "doctor",
+      "./fixtures/local-risky",
+      "--config",
+      configFile
+    ], {
+      auditTarget: async () => {
+        throw new Error("doctor should not invoke the scan engine");
+      },
+      stdout: createWriter(stdout)
+    });
+
+    expect(exitCode).toBe(1);
+    expect(stdout.join("")).toContain("Config: ERROR Baseline file");
+    expect(stdout.join("")).toContain("has invalid 'ruleId'");
   });
 
   it("reports unsupported GitHub tree URLs compactly in doctor", async () => {
@@ -1171,6 +1236,23 @@ describe("runCli exit thresholds", () => {
 });
 
 function createReport(sourceType: "local-directory" | "public-github-repo", severities: Severity[]): AuditReport {
+  const findings = severities.map((severity, index) => ({
+    fingerprint: `rule-${index + 1}|src/example-${index + 1}.ts|evidence-${index + 1}`,
+    ruleId: `rule-${index + 1}`,
+    severity,
+    confidence: "high" as const,
+    title: severity === "high"
+      ? "Shell execution capability detected"
+      : severity === "medium"
+        ? "Outbound network request capability detected"
+        : "Low severity placeholder finding",
+    file: `src/example-${index + 1}.ts`,
+    line: index + 1,
+    evidence: `evidence-${index + 1}`,
+    whyItMatters: `why-${index + 1}`,
+    remediation: `remediation-${index + 1}`
+  }));
+
   return {
     tool: {
       name: "TrustMCP",
@@ -1187,10 +1269,13 @@ function createReport(sourceType: "local-directory" | "public-github-repo", seve
       "No finding set should be interpreted as a safety guarantee."
     ],
     summary: {
+      baselineApplied: false,
       findingCount: severities.length,
       newFindingCount: severities.length,
+      gatedFindingCount: severities.length,
       triggeredRuleCount: severities.length,
       newTriggeredRuleCount: severities.length,
+      gatedTriggeredRuleCount: severities.length,
       severityCounts: {
         low: severities.filter((severity) => severity === "low").length,
         medium: severities.filter((severity) => severity === "medium").length,
@@ -1201,40 +1286,17 @@ function createReport(sourceType: "local-directory" | "public-github-repo", seve
         medium: severities.filter((severity) => severity === "medium").length,
         high: severities.filter((severity) => severity === "high").length
       },
+      gatedSeverityCounts: {
+        low: severities.filter((severity) => severity === "low").length,
+        medium: severities.filter((severity) => severity === "medium").length,
+        high: severities.filter((severity) => severity === "high").length
+      },
       message: severities.length === 0
         ? "No matching rules were triggered. Static heuristics only; this does not mean the target is safe."
         : `${severities.length} finding(s) across ${severities.length} rule(s). Static heuristics only.`
     },
-    findings: severities.map((severity, index) => ({
-      ruleId: `rule-${index + 1}`,
-      severity,
-      confidence: "high",
-      title: severity === "high"
-        ? "Shell execution capability detected"
-        : severity === "medium"
-          ? "Outbound network request capability detected"
-          : "Low severity placeholder finding",
-      file: `src/example-${index + 1}.ts`,
-      line: index + 1,
-      evidence: `evidence-${index + 1}`,
-      whyItMatters: `why-${index + 1}`,
-      remediation: `remediation-${index + 1}`
-    })),
-    newFindings: severities.map((severity, index) => ({
-      ruleId: `rule-${index + 1}`,
-      severity,
-      confidence: "high",
-      title: severity === "high"
-        ? "Shell execution capability detected"
-        : severity === "medium"
-          ? "Outbound network request capability detected"
-          : "Low severity placeholder finding",
-      file: `src/example-${index + 1}.ts`,
-      line: index + 1,
-      evidence: `evidence-${index + 1}`,
-      whyItMatters: `why-${index + 1}`,
-      remediation: `remediation-${index + 1}`
-    }))
+    findings,
+    newFindings: findings
   };
 }
 

@@ -47,6 +47,11 @@ describe("runAction", () => {
       "new-low-count": "0",
       "new-medium-count": "1",
       "new-high-count": "2",
+      "gated-finding-count": "3",
+      "gated-rule-count": "3",
+      "gated-low-count": "0",
+      "gated-medium-count": "1",
+      "gated-high-count": "2",
       "baseline-applied": "false",
       "summary-message": "3 finding(s) across 3 rule(s). Static heuristics only."
     });
@@ -117,6 +122,11 @@ describe("runAction", () => {
       "new-low-count": "0",
       "new-medium-count": "0",
       "new-high-count": "0",
+      "gated-finding-count": "0",
+      "gated-rule-count": "0",
+      "gated-low-count": "0",
+      "gated-medium-count": "0",
+      "gated-high-count": "0",
       "baseline-applied": "false",
       "summary-message": "No matching rules were triggered. Static heuristics only; this does not mean the target is safe."
     });
@@ -160,6 +170,11 @@ describe("runAction", () => {
       "new-low-count": "0",
       "new-medium-count": "1",
       "new-high-count": "1",
+      "gated-finding-count": "2",
+      "gated-rule-count": "2",
+      "gated-low-count": "0",
+      "gated-medium-count": "1",
+      "gated-high-count": "1",
       "baseline-applied": "false",
       "summary-message": "2 finding(s) across 2 rule(s). Static heuristics only."
     });
@@ -220,7 +235,7 @@ describe("runAction", () => {
     await writeFile(
       baselinePath,
       JSON.stringify([
-        { ruleId: "rule-1", file: "src/example-1.ts", line: 1 }
+        { fingerprint: "rule-1|src/example-1.ts|evidence-1", ruleId: "rule-1", file: "src/example-1.ts", line: 1 }
       ]),
       "utf8"
     );
@@ -247,7 +262,7 @@ describe("runAction", () => {
       ignoreRules: ["rule-1"],
       ignorePaths: ["src/vendor"],
       baselineEntries: [
-        { ruleId: "rule-1", file: "src/example-1.ts", line: 1 }
+        { fingerprint: "rule-1|src/example-1.ts|evidence-1", ruleId: "rule-1", file: "src/example-1.ts", line: 1 }
       ]
     });
     expect(stdout.join("")).toContain("# TrustMCP Report");
@@ -258,7 +273,7 @@ describe("runAction", () => {
     await writeFile(
       baselinePath,
       JSON.stringify([
-        { ruleId: "rule-1", file: "src/example-1.ts", line: 1 }
+        { fingerprint: "rule-1|src/example-1.ts|evidence-1", ruleId: "rule-1", file: "src/example-1.ts", line: 1 }
       ]),
       "utf8"
     );
@@ -283,7 +298,7 @@ describe("runAction", () => {
     expect(exitCode).toBe(0);
     expect(receivedOptions).toEqual({
       baselineEntries: [
-        { ruleId: "rule-1", file: "src/example-1.ts", line: 1 }
+        { fingerprint: "rule-1|src/example-1.ts|evidence-1", ruleId: "rule-1", file: "src/example-1.ts", line: 1 }
       ]
     });
   });
@@ -299,9 +314,17 @@ describe("runAction", () => {
 
     const report = createReport("local-directory", ["high", "medium", "low"]);
     report.newFindings = report.findings.slice(0, 2);
+    report.summary.baselineApplied = true;
     report.summary.newFindingCount = 2;
+    report.summary.gatedFindingCount = 2;
     report.summary.newTriggeredRuleCount = 2;
+    report.summary.gatedTriggeredRuleCount = 2;
     report.summary.newSeverityCounts = {
+      low: 0,
+      medium: 1,
+      high: 1
+    };
+    report.summary.gatedSeverityCounts = {
       low: 0,
       medium: 1,
       high: 1
@@ -333,6 +356,11 @@ describe("runAction", () => {
       "new-low-count": "0",
       "new-medium-count": "1",
       "new-high-count": "1",
+      "gated-finding-count": "2",
+      "gated-rule-count": "2",
+      "gated-low-count": "0",
+      "gated-medium-count": "1",
+      "gated-high-count": "1",
       "baseline-applied": "true",
       "summary-message": "3 finding(s) across 3 rule(s). Static heuristics only. 2 new finding(s) across 2 rule(s)."
     });
@@ -356,11 +384,13 @@ describe("runAction", () => {
     expect(exitCode).toBe(0);
     expect(await readFile(baselineOutput, "utf8")).toBe(`[
   {
+    "fingerprint": "rule-1|src/example-1.ts|evidence-1",
     "ruleId": "rule-1",
     "file": "src/example-1.ts",
     "line": 1
   },
   {
+    "fingerprint": "rule-2|src/example-2.ts|evidence-2",
     "ruleId": "rule-2",
     "file": "src/example-2.ts",
     "line": 2
@@ -552,6 +582,23 @@ describe("runAction", () => {
 });
 
 function createReport(sourceType: "local-directory" | "public-github-repo", severities: Severity[]): AuditReport {
+  const findings = severities.map((severity, index) => ({
+    fingerprint: `rule-${index + 1}|src/example-${index + 1}.ts|evidence-${index + 1}`,
+    ruleId: `rule-${index + 1}`,
+    severity,
+    confidence: "high" as const,
+    title: severity === "high"
+      ? "Shell execution capability detected"
+      : severity === "medium"
+        ? "Outbound network request capability detected"
+        : "Low severity placeholder finding",
+    file: `src/example-${index + 1}.ts`,
+    line: index + 1,
+    evidence: `evidence-${index + 1}`,
+    whyItMatters: `why-${index + 1}`,
+    remediation: `remediation-${index + 1}`
+  }));
+
   return {
     tool: {
       name: "TrustMCP",
@@ -568,10 +615,13 @@ function createReport(sourceType: "local-directory" | "public-github-repo", seve
       "No finding set should be interpreted as a safety guarantee."
     ],
     summary: {
+      baselineApplied: false,
       findingCount: severities.length,
       newFindingCount: severities.length,
+      gatedFindingCount: severities.length,
       triggeredRuleCount: severities.length,
       newTriggeredRuleCount: severities.length,
+      gatedTriggeredRuleCount: severities.length,
       newSeverityCounts: {
         low: severities.filter((severity) => severity === "low").length,
         medium: severities.filter((severity) => severity === "medium").length,
@@ -582,40 +632,17 @@ function createReport(sourceType: "local-directory" | "public-github-repo", seve
         medium: severities.filter((severity) => severity === "medium").length,
         high: severities.filter((severity) => severity === "high").length
       },
+      gatedSeverityCounts: {
+        low: severities.filter((severity) => severity === "low").length,
+        medium: severities.filter((severity) => severity === "medium").length,
+        high: severities.filter((severity) => severity === "high").length
+      },
       message: severities.length === 0
         ? "No matching rules were triggered. Static heuristics only; this does not mean the target is safe."
         : `${severities.length} finding(s) across ${severities.length} rule(s). Static heuristics only.`
     },
-    findings: severities.map((severity, index) => ({
-      ruleId: `rule-${index + 1}`,
-      severity,
-      confidence: "high",
-      title: severity === "high"
-        ? "Shell execution capability detected"
-        : severity === "medium"
-          ? "Outbound network request capability detected"
-          : "Low severity placeholder finding",
-      file: `src/example-${index + 1}.ts`,
-      line: index + 1,
-      evidence: `evidence-${index + 1}`,
-      whyItMatters: `why-${index + 1}`,
-      remediation: `remediation-${index + 1}`
-    })),
-    newFindings: severities.map((severity, index) => ({
-      ruleId: `rule-${index + 1}`,
-      severity,
-      confidence: "high",
-      title: severity === "high"
-        ? "Shell execution capability detected"
-        : severity === "medium"
-          ? "Outbound network request capability detected"
-          : "Low severity placeholder finding",
-      file: `src/example-${index + 1}.ts`,
-      line: index + 1,
-      evidence: `evidence-${index + 1}`,
-      whyItMatters: `why-${index + 1}`,
-      remediation: `remediation-${index + 1}`
-    }))
+    findings,
+    newFindings: findings
   };
 }
 

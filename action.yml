@@ -32,6 +32,21 @@ outputs:
   new-high-count:
     description: Count of new high-severity findings after baseline filtering.
     value: ${{ steps.scan.outputs.new-high-count }}
+  gated-finding-count:
+    description: Count of findings currently used for policy gating.
+    value: ${{ steps.scan.outputs.gated-finding-count }}
+  gated-rule-count:
+    description: Count of unique rules currently used for policy gating.
+    value: ${{ steps.scan.outputs.gated-rule-count }}
+  gated-low-count:
+    description: Count of gated low-severity findings.
+    value: ${{ steps.scan.outputs.gated-low-count }}
+  gated-medium-count:
+    description: Count of gated medium-severity findings.
+    value: ${{ steps.scan.outputs.gated-medium-count }}
+  gated-high-count:
+    description: Count of gated high-severity findings.
+    value: ${{ steps.scan.outputs.gated-high-count }}
   baseline-applied:
     description: Whether the action loaded at least one baseline entry for this scan.
     value: ${{ steps.scan.outputs.baseline-applied }}
@@ -65,7 +80,7 @@ inputs:
     required: false
     default: ""
   baseline-file:
-    description: Optional path to a JSON baseline file listing known findings (ruleId, file, line).
+    description: Optional path to a JSON baseline file listing known findings (preferred: fingerprint + ruleId/file/line; legacy tuple shape still accepted).
     required: false
     default: ""
   summary-only:

@@ -8,5 +8,10 @@
     "ruleId": "mcp/broad-filesystem",
     "file": "src/files.ts",
     "line": 4
+  },
+  {
+    "ruleId": "mcp/dynamic-code-exec",
+    "file": "src/dynamic.ts",
+    "line": 4
   }
 ]

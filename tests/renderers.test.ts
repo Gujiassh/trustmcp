@@ -30,11 +30,11 @@ describe("renderers", () => {
     };
 
     expect(first).toBe(second);
-    expect(parsed.summary.findingCount).toBe(3);
+    expect(parsed.summary.findingCount).toBe(4);
     expect(parsed.summary.severityCounts).toEqual({
       low: 0,
       medium: 1,
-      high: 2
+      high: 3
     });
     expect(parsed.findings[0]?.ruleId).toBe("mcp/broad-filesystem");
   });
@@ -146,16 +146,24 @@ No matching rules were triggered.`);
     "resolvedRef": "main@abc123def456"
   },
   "summary": {
+    "baselineApplied": false,
     "findingCount": 0,
     "newFindingCount": 0,
+    "gatedFindingCount": 0,
     "triggeredRuleCount": 0,
     "newTriggeredRuleCount": 0,
+    "gatedTriggeredRuleCount": 0,
     "severityCounts": {
       "low": 0,
       "medium": 0,
       "high": 0
     },
     "newSeverityCounts": {
+      "low": 0,
+      "medium": 0,
+      "high": 0
+    },
+    "gatedSeverityCounts": {
       "low": 0,
       "medium": 0,
       "high": 0
@@ -279,6 +287,23 @@ No matching rules were triggered.`);
 });
 
 function createReport(severities: Array<"high" | "medium" | "low">): AuditReport {
+  const findings = severities.map((severity, index) => ({
+    fingerprint: `${severity === "high" ? "mcp/shell-exec" : severity === "medium" ? "mcp/outbound-fetch" : "mcp/example-low"}|src/example-${index + 1}.ts|evidence-${index + 1}`,
+    ruleId: severity === "high" ? "mcp/shell-exec" : severity === "medium" ? "mcp/outbound-fetch" : "mcp/example-low",
+    severity,
+    confidence: "high" as const,
+    title: severity === "high"
+      ? "Shell execution capability detected"
+      : severity === "medium"
+        ? "Outbound network request capability detected"
+        : "Low severity placeholder finding",
+    file: `src/example-${index + 1}.ts`,
+    line: index + 1,
+    evidence: `evidence-${index + 1}`,
+    whyItMatters: `why-${index + 1}`,
+    remediation: `remediation-${index + 1}`
+  }));
+
   return {
     tool: {
       name: "TrustMCP",
@@ -296,10 +321,13 @@ function createReport(severities: Array<"high" | "medium" | "low">): AuditReport
       "No finding set should be interpreted as a safety guarantee."
     ],
     summary: {
+      baselineApplied: false,
       findingCount: severities.length,
       newFindingCount: severities.length,
+      gatedFindingCount: severities.length,
       triggeredRuleCount: severities.length,
       newTriggeredRuleCount: severities.length,
+      gatedTriggeredRuleCount: severities.length,
       severityCounts: {
         low: severities.filter((severity) => severity === "low").length,
         medium: severities.filter((severity) => severity === "medium").length,
@@ -310,39 +338,16 @@ function createReport(severities: Array<"high" | "medium" | "low">): AuditReport
         medium: severities.filter((severity) => severity === "medium").length,
         high: severities.filter((severity) => severity === "high").length
       },
+      gatedSeverityCounts: {
+        low: severities.filter((severity) => severity === "low").length,
+        medium: severities.filter((severity) => severity === "medium").length,
+        high: severities.filter((severity) => severity === "high").length
+      },
       message: severities.length === 0
         ? "No matching rules were triggered. Static heuristics only; this does not mean the target is safe."
         : `${severities.length} finding(s) across ${severities.length} rule(s). Static heuristics only.`
     },
-    findings: severities.map((severity, index) => ({
-      ruleId: severity === "high" ? "mcp/shell-exec" : severity === "medium" ? "mcp/outbound-fetch" : "mcp/example-low",
-      severity,
-      confidence: "high",
-      title: severity === "high"
-        ? "Shell execution capability detected"
-        : severity === "medium"
-          ? "Outbound network request capability detected"
-          : "Low severity placeholder finding",
-      file: `src/example-${index + 1}.ts`,
-      line: index + 1,
-      evidence: `evidence-${index + 1}`,
-      whyItMatters: `why-${index + 1}`,
-      remediation: `remediation-${index + 1}`
-    })),
-    newFindings: severities.map((severity, index) => ({
-      ruleId: severity === "high" ? "mcp/shell-exec" : severity === "medium" ? "mcp/outbound-fetch" : "mcp/example-low",
-      severity,
-      confidence: "high",
-      title: severity === "high"
-        ? "Shell execution capability detected"
-        : severity === "medium"
-          ? "Outbound network request capability detected"
-          : "Low severity placeholder finding",
-      file: `src/example-${index + 1}.ts`,
-      line: index + 1,
-      evidence: `evidence-${index + 1}`,
-      whyItMatters: `why-${index + 1}`,
-      remediation: `remediation-${index + 1}`
-    }))
+    findings,
+    newFindings: findings
   };
 }

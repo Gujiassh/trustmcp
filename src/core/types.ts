@@ -3,6 +3,7 @@ export type Confidence = "high" | "medium" | "low";
 export type SourceType = "local-directory" | "public-github-repo";
 
 export interface Finding {
+  fingerprint: string;
   ruleId: string;
   severity: Severity;
   confidence: Confidence;
@@ -22,16 +23,24 @@ export interface AuditTarget {
 }
 
 export interface AuditSummary {
+  baselineApplied: boolean;
   findingCount: number;
   newFindingCount: number;
+  gatedFindingCount: number;
   triggeredRuleCount: number;
   newTriggeredRuleCount: number;
+  gatedTriggeredRuleCount: number;
   severityCounts: {
     low: number;
     medium: number;
     high: number;
   };
   newSeverityCounts: {
+    low: number;
+    medium: number;
+    high: number;
+  };
+  gatedSeverityCounts: {
     low: number;
     medium: number;
     high: number;
@@ -52,6 +61,7 @@ export interface AuditReport {
 }
 
 export interface BaselineEntry {
+  fingerprint?: string;
   ruleId: string;
   file: string;
   line?: number;

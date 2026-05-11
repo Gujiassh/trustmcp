@@ -109,6 +109,11 @@ export async function writeActionOutputs(
     `new-low-count=${report.summary.newSeverityCounts.low}`,
     `new-medium-count=${report.summary.newSeverityCounts.medium}`,
     `new-high-count=${report.summary.newSeverityCounts.high}`,
+    `gated-finding-count=${report.summary.gatedFindingCount}`,
+    `gated-rule-count=${report.summary.gatedTriggeredRuleCount}`,
+    `gated-low-count=${report.summary.gatedSeverityCounts.low}`,
+    `gated-medium-count=${report.summary.gatedSeverityCounts.medium}`,
+    `gated-high-count=${report.summary.gatedSeverityCounts.high}`,
     `baseline-applied=${baselineApplied ? "true" : "false"}`,
     `summary-message=${sanitizeGitHubOutputValue(report.summary.message)}`
   ];

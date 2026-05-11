@@ -6,6 +6,9 @@ Internal planning and decision logs are maintained outside this public repositor
 
 Public-facing documentation in this repo should stay aligned with shipped behavior. Private incubation notes and discarded options are intentionally not mirrored here.
 
+For the forward-looking product and engineering roadmap, see [TrustMCP Long-Term Development Spec](./long-term-development-spec.md).
+For the implementation-level breakdown of the next slices and milestones, see [TrustMCP Execution Breakdown](./execution-breakdown.md).
+
 Current public CLI surface includes text or JSON reports plus `--fail-on low|medium|high` for CI-oriented exit thresholds.
 
 Public output formats now include `text`, `json`, `markdown`, and deterministic `sarif` rendering for code-scanning workflows.

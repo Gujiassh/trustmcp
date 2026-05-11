@@ -18,7 +18,7 @@ node dist/cli/main.js doctor <target> [--config trustmcp.config.json]
 | `Local path is not a directory:` | The path exists, but it points to a file instead of a directory. | Point TrustMCP at the repository or folder root, not an individual file. |
 | `Config file ... must contain valid JSON` or `Config file ... has invalid ...` | The config file exists, but its JSON or supported field values are invalid. | Keep the config to the supported fields only: `format`, `fail-on`, `summary-only`, `output-file`, `ignore-rules`, `ignore-paths`, `baseline-file`, and `baseline-output`. If you want a clean starting point, run `node dist/cli/main.js init-config`. |
 | `baseline-output directory does not exist:` | You asked TrustMCP to write a baseline file into a missing directory. | Create the parent directory first, then rerun the scan with the same `--baseline-output` path. |
-| `Baseline file ... must contain valid JSON` or `Baseline file ... entry at index ...` | The baseline file exists, but its JSON or entry shape is invalid. | Keep the baseline file as a JSON array of objects with exact `ruleId`, `file`, and optional positive-integer `line` values. TrustMCP does not support globs or regexes in baseline entries. |
+| `Baseline file ... must contain valid JSON` or `Baseline file ... entry at index ...` | The baseline file exists, but its JSON or entry shape is invalid. | Keep the baseline file as a JSON array. Preferred entries include `fingerprint`, `ruleId`, `file`, and optional positive-integer `line`. Older entries with only `ruleId`, `file`, and optional `line` are still accepted. TrustMCP does not support globs or regexes in baseline entries. |
 | `Output file directory does not exist:` | You used `--output-file` with a parent directory that is missing. | Create the parent directory first, then run TrustMCP again. TrustMCP writes the report file, but it does not scaffold report directories for you. |
 | `No matching rules were triggered.` | The current shipped rules did not match the current repository snapshot. | Treat this as a narrow no-match result, not a safety verdict. Check [What TrustMCP scans, and how it differs from npm audit](./what-trustmcp-scans.md) if you want the scope explanation. |
 
@@ -49,7 +49,11 @@ The GitHub Action also supports the same config file through the `config-file` i
 
 The action also respects the CLI `summary-only` option: leave the new `summary-only` input unset so the config file can drive the behavior, or set it to `true`/`false` explicitly when you want to override. This input enforces the same `summary-only` + `format: sarif` restriction as the CLI runner, so avoid that incompatible combination whether you run locally or in CI.
 
-For staged adoption on an existing repository, first create a baseline file with `--baseline-output`, then feed that file back through `baseline-file` in either the CLI invocation or the shared config file. Baseline entries are exact finding tuples, so use the same `ruleId`, normalized `file`, and optional `line` values that TrustMCP already emits. When a baseline is active, TrustMCP still prints the full finding list, but `--fail-on` only evaluates the findings that are not already present in that baseline.
+For staged adoption on an existing repository, first create a baseline file with `--baseline-output`, then feed that file back through `baseline-file` in either the CLI invocation or the shared config file. New baseline files include a stable `fingerprint` plus the visible `ruleId`, normalized `file`, and optional `line` fields. Older tuple-only baseline files are still accepted. When a baseline is active, TrustMCP still prints the full finding list, but `--fail-on` only evaluates the findings that are not already present in that baseline.
+
+If you want the full recommended rollout path instead of the short troubleshooting version, use [TrustMCP project-level policy adoption](./project-policy-adoption.md).
+
+`doctor` now also validates config-linked baseline paths and baseline file structure before a real scan starts, so it is the safest first command when you are wiring in `baseline-file`, `baseline-output`, or shared config defaults.
 
 If you are starting from scratch, generate a safe starter file:
 
@@ -82,7 +86,7 @@ node dist/cli/main.js gh:modelcontextprotocol/servers --format json --output-fil
 
 ## When you are not sure what TrustMCP is checking
 
-TrustMCP currently ships three rules.
+TrustMCP currently ships four rules.
 
 To list them from the CLI:
 

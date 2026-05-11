@@ -9,7 +9,7 @@ import {
 } from "../inputs/github.js";
 import { materializeLocalDirectory } from "../inputs/local.js";
 import { runAllRules } from "../rules/index.js";
-import { buildBaselineKey, normalizeRelativePath } from "./baseline-entries.js";
+import { buildBaselineKey, normalizeRelativePath, normalizeFingerprint } from "./baseline-entries.js";
 
 export interface AuditDependencies {
   collectSourceFiles: typeof collectSourceFiles;
@@ -82,6 +82,9 @@ function createReport(
   const severityCounts = countFindingsBySeverity(findings);
   const newSeverityCounts = countFindingsBySeverity(newFindings);
   const newTriggeredRuleCount = new Set(newFindings.map((finding) => finding.ruleId)).size;
+  const gatedFindingCount = baselineApplied ? newFindings.length : findings.length;
+  const gatedTriggeredRuleCount = baselineApplied ? newTriggeredRuleCount : triggeredRuleCount;
+  const gatedSeverityCounts = baselineApplied ? newSeverityCounts : severityCounts;
   const baseMessage =
     findings.length === 0
       ? "No matching rules were triggered. Static heuristics only; this does not mean the target is safe."
@@ -100,9 +103,13 @@ function createReport(
     target: materializedSource.target,
     limitations: DEFAULT_LIMITATIONS,
     summary: {
+      baselineApplied,
       newFindingCount: newFindings.length,
+      gatedFindingCount,
       newTriggeredRuleCount,
+      gatedTriggeredRuleCount,
       newSeverityCounts,
+      gatedSeverityCounts,
       findingCount: findings.length,
       triggeredRuleCount,
       severityCounts,
@@ -167,12 +174,19 @@ function applyBaselineFilter(findings: Finding[], baselineEntries?: BaselineEntr
     return findings;
   }
 
-  const baselineSet = new Set(
+  const fingerprintSet = new Set(
+    baselineEntries
+      .filter((entry) => entry.fingerprint !== undefined)
+      .map((entry) => normalizeFingerprint(entry.fingerprint!))
+  );
+  const legacyKeySet = new Set(
     baselineEntries.map((entry) => buildBaselineKey(entry.ruleId, entry.file, entry.line))
   );
 
   return findings.filter(
-    (finding) => !baselineSet.has(buildBaselineKey(finding.ruleId, finding.file, finding.line))
+    (finding) =>
+      !fingerprintSet.has(normalizeFingerprint(finding.fingerprint)) &&
+      !legacyKeySet.has(buildBaselineKey(finding.ruleId, finding.file, finding.line))
   );
 }
 

@@ -1,6 +1,6 @@
 # TrustMCP rules explained
 
-TrustMCP currently ships three rules for JavaScript and TypeScript MCP server repositories: `mcp/shell-exec`, `mcp/outbound-fetch`, and `mcp/broad-filesystem`.
+TrustMCP currently ships four rules for JavaScript and TypeScript MCP server repositories: `mcp/shell-exec`, `mcp/outbound-fetch`, `mcp/broad-filesystem`, and `mcp/dynamic-code-exec`.
 
 This page explains what each rule is trying to catch, what evidence usually causes a match, and what the rule is **not** claiming.
 
@@ -89,6 +89,35 @@ This rule is **not** claiming that all filesystem access is a problem.
 
 Reading a fixed local file inside the repository is different from letting tool input reach broad host paths. The rule is aimed at the latter pattern: broad or tool-controlled access that could expose secrets, modify unrelated files, or touch sensitive directories.
 
+## `mcp/dynamic-code-exec`
+
+This rule is trying to catch code paths that turn strings into executable runtime behavior inside the host process.
+
+### What usually causes a match
+
+TrustMCP looks for dynamic execution patterns such as:
+
+- `eval(...)`
+- `Function(...)` or `new Function(...)`
+- `vm.runInNewContext(...)`
+- `vm.runInThisContext(...)`
+- `vm.compileFunction(...)`
+- similar imported `vm` execution helpers
+
+The confidence increases when the code string appears to come from tool input, request input, or similar user-controlled fields.
+
+Typical matched evidence looks like:
+
+- `return eval(input.expression)`
+- `new Function(args.code)`
+- `vm.runInNewContext(input.code, {})`
+
+### What the rule is not claiming
+
+This rule is **not** claiming that every dynamic execution helper is automatically exploitable or always reachable.
+
+It is also **not** trying to prove whether the executed string is perfectly constrained elsewhere. The narrower claim is that the repository appears to expose dynamic code execution capability, which materially changes the trust profile of an MCP server before first use.
+
 ## Why these rules are narrow on purpose
 
 TrustMCP is not trying to be a full security review in one command. These rules are intentionally capability-focused and evidence-based.
@@ -98,6 +127,7 @@ They answer questions like:
 - does this repository appear able to execute commands?
 - does it appear able to make outbound requests?
 - does it appear able to reach broad or tool-controlled filesystem paths?
+- does it appear able to execute dynamic code strings at runtime?
 
 They do **not** answer every security question about an MCP server, and they do **not** prove a repository is safe when no rules match.
 

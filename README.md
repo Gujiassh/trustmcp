@@ -38,7 +38,7 @@ TrustMCP intentionally stays small:
 - one reusable GitHub Action
 - static heuristics only
 - public GitHub repo root URLs or local folders
-- three evidence-backed rules
+- four evidence-backed rules
 
 It does **not** claim a target is safe.
 
@@ -57,6 +57,10 @@ For a rule-by-rule explainer, check out [TrustMCP rules explained](./docs/trustm
 - `mcp/shell-exec`
 - `mcp/outbound-fetch`
 - `mcp/broad-filesystem`
+- `mcp/dynamic-code-exec`
+
+For the stable JSON, baseline, and GitHub Action machine-readable contract, see [TrustMCP machine-readable output contract](./docs/machine-readable-output-contract.md).
+For the recommended single-repository baseline and CI rollout path, see [TrustMCP project-level policy adoption](./docs/project-policy-adoption.md).
 
 If you want the current IDs from the CLI, run `node dist/cli/main.js list-rules`.
 
@@ -247,12 +251,12 @@ When you pass `--config`, `doctor` also checks config-loaded `output-file` paths
 - `output-file`: a file path where the rendered report is written in addition to stdout.
 - `ignore-rules`: an array of exact rule IDs (`mcp/shell-exec`, `mcp/outbound-fetch`, etc.). Any finding whose `ruleId` matches one of the entries is dropped from the final report, but the heuristic still runs internally, so only use this to silence known noise that you have inspected.
 - `ignore-paths`: an array of slash-separated relative paths (files or directories) inside the audited target. If a finding’s `file` path starts with one of the configured strings, that finding is omitted from the CLI summary output and structured report. There is no globbing or regex support; entries are matched literally and are case-sensitive.
-- `baseline-file`: a JSON file containing previously accepted finding tuples (`ruleId`, `file`, and optional `line`). When provided, TrustMCP still reports the full finding list for visibility, but `--fail-on` only evaluates findings that are not present in the baseline.
-- `baseline-output`: a file path where TrustMCP writes the current finding tuples as reusable baseline JSON. This is the explicit “accept current findings” path for later `baseline-file` runs.
+- `baseline-file`: a JSON file containing previously accepted findings. Preferred entries include `fingerprint`, `ruleId`, `file`, and optional `line`; older tuple-only entries remain readable for compatibility. When provided, TrustMCP still reports the full finding list for visibility, but `--fail-on` only evaluates findings that are not present in the baseline.
+- `baseline-output`: a file path where TrustMCP writes the current finding identities as reusable baseline JSON. This is the explicit “accept current findings” path for later `baseline-file` runs.
 
 Both `ignore-rules` and `ignore-paths` are best reserved for short-lived noise gating when you already trust the other findings and you are confident that the ignored rows represent accepted risk. They do not change the rule evaluation itself; they only suppress matching findings from the emitted summary and report output.
 
-`baseline-file` solves a different adoption problem: it lets an existing repository keep historical findings visible while failing CI only on newly introduced findings. Baseline matching is exact and literal after the same path normalization TrustMCP uses for report output. There is no globbing, regex matching, or automatic baseline update flow in this first slice.
+`baseline-file` solves a different adoption problem: it lets an existing repository keep historical findings visible while failing CI only on newly introduced findings. Baseline matching is fingerprint-first, with compatibility fallback for older `ruleId` + `file` + optional `line` entries. There is no globbing, regex matching, or automatic baseline update flow in this first slice.
 
 If you want to create that baseline file from a real scan instead of writing it by hand, run:
 
@@ -321,11 +325,13 @@ jobs:
 
 The action builds TrustMCP from its own source tree on each run and then scans the checked-out target path or public GitHub URL you pass in. It does not rely on a published npm package or marketplace wrapper. The example above uses the current stable tag `v0.1.0`; if you need stricter supply-chain pinning, use a specific commit SHA.
 
-The reusable action exposes `finding-count`, `rule-count`, `low-count`, `medium-count`, and `high-count` outputs for total findings, plus `new-finding-count`, `new-rule-count`, `new-low-count`, `new-medium-count`, and `new-high-count` for the baseline-filtered "new findings" subset when you use baseline gating. It also emits `baseline-applied` so later steps can tell whether the scan actually loaded baseline entries, and `summary-message` so lightweight jobs can reuse the exact one-line TrustMCP summary without reparsing JSON output.
+The reusable action exposes `finding-count`, `rule-count`, `low-count`, `medium-count`, and `high-count` outputs for total visible findings, plus `new-finding-count`, `new-rule-count`, `new-low-count`, `new-medium-count`, and `new-high-count` for the baseline-filtered "new findings" subset when you use baseline gating. It also emits `gated-finding-count`, `gated-rule-count`, `gated-low-count`, `gated-medium-count`, and `gated-high-count` for the exact set currently used for policy failure, `baseline-applied` so later steps can tell whether the scan actually loaded baseline entries, and `summary-message` so lightweight jobs can reuse the exact one-line TrustMCP summary without reparsing JSON output.
 
 When `GITHUB_STEP_SUMMARY` is available, the reusable action also appends the compact TrustMCP markdown report there automatically for easier job review.
 
 To reuse CLI defaults inside GitHub Actions, pass the new `config-file` input pointing at your `trustmcp.config.json`. The action resolves relative paths against `${{ github.workspace }}` before building, so `config-file: trustmcp.config.json` simply reuses the same config file you use with the CLI and honors the same `format`, `fail-on`, `ignore-rules`, `ignore-paths`, `baseline-file`, `baseline-output`, and `summary-only` settings. Dedicated `summary-only`, `baseline-file`, and `baseline-output` inputs also let the workflow override those values explicitly; `summary-only` stays empty by default so a config file can keep driving the value. The action enforces the same `summary-only` + `format: sarif` restriction as the CLI, so shared configs behave identically between local and CI runs.
+
+If you want the recommended baseline-first CI rollout pattern, start from [TrustMCP project-level policy adoption](./docs/project-policy-adoption.md) and the example workflow at [`.github/examples/trustmcp-baseline-gate.yml`](./.github/examples/trustmcp-baseline-gate.yml).
 
 If a later workflow step needs a concrete report file, set `output-file`, for example `output-file: reports/trustmcp.md`. Relative paths are resolved from the checked-out workspace, and the parent directory must already exist.
 
