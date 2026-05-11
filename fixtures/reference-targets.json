@@ -8,7 +8,7 @@
     },
     {
       "id": "mostly-clean",
-      "target": "https://github.com/github/github-mcp-server?ref=b1575edfefde09e3cf7c805aea79a92131271659",
+      "target": "https://github.com/okooo5km/memory-mcp-server?ref=e874a073288981779e14a489b7f9b10f4b576b3c",
       "expectedCategory": "mostly-clean",
       "notes": "Pinned real-world example expected to stay mostly or entirely clean."
     },

@@ -50,6 +50,8 @@ That command is now opinionated enough to fail non-zero when the checked-in targ
 - `mostly-clean` must still report zero findings
 - `sarif-relevant` must still produce a meaningful scan result for SARIF inspection
 
+Because those runs fetch real GitHub repository metadata and archives, they can take noticeably longer than local fixture checks. Treat them as release-confidence gates, not as a replacement for the fast deterministic local test suite.
+
 Both commands also accept `--json` after the script, for example:
 
 ```bash
@@ -127,7 +129,7 @@ The repository currently tracks these categories in `fixtures/reference-targets.
 - `finding-producing`
   - `https://github.com/microsoft/playwright-mcp`
 - `mostly-clean`
-  - `https://github.com/github/github-mcp-server`
+  - `https://github.com/okooo5km/memory-mcp-server`
 - `sarif-relevant`
   - `https://github.com/modelcontextprotocol/servers`
 
