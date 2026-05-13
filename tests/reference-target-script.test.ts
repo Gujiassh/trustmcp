@@ -3,12 +3,20 @@ import { promisify } from "node:util";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 const execFileAsync = promisify(execFile);
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
 
 describe("reference-target-check script", () => {
+  beforeAll(async () => {
+    await execFileAsync(npmCommand, ["run", "build"], {
+      cwd: repoRoot,
+      maxBuffer: 10 * 1024 * 1024
+    });
+  });
+
   it("emits stable JSON for manifest mode", async () => {
     const { stdout } = await execFileAsync(
       process.execPath,
