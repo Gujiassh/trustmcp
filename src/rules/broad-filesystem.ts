@@ -17,6 +17,41 @@ const USER_PATH_PATTERN =
   /(?:args|params|input|request|toolInput|toolArgs|resource)\.[A-Za-z0-9_]*path\b|\b(?:filePath|dirPath|targetPath|requestedPath|workspacePath|userPath|pathArg)\b/i;
 
 export const broadFilesystemRule: Rule = {
+  confidenceGuidance: [
+    {
+      level: "high",
+      reason: "recursive-filesystem-operation",
+      description: "A recursive filesystem operation such as rm/cp/readdir with recursive=true was matched."
+    },
+    {
+      level: "high",
+      reason: "root-or-home-directory-path",
+      description: "The filesystem path reaches HOME, USERPROFILE, os.homedir(), or a tilde-rooted path."
+    },
+    {
+      level: "high",
+      reason: "broad-operation-with-tool-controlled-path",
+      description: "A broad filesystem operation appears to take a tool-controlled path argument."
+    },
+    {
+      level: "medium",
+      reason: "tool-controlled-path",
+      description: "A filesystem call appears to take a tool-controlled path argument."
+    },
+    {
+      level: "medium",
+      reason: "broad-operation-with-non-literal-path",
+      description: "A broad filesystem operation uses a non-literal path even without explicit tool-input evidence."
+    }
+  ],
+  confidenceLevels: ["medium", "high"],
+  confidenceReasons: [
+    "recursive-filesystem-operation",
+    "root-or-home-directory-path",
+    "broad-operation-with-tool-controlled-path",
+    "tool-controlled-path",
+    "broad-operation-with-non-literal-path"
+  ],
   defaultSeverity: "high",
   id: "mcp/broad-filesystem",
   title: "Filesystem access using broad or tool-controlled paths detected",
@@ -40,12 +75,17 @@ export const broadFilesystemRule: Rule = {
         if (confidence === null) {
           return;
         }
+        const confidenceReason = classifyFilesystemConfidenceReason(line, evidence);
+        if (confidenceReason === null) {
+          return;
+        }
 
         findings.push(
           createFinding({
             ruleId: "mcp/broad-filesystem",
             severity: "high",
             confidence,
+            confidenceReason,
             title: broadFilesystemRule.title,
             file: file.relativePath,
             line: index + 1,
@@ -64,18 +104,47 @@ export const broadFilesystemRule: Rule = {
 };
 
 function classifyFilesystemConfidence(line: string, evidence: string): "high" | "medium" | null {
+  const reason = classifyFilesystemConfidenceReason(line, evidence);
+  if (reason === null) {
+    return null;
+  }
+
+  if (
+    reason === "recursive-filesystem-operation" ||
+    reason === "root-or-home-directory-path" ||
+    reason === "broad-operation-with-tool-controlled-path"
+  ) {
+    return "high";
+  }
+
+  return "medium";
+}
+
+function classifyFilesystemConfidenceReason(line: string, evidence: string): string | null {
   const hasRecursive = RECURSIVE_PATTERN.test(evidence);
   const hasRootPath = ROOT_PATH_PATTERN.test(evidence);
   const hasUserPath = USER_PATH_PATTERN.test(evidence);
   const broadOperation = BROAD_OPERATION_PATTERN.test(line);
   const nonLiteralFirstArgument = hasNonLiteralFirstArgument(line);
 
-  if (hasRecursive || hasRootPath || (broadOperation && hasUserPath)) {
-    return "high";
+  if (hasRecursive) {
+    return "recursive-filesystem-operation";
   }
 
-  if (hasUserPath || (broadOperation && nonLiteralFirstArgument)) {
-    return "medium";
+  if (hasRootPath) {
+    return "root-or-home-directory-path";
+  }
+
+  if (broadOperation && hasUserPath) {
+    return "broad-operation-with-tool-controlled-path";
+  }
+
+  if (hasUserPath) {
+    return "tool-controlled-path";
+  }
+
+  if (broadOperation && nonLiteralFirstArgument) {
+    return "broad-operation-with-non-literal-path";
   }
 
   return null;

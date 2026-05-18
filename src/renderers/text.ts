@@ -21,6 +21,9 @@ export function renderTextReport(report: AuditReport): string {
     lines.push("");
     lines.push(`[${finding.severity.toUpperCase()}][${finding.confidence.toUpperCase()}] ${finding.title}`);
     lines.push(`Rule: ${finding.ruleId}`);
+    if (finding.confidenceReason !== undefined) {
+      lines.push(`Confidence reason: ${finding.confidenceReason}`);
+    }
     lines.push(`Location: ${formatLocation(finding)}`);
     lines.push(`Evidence: ${finding.evidence}`);
     lines.push(`Why it matters: ${finding.whyItMatters}`);

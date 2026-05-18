@@ -25,6 +25,7 @@ export function createFinding(input: {
   ruleId: string;
   severity: Severity;
   confidence: Confidence;
+  confidenceReason?: string;
   title: string;
   file: string;
   line?: number;
@@ -32,13 +33,16 @@ export function createFinding(input: {
   whyItMatters: string;
   remediation: string;
 }): Finding {
+  const normalizedEvidence = normalizeEvidence(input.evidence);
   const finding: Finding = {
+    fingerprint: buildFindingFingerprint(input.ruleId, input.file, normalizedEvidence),
     ruleId: input.ruleId,
     severity: input.severity,
     confidence: input.confidence,
+    ...(input.confidenceReason === undefined ? {} : { confidenceReason: input.confidenceReason }),
     title: input.title,
     file: input.file,
-    evidence: normalizeEvidence(input.evidence),
+    evidence: normalizedEvidence,
     whyItMatters: input.whyItMatters,
     remediation: input.remediation
   };
@@ -48,6 +52,10 @@ export function createFinding(input: {
   }
 
   return finding;
+}
+
+export function buildFindingFingerprint(ruleId: string, filePath: string, evidence: string): string {
+  return `${ruleId}|${filePath.replace(/\\/g, "/").replace(/^\.\//, "")}|${normalizeEvidence(evidence)}`;
 }
 
 export function sortFindings(findings: Finding[]): Finding[] {

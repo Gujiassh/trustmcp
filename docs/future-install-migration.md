@@ -1,58 +1,62 @@
-# Future install migration note for source users
+# Source Install And Packaging Notes
 
-TrustMCP works today from source checkout. That is the real supported path right now.
+TrustMCP is already published on npm, but source checkout still matters for contributors, local inspection, and pre-release work on the unreleased repository surface.
 
-Today, people use TrustMCP by:
+This page exists to keep three ideas separate:
 
-- cloning the repository
-- running `npm install`
-- running `npm run build`
-- using either `node dist/cli/main.js ...` or `npm link`
-
-This page explains how to think about a future packaged install path without implying that npm publication already exists.
+- **installing the published package today**
+- **running the current repository from source**
+- **preparing the next package/release without publishing immediately**
 
 ## What is real today
 
-TrustMCP is **not published to npm yet**.
+TrustMCP is published on npm as `trustmcp`.
 
-The current supported options are:
+Current supported ways to use it are:
 
-- direct `node dist/cli/main.js ...` usage from a built source checkout
+- `npm install -g trustmcp`
+- `npx trustmcp ...`
+- direct `node dist/cli/main.js ...` from a built source checkout
 - optional `npm link` from that same local source checkout
 
-If you want the full current install steps, check out [Installing TrustMCP today](./installing-trustmcp.md).
+If you want the concrete install paths, use [Installing TrustMCP today](./installing-trustmcp.md).
 
-## What would change if packaged install becomes available later
+## Why source checkout still matters
 
-Conceptually, the difference is simple:
+Even with npm publication live, a source checkout is still the right path when you need to:
 
-- today, you build TrustMCP from source in your own checkout
-- later, a packaged install path would mean consuming a prepared package build instead of building from a cloned repo first
+- inspect or modify the repository
+- validate unreleased behavior such as `0.2.0-dev`
+- run fixture, contract, and release-confidence checks before tagging a release
+- use `npm run smoke`, `npm run reference:check`, or `npm run release:check`
 
-That would change **how you obtain the CLI**, not what TrustMCP scans or how the core commands behave.
+## What packaging and release checks mean now
 
-## What would stay the same
+These commands are no longer placeholders for a hypothetical future package. They are the local validation path for future releases of the already-published package.
 
-Even if a packaged install path exists later, people should still expect the same basic TrustMCP surface:
+- `npm run pack:check`
+  - validates the tarball file set
+- `npm run pack:smoke`
+  - validates that the packed tarball can be installed and started
+- `npm run publish:check`
+  - runs the packaging-oriented local release gate
+- `npm run release:check`
+  - runs the broader local release-confidence gate, including reference-target checks
 
-- the same rule set and scan model
-- the same output formats
-- the same `doctor`, `list-rules`, and `init-config` style entry points
-- the same need to review findings in context
-
-In other words, package delivery would be different, but the scanner itself would still be the same product.
+None of these commands publish anything by themselves.
 
 ## What this page is not saying
 
 This page is **not** saying:
 
-- TrustMCP is already on npm
-- a packaged install command is available today
-- publication timing is already decided
+- the current repository tip has already been published
+- every example in this repo is available from the last npm tag
+- a local check automatically creates a GitHub release or npm release
 
-It is only here so future install messaging can evolve without rewriting the source-install guidance from scratch.
+It only separates **published package usage** from **unreleased repo-surface validation** so users and maintainers do not confuse the two.
 
 ## Use the right doc for the current job
 
-- For current real install steps, check out [Installing TrustMCP today](./installing-trustmcp.md).
-- For pack-readiness and the final manual registry preflight, check out [the npm publish checklist](./npm-publish-checklist.md).
+- For current install steps, check out [Installing TrustMCP today](./installing-trustmcp.md).
+- For package/release preflight, check out [the npm publish checklist](./npm-publish-checklist.md).
+- For release-confidence target replay and manual scanner confidence checks, check out [TrustMCP release confidence and reference targets](./release-confidence-and-reference-targets.md).

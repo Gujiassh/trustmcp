@@ -505,7 +505,7 @@ function parseDoctorArguments(argv: string[]): DoctorCliArguments | null {
     }
 
     if (target !== undefined) {
-      throw new Error("doctor accepts exactly one target: a local directory, GitHub repository URL, or gh:owner/repo.");
+      throw new Error("doctor accepts exactly one target: a local directory, GitHub repository URL, or gh:owner/repo, optionally with an explicit ref.");
     }
 
     if (isBlankPath(argument)) {
@@ -516,7 +516,7 @@ function parseDoctorArguments(argv: string[]): DoctorCliArguments | null {
   }
 
   if (target === undefined) {
-    throw new Error("doctor requires a local directory, GitHub repository URL, or gh:owner/repo target.");
+    throw new Error("doctor requires a local directory, GitHub repository URL, or gh:owner/repo target, optionally with an explicit ref.");
   }
 
   const options: DoctorCliArguments = {
@@ -688,7 +688,7 @@ function resolveConfigRelativePath(filePath: string, baseDirectory: string): str
 
 function usage(): string {
   return [
-    "TrustMCP v0.1.0",
+    "TrustMCP v0.2.0-dev",
     "",
     "Run a scan:",
     "  trustmcp <target> [--config path] [--baseline-file path] [--baseline-output path] [--format text|json|markdown|sarif] [--summary-only] [--fail-on low|medium|high] [--output-file path]",
@@ -711,7 +711,8 @@ function usage(): string {
     "Targets:",
     "  - local directory",
     "  - public GitHub repository URL",
-    "  - gh:owner/repo"
+    "  - gh:owner/repo",
+    "  - optional explicit GitHub refs via ?ref= or @ref"
   ].join("\n");
 }
 

@@ -6,6 +6,9 @@ Internal planning and decision logs are maintained outside this public repositor
 
 Public-facing documentation in this repo should stay aligned with shipped behavior. Private incubation notes and discarded options are intentionally not mirrored here.
 
+For the forward-looking product and engineering roadmap, see [TrustMCP Long-Term Development Spec](./long-term-development-spec.md).
+For the implementation-level breakdown of the next slices and milestones, see [TrustMCP Execution Breakdown](./execution-breakdown.md).
+
 Current public CLI surface includes text or JSON reports plus `--fail-on low|medium|high` for CI-oriented exit thresholds.
 
 Public output formats now include `text`, `json`, `markdown`, and deterministic `sarif` rendering for code-scanning workflows.
@@ -25,14 +28,16 @@ The CLI now also ships an explicit `init-config` helper for scaffolding a starte
 The CLI now also ships an explicit `doctor` command for read-only first-use validation of targets and optional config files.
 
 The CLI now also ships an explicit `list-rules` command for compact introspection of the current shipped rule set.
+The JSON form of `list-rules` now also exposes machine-readable rule metadata including default severity, possible `confidenceLevels`, stable `confidenceReasons`, and optional `confidenceGuidance` descriptions.
 
 Public docs now also include a dedicated explainer for what TrustMCP scans, what it does not scan, and how that differs from `npm audit`.
 
 Public docs now also include a dedicated rule explainer for the currently shipped checks and their intended evidence patterns.
+Public docs now also describe the current shipped scanner surface as a twelve-rule capability review tool rather than the original three-rule baseline.
 
 Public docs now also include a compact troubleshooting guide for common TrustMCP setup and input errors.
 
-Public docs now also include a dedicated install-path guide covering source checkout, direct CLI use, `npm link`, and pack-readiness without implying npm publication.
+Public docs now also include a dedicated install-path guide covering npm usage, source checkout, direct CLI use, `npm link`, and pack/release readiness without confusing the published package with the unreleased repository tip.
 
 The package scripts now also include a narrow `bootstrap` command for source-based local setup (`npm install && npm run build`).
 
@@ -46,7 +51,7 @@ GitHub input ergonomics stay narrow: repository root inputs are accepted as full
 
 JSON output now includes deterministic summary severity counters for `low`, `medium`, and `high` findings.
 
-The public repo now also ships a reusable composite GitHub Action plus official example workflows for a checked-out repository target, an explicit public GitHub target, markdown artifact retention, JSON artifact retention, SARIF artifact retention, and GitHub code-scanning SARIF upload, all pointing at the stable `v0.1.0` tag.
+The public repo now also ships a reusable composite GitHub Action plus official example workflows for a checked-out repository target, an explicit public GitHub target, markdown artifact retention, JSON artifact retention, SARIF artifact retention, sticky PR comments, and GitHub code-scanning SARIF upload. Until a newer release tag is cut, those examples intentionally track the current repo surface rather than the older `v0.1.0` Action contract.
 
 The repo now also ships a conservative manual GitHub release workflow triggered by `workflow_dispatch`, with explicit version validation and GitHub release creation only.
 
@@ -55,10 +60,17 @@ The public repo now also has a lightweight `CHANGELOG.md` as the release-history
 The repo now also ships an explicit npm pack validation path so future package distribution can be checked deliberately without publishing.
 
 The repo now also ships a local tarball install smoke check so future package distribution can be validated beyond dry-run pack contents alone.
+The repo now also ships a checked-in reference-target manifest plus `npm run reference:check` so release-confidence target categories can be validated locally without relying on maintainer memory alone.
+The repo now also ships `npm run reference:scan` so maintainers can replay the current scans for those checked-in public reference targets from one documented command.
+The repo now also ships `npm run release:check` as the one-command local gate that combines reference-target validation with the existing packaging checks.
+The repo now also ships `npm run release:check:strict` as the stricter variant that requires the live reference targets themselves to continue matching their declared categories.
 
 The repo now also ships a single `publish:check` command that bundles the local release-readiness checks without touching external systems.
 
 The reusable action now exposes machine-readable summary outputs for total findings and low/medium/high severity counts.
+The reusable action now also exposes baseline-aware machine-readable outputs for new finding totals and new low/medium/high severity counts, so workflows can distinguish overall inventory from newly introduced findings.
+The reusable action now also exposes total triggered-rule counts and baseline-aware new triggered-rule counts, so workflows can branch on rule breadth without reparsing JSON reports.
+The reusable action now also exposes `baseline-applied` and the final one-line `summary-message`, so downstream workflow steps can tell whether baseline gating was actually active and can reuse the human-readable summary text directly.
 
 When running inside GitHub Actions with `GITHUB_STEP_SUMMARY` available, the reusable action also appends the existing markdown report there.
 
@@ -68,5 +80,8 @@ The reusable action now accepts the `config-file` input so it can reuse the same
 The action now also honors the CLI `summary-only` setting, whether provided through the shared config file or the new `summary-only` input, and it validates the same compatibility rules (e.g., `summary-only: true` cannot pair with `format: sarif`).
 The action now also accepts `baseline-file` directly and honors the same config-driven baseline gating behavior as the CLI.
 The action now also accepts `baseline-output` so workflows can capture a baseline artifact from the current findings without hand-authoring the file.
+The example workflow set now also includes a sticky PR comment pattern for posting the markdown report directly into pull-request review.
+
+Findings now also expose an optional stable `confidenceReason` field across machine-readable outputs, and the shipped rules now declare stable reason strings so downstream consumers can understand why a finding was classified at `medium` versus `high` confidence.
 
 README now includes pinned real-world scan snapshots for both a finding-producing public example and a no-match public example so visitors can see the tool's behavior more honestly.

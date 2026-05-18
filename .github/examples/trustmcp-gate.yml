@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run TrustMCP gate
-        uses: Gujiassh/trustmcp@v0.1.0
+        uses: Gujiassh/trustmcp@main
         with:
           target: ${{ github.workspace }}
           format: json

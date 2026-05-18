@@ -11,24 +11,47 @@ They solve different problems.
 
 ## What TrustMCP scans today
 
-TrustMCP v0.1 ships three static rules:
+TrustMCP currently ships twelve static rules:
 
 - `mcp/shell-exec`
 - `mcp/outbound-fetch`
 - `mcp/broad-filesystem`
+- `mcp/archive-extract`
+- `mcp/download-write-exec`
+- `mcp/dynamic-code-exec`
+- `mcp/env-secret-exposure`
+- `mcp/subprocess-network-exfil`
+- `mcp/tool-metadata-risk`
+- `mcp/script-runner-exec`
+- `mcp/sensitive-local-data`
+- `mcp/local-service-binding`
 
 In practice, that means TrustMCP looks for source patterns that suggest an MCP server can:
 
 - execute shell commands on the host
 - make outbound network requests
 - access broad or tool-controlled filesystem paths
+- evaluate or compile dynamic code
+- read local secret-bearing paths
+- expose environment secrets to dangerous sinks
+- open local or publicly bound listeners
+- download, unpack, write, and execute remote content
+- advertise risky host capability directly in tool metadata
 
-Every finding includes a rule ID, severity, confidence, file, line when available, evidence, why it matters, and a remediation note.
+Those checks are still capability-focused rather than vulnerability-database-driven. TrustMCP is trying to answer “what host-side power does this repository appear to expose?” not “does this dependency tree match a known advisory feed?”
+
+Every finding includes a rule ID, severity, confidence, an optional confidence reason, file, line when available, evidence, why it matters, and a remediation note.
 
 To see the currently shipped rule set from the CLI, run:
 
 ```bash
 node dist/cli/main.js list-rules
+```
+
+If you want the machine-readable rule metadata that backs those findings, including each rule's possible confidence levels and stable reason codes, run:
+
+```bash
+node dist/cli/main.js list-rules --json
 ```
 
 ## What TrustMCP does not scan
@@ -51,7 +74,7 @@ When TrustMCP says `No matching rules were triggered.`, that means the current r
 
 TrustMCP asks a repository capability question:
 
-- does this MCP server source code appear able to execute commands, call out to the network, or reach broad filesystem paths?
+- does this MCP server source code appear able to execute commands, call out to the network, reach broad filesystem paths, expose local secrets, or chain those capabilities together?
 
 That difference matters because an MCP server can be risky even when its dependency tree is clean.
 
@@ -67,7 +90,7 @@ TrustMCP is meant to complement dependency scanning, not replace it.
 TrustMCP is useful when you want a fast first pass on a repository before deeper review, especially when the question is:
 
 - "What can this MCP server do on my machine?"
-- "Does this code appear able to execute commands or touch broad paths?"
+- "Does this code appear able to execute commands, touch sensitive paths, or ship local results elsewhere?"
 - "Should I take a closer look before wiring this into local tools or CI?"
 
 That is why the output focuses on concrete evidence and capability descriptions, rather than broad trust scores.

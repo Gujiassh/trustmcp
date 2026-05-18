@@ -217,7 +217,7 @@ describe("parseArguments", () => {
 
   it("rejects extra doctor positional arguments", () => {
     expect(() => parseArguments(["doctor", "one", "two"]))
-      .toThrowError("doctor accepts exactly one target: a local directory, GitHub repository URL, or gh:owner/repo.");
+      .toThrowError("doctor accepts exactly one target: a local directory, GitHub repository URL, or gh:owner/repo, optionally with an explicit ref.");
   });
 
   it("rejects blank target arguments", () => {
@@ -355,7 +355,7 @@ describe("runCli exit thresholds", () => {
     const fileContent = await readFile(outputFile, "utf8");
     const parsed = JSON.parse(stdoutContent) as {
       version: string;
-      runs: Array<{ results: Array<{ ruleId: string }> }>;
+      runs: Array<{ results: Array<{ ruleId: string; partialFingerprints?: Record<string, string>; properties?: Record<string, unknown> }> }>;
     };
 
     expect(exitCode).toBe(0);
@@ -363,6 +363,10 @@ describe("runCli exit thresholds", () => {
     expect(parsed.version).toBe("2.1.0");
     expect(parsed.runs[0]?.results).toHaveLength(2);
     expect(parsed.runs[0]?.results[0]?.ruleId).toBe("rule-1");
+    expect(parsed.runs[0]?.results[0]?.partialFingerprints?.primaryLocationLineHash).toBe("rule-1|src/example-1.ts|evidence-1");
+    expect(parsed.runs[0]?.results[0]?.properties?.baselineApplied).toBe(false);
+    expect(parsed.runs[0]?.results[0]?.properties?.isNewFinding).toBe(true);
+    expect(parsed.runs[0]?.results[0]?.properties?.isGatedFinding).toBe(true);
   });
 
   it("emits only the compact text summary while preserving fail-on behavior", async () => {
@@ -467,7 +471,29 @@ describe("runCli exit thresholds", () => {
     );
 
     expect(exitCode).toBe(0);
-    expect(stdout.join("")).toContain("1 new finding(s) across 1 rule(s)");
+    expect(stdout.join("")).toContain("No new findings.");
+  });
+
+  it("treats an empty baseline file as active baseline gating", async () => {
+    const baselineFile = await createTempFilePath("trustmcp-empty.baseline.json");
+    await writeFile(baselineFile, "[]", "utf8");
+    const stdout: string[] = [];
+
+    const exitCode = await runCli(
+      [
+        "./fixtures/local-risky",
+        "--fail-on",
+        "high",
+        "--baseline-file",
+        baselineFile
+      ],
+      {
+        stdout: createWriter(stdout)
+      }
+    );
+
+    expect(exitCode).toBe(2);
+    expect(stdout.join("")).toContain("21 new finding(s) across 12 rule(s).");
   });
 
   it("writes current findings to a baseline-output file", async () => {
@@ -485,24 +511,134 @@ describe("runCli exit thresholds", () => {
     );
 
     expect(exitCode).toBe(0);
-    expect(await readFile(baselineOutput, "utf8")).toBe(`[
-  {
-    "ruleId": "mcp/broad-filesystem",
-    "file": "src/files.ts",
-    "line": 4
-  },
-  {
-    "ruleId": "mcp/shell-exec",
-    "file": "src/shell.ts",
-    "line": 4
-  },
-  {
-    "ruleId": "mcp/outbound-fetch",
-    "file": "src/network.ts",
-    "line": 2
-  }
-]
-`);
+    expect(await readFile(baselineOutput, "utf8")).toBe(`${JSON.stringify([
+      {
+        fingerprint: "mcp/broad-filesystem|src/files.ts|return fs.readdir(input.path, { recursive: true }); }",
+        ruleId: "mcp/broad-filesystem",
+        file: "src/files.ts",
+        line: 4
+      },
+      {
+        fingerprint: "mcp/broad-filesystem|src/mutation.ts|return fs.rm(input.targetPath, { recursive: true, force: true }); }",
+        ruleId: "mcp/broad-filesystem",
+        file: "src/mutation.ts",
+        line: 4
+      },
+      {
+        fingerprint: "mcp/broad-filesystem|src/secrets.ts|return fs.readFile(`${process.env.HOME}/.aws/credentials`, \"utf8\"); }",
+        ruleId: "mcp/broad-filesystem",
+        file: "src/secrets.ts",
+        line: 4
+      },
+      {
+        fingerprint: "mcp/download-write-exec|src/download.ts|const response = await fetch(input.url); const script = await response.text(); await writeFile(\"/tmp/remote-installer.sh\", script, \"utf8\"); return execa(input.command); }",
+        ruleId: "mcp/download-write-exec",
+        file: "src/download.ts",
+        line: 5
+      },
+      {
+        fingerprint: "mcp/dynamic-code-exec|src/dynamic.ts|return vm.runInNewContext(input.code, {}); }",
+        ruleId: "mcp/dynamic-code-exec",
+        file: "src/dynamic.ts",
+        line: 4
+      },
+      {
+        fingerprint: "mcp/env-secret-exposure|src/env.ts|const token = process.env.GITHUB_TOKEN; return fetch(input.url, { method: \"POST\",",
+        ruleId: "mcp/env-secret-exposure",
+        file: "src/env.ts",
+        line: 2
+      },
+      {
+        fingerprint: "mcp/script-runner-exec|src/runner.ts|return `npm run ${input.script}`;",
+        ruleId: "mcp/script-runner-exec",
+        file: "src/runner.ts",
+        line: 2
+      },
+      {
+        fingerprint: "mcp/shell-exec|src/download.ts|return execa(input.command);",
+        ruleId: "mcp/shell-exec",
+        file: "src/download.ts",
+        line: 8
+      },
+      {
+        fingerprint: "mcp/shell-exec|src/exfil.ts|const result = await execa(input.command);",
+        ruleId: "mcp/shell-exec",
+        file: "src/exfil.ts",
+        line: 4
+      },
+      {
+        fingerprint: "mcp/shell-exec|src/shell.ts|exec(args.command);",
+        ruleId: "mcp/shell-exec",
+        file: "src/shell.ts",
+        line: 4
+      },
+      {
+        fingerprint: "mcp/subprocess-network-exfil|src/download.ts|const response = await fetch(input.url); const script = await response.text(); await writeFile(\"/tmp/remote-installer.sh\", script, \"utf8\"); return execa(input.command); }",
+        ruleId: "mcp/subprocess-network-exfil",
+        file: "src/download.ts",
+        line: 5
+      },
+      {
+        fingerprint: "mcp/subprocess-network-exfil|src/exfil.ts|const result = await execa(input.command); return fetch(input.url, { method: \"POST\", body: result.stdout }); }",
+        ruleId: "mcp/subprocess-network-exfil",
+        file: "src/exfil.ts",
+        line: 4
+      },
+      {
+        fingerprint: "mcp/sensitive-local-data|src/secrets.ts|return fs.readFile(`${process.env.HOME}/.aws/credentials`, \"utf8\"); }",
+        ruleId: "mcp/sensitive-local-data",
+        file: "src/secrets.ts",
+        line: 4
+      },
+      {
+        fingerprint: "mcp/archive-extract|src/archive.ts|const archive = new AdmZip(input.archivePath); archive.extractAllTo(input.targetPath, true); }",
+        ruleId: "mcp/archive-extract",
+        file: "src/archive.ts",
+        line: 4
+      },
+      {
+        fingerprint: "mcp/archive-extract|src/archive.ts|archive.extractAllTo(input.targetPath, true); }",
+        ruleId: "mcp/archive-extract",
+        file: "src/archive.ts",
+        line: 5
+      },
+      {
+        fingerprint: "mcp/local-service-binding|src/listener.ts|return app.listen(input.port, \"0.0.0.0\"); }",
+        ruleId: "mcp/local-service-binding",
+        file: "src/listener.ts",
+        line: 2
+      },
+      {
+        fingerprint: "mcp/outbound-fetch|src/download.ts|const response = await fetch(input.url);",
+        ruleId: "mcp/outbound-fetch",
+        file: "src/download.ts",
+        line: 5
+      },
+      {
+        fingerprint: "mcp/outbound-fetch|src/env.ts|return fetch(input.url, {",
+        ruleId: "mcp/outbound-fetch",
+        file: "src/env.ts",
+        line: 3
+      },
+      {
+        fingerprint: "mcp/outbound-fetch|src/exfil.ts|return fetch(input.url, {",
+        ruleId: "mcp/outbound-fetch",
+        file: "src/exfil.ts",
+        line: 5
+      },
+      {
+        fingerprint: "mcp/outbound-fetch|src/network.ts|return fetch(input.url);",
+        ruleId: "mcp/outbound-fetch",
+        file: "src/network.ts",
+        line: 2
+      },
+      {
+        fingerprint: "mcp/tool-metadata-risk|src/metadata.ts|description: \"Execute shell commands, read credentials, and send results to a remote endpoint.\" }",
+        ruleId: "mcp/tool-metadata-risk",
+        file: "src/metadata.ts",
+        line: 4
+      }
+    ], null, 2)}\n`);
   });
 
   it("trims ignore rule and path entries loaded from config", async () => {
@@ -746,9 +882,18 @@ describe("runCli exit thresholds", () => {
     expect(exitCode).toBe(0);
     expect(stdout.join("")).toBe(
       "ruleId\tseverity\ttitle\n" +
+      "mcp/archive-extract\tmedium\tArchive extraction capability detected\n" +
       "mcp/broad-filesystem\thigh\tFilesystem access using broad or tool-controlled paths detected\n" +
+      "mcp/download-write-exec\thigh\tDownload-to-disk execution chain detected\n" +
+      "mcp/dynamic-code-exec\thigh\tDynamic code execution capability detected\n" +
+      "mcp/env-secret-exposure\thigh\tEnvironment secret exposure path detected\n" +
+      "mcp/local-service-binding\tmedium\tLocal service or port-binding capability detected\n" +
       "mcp/outbound-fetch\tmedium\tOutbound network request capability detected\n" +
-      "mcp/shell-exec\thigh\tShell execution capability detected\n"
+      "mcp/script-runner-exec\thigh\tScript runner or package-manager execution wrapper detected\n" +
+      "mcp/sensitive-local-data\thigh\tSensitive local credential or secret path access detected\n" +
+      "mcp/shell-exec\thigh\tShell execution capability detected\n" +
+      "mcp/subprocess-network-exfil\thigh\tSubprocess plus network exfiltration path detected\n" +
+      "mcp/tool-metadata-risk\tmedium\tRisky MCP tool capability advertised in metadata\n"
     );
   });
 
@@ -765,19 +910,319 @@ describe("runCli exit thresholds", () => {
     expect(exitCode).toBe(0);
     expect(stdout.join("")).toBe(`[
   {
+    "id": "mcp/archive-extract",
+    "severity": "medium",
+    "title": "Archive extraction capability detected",
+    "confidenceLevels": [
+      "medium",
+      "high"
+    ],
+    "confidenceReasons": [
+      "fixed-archive-extraction",
+      "tool-controlled-archive-path"
+    ],
+    "confidenceGuidance": [
+      {
+        "level": "medium",
+        "reason": "fixed-archive-extraction",
+        "description": "An archive extraction helper was matched without clear tool-controlled archive or target input."
+      },
+      {
+        "level": "high",
+        "reason": "tool-controlled-archive-path",
+        "description": "The archive source or extraction target appears to come from tool or request input."
+      }
+    ]
+  },
+  {
     "id": "mcp/broad-filesystem",
     "severity": "high",
-    "title": "Filesystem access using broad or tool-controlled paths detected"
+    "title": "Filesystem access using broad or tool-controlled paths detected",
+    "confidenceLevels": [
+      "medium",
+      "high"
+    ],
+    "confidenceReasons": [
+      "recursive-filesystem-operation",
+      "root-or-home-directory-path",
+      "broad-operation-with-tool-controlled-path",
+      "tool-controlled-path",
+      "broad-operation-with-non-literal-path"
+    ],
+    "confidenceGuidance": [
+      {
+        "level": "high",
+        "reason": "recursive-filesystem-operation",
+        "description": "A recursive filesystem operation such as rm/cp/readdir with recursive=true was matched."
+      },
+      {
+        "level": "high",
+        "reason": "root-or-home-directory-path",
+        "description": "The filesystem path reaches HOME, USERPROFILE, os.homedir(), or a tilde-rooted path."
+      },
+      {
+        "level": "high",
+        "reason": "broad-operation-with-tool-controlled-path",
+        "description": "A broad filesystem operation appears to take a tool-controlled path argument."
+      },
+      {
+        "level": "medium",
+        "reason": "tool-controlled-path",
+        "description": "A filesystem call appears to take a tool-controlled path argument."
+      },
+      {
+        "level": "medium",
+        "reason": "broad-operation-with-non-literal-path",
+        "description": "A broad filesystem operation uses a non-literal path even without explicit tool-input evidence."
+      }
+    ]
+  },
+  {
+    "id": "mcp/download-write-exec",
+    "severity": "high",
+    "title": "Download-to-disk execution chain detected",
+    "confidenceLevels": [
+      "medium",
+      "high"
+    ],
+    "confidenceReasons": [
+      "fixed-download-write-exec-chain",
+      "tool-controlled-download-or-exec-input"
+    ],
+    "confidenceGuidance": [
+      {
+        "level": "medium",
+        "reason": "fixed-download-write-exec-chain",
+        "description": "A download-write-execute chain was matched without clear tool-controlled download or execution input."
+      },
+      {
+        "level": "high",
+        "reason": "tool-controlled-download-or-exec-input",
+        "description": "The download source, written artifact, or execution step appears to depend on tool input."
+      }
+    ]
+  },
+  {
+    "id": "mcp/dynamic-code-exec",
+    "severity": "high",
+    "title": "Dynamic code execution capability detected",
+    "confidenceLevels": [
+      "medium",
+      "high"
+    ],
+    "confidenceReasons": [
+      "literal-dynamic-eval",
+      "vm-execution-api",
+      "tool-controlled-code-input"
+    ],
+    "confidenceGuidance": [
+      {
+        "level": "medium",
+        "reason": "literal-dynamic-eval",
+        "description": "A direct eval or Function-style primitive was matched without clear tool-controlled code input."
+      },
+      {
+        "level": "high",
+        "reason": "vm-execution-api",
+        "description": "A vm execution API was matched, which is treated as a stronger dynamic execution surface."
+      },
+      {
+        "level": "high",
+        "reason": "tool-controlled-code-input",
+        "description": "The executed code string appears to come from tool or request input."
+      }
+    ]
+  },
+  {
+    "id": "mcp/env-secret-exposure",
+    "severity": "high",
+    "title": "Environment secret exposure path detected",
+    "confidenceLevels": [
+      "high"
+    ],
+    "confidenceReasons": [
+      "secret-env-var-reaches-dangerous-sink"
+    ],
+    "confidenceGuidance": [
+      {
+        "level": "high",
+        "reason": "secret-env-var-reaches-dangerous-sink",
+        "description": "A secret-bearing environment variable appears to flow into a network, execution, logging, or return sink."
+      }
+    ]
+  },
+  {
+    "id": "mcp/local-service-binding",
+    "severity": "medium",
+    "title": "Local service or port-binding capability detected",
+    "confidenceLevels": [
+      "medium",
+      "high"
+    ],
+    "confidenceReasons": [
+      "local-listener-startup",
+      "explicit-public-bind-address",
+      "tool-controlled-bind-parameter"
+    ],
+    "confidenceGuidance": [
+      {
+        "level": "medium",
+        "reason": "local-listener-startup",
+        "description": "A local listener startup path was matched without explicit public bind or tool-controlled bind input."
+      },
+      {
+        "level": "high",
+        "reason": "explicit-public-bind-address",
+        "description": "The listener binds an explicitly public address such as 0.0.0.0 or ::."
+      },
+      {
+        "level": "high",
+        "reason": "tool-controlled-bind-parameter",
+        "description": "The host, port, or bind target appears to come from tool or request input."
+      }
+    ]
   },
   {
     "id": "mcp/outbound-fetch",
     "severity": "medium",
-    "title": "Outbound network request capability detected"
+    "title": "Outbound network request capability detected",
+    "confidenceLevels": [
+      "medium",
+      "high"
+    ],
+    "confidenceReasons": [
+      "literal-fetch-call",
+      "non-fetch-network-client",
+      "tool-controlled-url"
+    ],
+    "confidenceGuidance": [
+      {
+        "level": "medium",
+        "reason": "literal-fetch-call",
+        "description": "A plain fetch call was matched without clear tool-controlled destination evidence."
+      },
+      {
+        "level": "high",
+        "reason": "non-fetch-network-client",
+        "description": "A stronger network client surface such as axios, http(s), got, or undici was matched."
+      },
+      {
+        "level": "high",
+        "reason": "tool-controlled-url",
+        "description": "The destination URL appears to come from tool or request input."
+      }
+    ]
+  },
+  {
+    "id": "mcp/script-runner-exec",
+    "severity": "high",
+    "title": "Script runner or package-manager execution wrapper detected",
+    "confidenceLevels": [
+      "medium",
+      "high"
+    ],
+    "confidenceReasons": [
+      "fixed-script-runner-command",
+      "tool-controlled-script-runner-input"
+    ],
+    "confidenceGuidance": [
+      {
+        "level": "medium",
+        "reason": "fixed-script-runner-command",
+        "description": "A package-manager or script-runner execution wrapper was matched with a fixed command."
+      },
+      {
+        "level": "high",
+        "reason": "tool-controlled-script-runner-input",
+        "description": "The script, task, or runner input appears to come from tool or request data."
+      }
+    ]
+  },
+  {
+    "id": "mcp/sensitive-local-data",
+    "severity": "high",
+    "title": "Sensitive local credential or secret path access detected",
+    "confidenceLevels": [
+      "medium",
+      "high"
+    ],
+    "confidenceReasons": [
+      "fixed-sensitive-local-path",
+      "tool-controlled-secret-path"
+    ],
+    "confidenceGuidance": [
+      {
+        "level": "medium",
+        "reason": "fixed-sensitive-local-path",
+        "description": "A known secret-bearing local path was matched without clear tool-controlled path input."
+      },
+      {
+        "level": "high",
+        "reason": "tool-controlled-secret-path",
+        "description": "The secret-bearing path appears to come from tool or request input."
+      }
+    ]
   },
   {
     "id": "mcp/shell-exec",
     "severity": "high",
-    "title": "Shell execution capability detected"
+    "title": "Shell execution capability detected",
+    "confidenceLevels": [
+      "high"
+    ],
+    "confidenceReasons": [
+      "direct-command-execution-api"
+    ],
+    "confidenceGuidance": [
+      {
+        "level": "high",
+        "reason": "direct-command-execution-api",
+        "description": "Direct command execution primitives such as child_process, execa, or Bun.spawn were matched."
+      }
+    ]
+  },
+  {
+    "id": "mcp/subprocess-network-exfil",
+    "severity": "high",
+    "title": "Subprocess plus network exfiltration path detected",
+    "confidenceLevels": [
+      "medium",
+      "high"
+    ],
+    "confidenceReasons": [
+      "subprocess-plus-network-chain",
+      "tool-controlled-exfiltration-path"
+    ],
+    "confidenceGuidance": [
+      {
+        "level": "medium",
+        "reason": "subprocess-plus-network-chain",
+        "description": "A subprocess plus outbound network chain was matched without clear tool-controlled exfiltration input."
+      },
+      {
+        "level": "high",
+        "reason": "tool-controlled-exfiltration-path",
+        "description": "The command, URL, output path, or payload appears to be controlled by tool input."
+      }
+    ]
+  },
+  {
+    "id": "mcp/tool-metadata-risk",
+    "severity": "medium",
+    "title": "Risky MCP tool capability advertised in metadata",
+    "confidenceLevels": [
+      "medium"
+    ],
+    "confidenceReasons": [
+      "metadata-advertises-risky-capability"
+    ],
+    "confidenceGuidance": [
+      {
+        "level": "medium",
+        "reason": "metadata-advertises-risky-capability",
+        "description": "Tool metadata text directly advertises risky host capabilities such as shell, secrets, or remote exfiltration."
+      }
+    ]
   }
 ]
 `);
@@ -940,6 +1385,37 @@ describe("runCli exit thresholds", () => {
     expect(parsed.target.message).toBe("GitHub repository input (modelcontextprotocol/servers)");
   });
 
+  it("includes explicit requested GitHub refs in doctor JSON output", async () => {
+    const stdout: string[] = [];
+
+    const exitCode = await runCli([
+      "doctor",
+      "gh:modelcontextprotocol/servers@release-branch",
+      "--json"
+    ], {
+      auditTarget: async () => {
+        throw new Error("doctor should not invoke the scan engine");
+      },
+      stdout: createWriter(stdout)
+    });
+
+    const parsed = JSON.parse(stdout.join("")) as {
+      ok: boolean;
+      target: {
+        ok: boolean;
+        displayName?: string;
+        resolvedRef?: string;
+        message: string;
+      };
+    };
+
+    expect(exitCode).toBe(0);
+    expect(parsed.ok).toBe(true);
+    expect(parsed.target.displayName).toBe("modelcontextprotocol/servers");
+    expect(parsed.target.resolvedRef).toBe("release-branch");
+    expect(parsed.target.message).toBe("GitHub repository input (modelcontextprotocol/servers @ release-branch)");
+  });
+
   it("reports configured output-file paths as valid in doctor when the parent directory exists", async () => {
     const outputFile = await createTempFilePath("trustmcp.json");
     const configFile = await createConfigFile(JSON.stringify({ "output-file": outputFile }));
@@ -960,6 +1436,33 @@ describe("runCli exit thresholds", () => {
 
     expect(exitCode).toBe(0);
     expect(stdout.join("")).toContain(`"message": "${configFile} (output-file OK: ${outputFile})"`);
+  });
+
+  it("reports configured baseline paths as valid in doctor when the file exists and is readable", async () => {
+    const baselineFile = await createTempFilePath("trustmcp.baseline.json");
+    const configFile = await createConfigFile(JSON.stringify({ "baseline-file": baselineFile }));
+    const stdout: string[] = [];
+    await writeFile(
+      baselineFile,
+      JSON.stringify([{ fingerprint: "mcp/shell-exec|src/shell.ts|exec(args.command);", ruleId: "mcp/shell-exec", file: "src/shell.ts", line: 4 }]),
+      "utf8"
+    );
+
+    const exitCode = await runCli([
+      "doctor",
+      "./fixtures/local-risky",
+      "--config",
+      configFile,
+      "--json"
+    ], {
+      auditTarget: async () => {
+        throw new Error("doctor should not invoke the scan engine");
+      },
+      stdout: createWriter(stdout)
+    });
+
+    expect(exitCode).toBe(0);
+    expect(stdout.join("")).toContain(`"message": "${configFile} (baseline-file OK: ${baselineFile})"`);
   });
 
   it("writes doctor text output to a file when requested", async () => {
@@ -1053,6 +1556,29 @@ describe("runCli exit thresholds", () => {
     expect(exitCode).toBe(1);
     expect(stdout.join("")).toContain("Config: ERROR Output file directory does not exist:");
     expect(stdout.join("")).toContain(join(directory, "missing"));
+  });
+
+  it("reports invalid baseline files in doctor before a scan runs", async () => {
+    const baselineFile = await createTempFilePath("trustmcp.baseline.json");
+    const configFile = await createConfigFile(JSON.stringify({ "baseline-file": baselineFile }));
+    const stdout: string[] = [];
+    await writeFile(baselineFile, JSON.stringify([{ ruleId: "", file: "src/example.ts" }]), "utf8");
+
+    const exitCode = await runCli([
+      "doctor",
+      "./fixtures/local-risky",
+      "--config",
+      configFile
+    ], {
+      auditTarget: async () => {
+        throw new Error("doctor should not invoke the scan engine");
+      },
+      stdout: createWriter(stdout)
+    });
+
+    expect(exitCode).toBe(1);
+    expect(stdout.join("")).toContain("Config: ERROR Baseline file");
+    expect(stdout.join("")).toContain("has invalid 'ruleId'");
   });
 
   it("reports unsupported GitHub tree URLs compactly in doctor", async () => {
@@ -1171,10 +1697,28 @@ describe("runCli exit thresholds", () => {
 });
 
 function createReport(sourceType: "local-directory" | "public-github-repo", severities: Severity[]): AuditReport {
+  const findings = severities.map((severity, index) => ({
+    fingerprint: `rule-${index + 1}|src/example-${index + 1}.ts|evidence-${index + 1}`,
+    ruleId: `rule-${index + 1}`,
+    severity,
+    confidence: "high" as const,
+    confidenceReason: `rule-specific-test-reason-${index + 1}`,
+    title: severity === "high"
+      ? "Shell execution capability detected"
+      : severity === "medium"
+        ? "Outbound network request capability detected"
+        : "Low severity placeholder finding",
+    file: `src/example-${index + 1}.ts`,
+    line: index + 1,
+    evidence: `evidence-${index + 1}`,
+    whyItMatters: `why-${index + 1}`,
+    remediation: `remediation-${index + 1}`
+  }));
+
   return {
     tool: {
       name: "TrustMCP",
-      version: "0.1.0"
+      version: TRUSTMCP_VERSION
     },
     target: {
       input: sourceType === "local-directory" ? "./fixtures/local-risky" : "https://github.com/example/risky-mcp",
@@ -1187,9 +1731,13 @@ function createReport(sourceType: "local-directory" | "public-github-repo", seve
       "No finding set should be interpreted as a safety guarantee."
     ],
     summary: {
+      baselineApplied: false,
       findingCount: severities.length,
       newFindingCount: severities.length,
+      gatedFindingCount: severities.length,
       triggeredRuleCount: severities.length,
+      newTriggeredRuleCount: severities.length,
+      gatedTriggeredRuleCount: severities.length,
       severityCounts: {
         low: severities.filter((severity) => severity === "low").length,
         medium: severities.filter((severity) => severity === "medium").length,
@@ -1200,40 +1748,17 @@ function createReport(sourceType: "local-directory" | "public-github-repo", seve
         medium: severities.filter((severity) => severity === "medium").length,
         high: severities.filter((severity) => severity === "high").length
       },
+      gatedSeverityCounts: {
+        low: severities.filter((severity) => severity === "low").length,
+        medium: severities.filter((severity) => severity === "medium").length,
+        high: severities.filter((severity) => severity === "high").length
+      },
       message: severities.length === 0
         ? "No matching rules were triggered. Static heuristics only; this does not mean the target is safe."
         : `${severities.length} finding(s) across ${severities.length} rule(s). Static heuristics only.`
     },
-    findings: severities.map((severity, index) => ({
-      ruleId: `rule-${index + 1}`,
-      severity,
-      confidence: "high",
-      title: severity === "high"
-        ? "Shell execution capability detected"
-        : severity === "medium"
-          ? "Outbound network request capability detected"
-          : "Low severity placeholder finding",
-      file: `src/example-${index + 1}.ts`,
-      line: index + 1,
-      evidence: `evidence-${index + 1}`,
-      whyItMatters: `why-${index + 1}`,
-      remediation: `remediation-${index + 1}`
-    })),
-    newFindings: severities.map((severity, index) => ({
-      ruleId: `rule-${index + 1}`,
-      severity,
-      confidence: "high",
-      title: severity === "high"
-        ? "Shell execution capability detected"
-        : severity === "medium"
-          ? "Outbound network request capability detected"
-          : "Low severity placeholder finding",
-      file: `src/example-${index + 1}.ts`,
-      line: index + 1,
-      evidence: `evidence-${index + 1}`,
-      whyItMatters: `why-${index + 1}`,
-      remediation: `remediation-${index + 1}`
-    }))
+    findings,
+    newFindings: findings
   };
 }
 

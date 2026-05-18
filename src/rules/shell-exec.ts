@@ -14,6 +14,15 @@ const EXECA_PATTERN = /\bexeca(?:Command|CommandSync|Sync)?\s*\(/;
 const BUN_PATTERN = /\bBun\.spawn\s*\(/;
 
 export const shellExecRule: Rule = {
+  confidenceGuidance: [
+    {
+      level: "high",
+      reason: "direct-command-execution-api",
+      description: "Direct command execution primitives such as child_process, execa, or Bun.spawn were matched."
+    }
+  ],
+  confidenceLevels: ["high"],
+  confidenceReasons: ["direct-command-execution-api"],
   defaultSeverity: "high",
   id: "mcp/shell-exec",
   title: "Shell execution capability detected",
@@ -39,6 +48,7 @@ export const shellExecRule: Rule = {
             ruleId: "mcp/shell-exec",
             severity: "high",
             confidence: "high",
+            confidenceReason: "direct-command-execution-api",
             title: shellExecRule.title,
             file: file.relativePath,
             line: index + 1,

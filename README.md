@@ -17,7 +17,10 @@ Release history: [CHANGELOG.md](./CHANGELOG.md)
 - GitHub Actions CI runs on Node 18 and 20
 - Package readiness checks exist: `npm run pack:check`, `npm run pack:smoke`, and `npm run publish:check`
 - GitHub release flow exists and stays manual
-- npm publication is live: `trustmcp@0.1.0`
+- npm publication is live: the latest published package line starts at `trustmcp@0.1.0`
+- current unreleased repository surface is tracking the next development line: `0.2.0-dev`
+
+That development suffix is intentional: before running the manual GitHub release workflow for the next public tag, move `package.json`, `package-lock.json`, and the related release notes from `0.2.0-dev` to the final release version.
 
 ## Install and release readiness
 
@@ -25,7 +28,9 @@ TrustMCP is usable today from npm, `npx`, and source checkout/local build.
 
 - Use [Installing TrustMCP today](./docs/installing-trustmcp.md) for the current supported install paths: npm, `npx`, direct `node dist/cli/main.js ...`, and optional `npm link`.
 - Use `npm run pack:check` to validate future npm tarball contents locally.
-- Use `npm run publish:check` to run the local release/package preflight in one command.
+- Use `npm run publish:check` when you only want the packaging-oriented local release preflight.
+- Use `npm run release:check` when you want the full local release-confidence + packaging gate in one command.
+- Use `npm run release:check:strict` when you also want to require real reference-target scans before release.
 - Use [the npm publish checklist](./docs/npm-publish-checklist.md) and [CONTRIBUTING.md](./CONTRIBUTING.md) for future package updates and manual GitHub release steps.
 
 ## Why scan MCP servers
@@ -38,7 +43,7 @@ TrustMCP intentionally stays small:
 - one reusable GitHub Action
 - static heuristics only
 - public GitHub repo root URLs or local folders
-- three evidence-backed rules
+- twelve evidence-backed rules
 
 It does **not** claim a target is safe.
 
@@ -57,10 +62,27 @@ For a rule-by-rule explainer, check out [TrustMCP rules explained](./docs/trustm
 - `mcp/shell-exec`
 - `mcp/outbound-fetch`
 - `mcp/broad-filesystem`
+- `mcp/archive-extract`
+- `mcp/download-write-exec`
+- `mcp/dynamic-code-exec`
+- `mcp/env-secret-exposure`
+- `mcp/subprocess-network-exfil`
+- `mcp/tool-metadata-risk`
+- `mcp/script-runner-exec`
+- `mcp/sensitive-local-data`
+- `mcp/local-service-binding`
+
+For the stable JSON, baseline, and GitHub Action machine-readable contract, see [TrustMCP machine-readable output contract](./docs/machine-readable-output-contract.md).
+For the recommended single-repository baseline and CI rollout path, see [TrustMCP project-level policy adoption](./docs/project-policy-adoption.md).
+
+Some repositories may legitimately trigger both `mcp/broad-filesystem` and `mcp/sensitive-local-data` on the same file path. TrustMCP currently keeps both findings because they answer different trust-review questions: broad host-path reach versus direct access to credential/secret-bearing locations.
+
+Some repositories may also trigger `mcp/local-service-binding` when they open listeners or bind ports from MCP-controlled flows. That rule is intentionally separate from fetch and execution rules because it answers a different trust question: whether the repository expands its reachable surface by starting a local or publicly bound service.
 
 If you want the current IDs from the CLI, run `node dist/cli/main.js list-rules`.
 
 For automation-friendly rule metadata, run `node dist/cli/main.js list-rules --json`.
+The JSON form now includes each rule's default severity plus its possible `confidenceLevels`, stable `confidenceReasons`, and optional `confidenceGuidance` entries with machine-readable descriptions.
 
 If you want to persist the shipped rule metadata to a file, run:
 
@@ -72,7 +94,7 @@ If you want a copy-paste automation path, for example in shell scripts:
 
 ```bash
 node dist/cli/main.js doctor gh:modelcontextprotocol/servers --json | jq '.ok'
-node dist/cli/main.js list-rules --json | jq '.[].ruleId'
+node dist/cli/main.js list-rules --json | jq '.[].id'
 ```
 
 Every finding includes:
@@ -80,6 +102,7 @@ Every finding includes:
 - `ruleId`
 - `severity`
 - `confidence`
+- `confidenceReason`
 - `title`
 - `file`
 - `line` when available
@@ -165,7 +188,14 @@ Or use explicit GitHub shorthand:
 node dist/cli/main.js gh:modelcontextprotocol/servers --format text
 ```
 
-GitHub scans accept **repository root inputs only**: either `https://github.com/owner/repo` or `gh:owner/repo`. Trailing slashes, `.git`, and repo-root query fragments are normalized for full URLs. Copied `tree/...`, `blob/...`, and other GitHub subpath URLs are rejected with a hint to use the repository root URL instead. Invalid shorthand fails with `gh:<owner>/<repo>` guidance rather than falling through to local-path handling.
+If you need a reproducible pinned GitHub scan instead of the current default-branch head, pass an explicit ref:
+
+```bash
+node dist/cli/main.js gh:modelcontextprotocol/servers@main --format text
+node dist/cli/main.js "https://github.com/modelcontextprotocol/servers?ref=main" --format text
+```
+
+GitHub scans accept **repository root inputs only**: either `https://github.com/owner/repo` or `gh:owner/repo`, optionally with an explicit ref selector (`?ref=` for full URLs or `@ref` for `gh:` shorthand). Trailing slashes, `.git`, and repo-root query fragments are normalized for full URLs. Copied `tree/...`, `blob/...`, and other GitHub subpath URLs are rejected with a hint to use the repository root URL instead. Invalid shorthand fails with `gh:<owner>/<repo>` guidance rather than falling through to local-path handling.
 
 ### Output formats
 
@@ -247,12 +277,12 @@ When you pass `--config`, `doctor` also checks config-loaded `output-file` paths
 - `output-file`: a file path where the rendered report is written in addition to stdout.
 - `ignore-rules`: an array of exact rule IDs (`mcp/shell-exec`, `mcp/outbound-fetch`, etc.). Any finding whose `ruleId` matches one of the entries is dropped from the final report, but the heuristic still runs internally, so only use this to silence known noise that you have inspected.
 - `ignore-paths`: an array of slash-separated relative paths (files or directories) inside the audited target. If a finding’s `file` path starts with one of the configured strings, that finding is omitted from the CLI summary output and structured report. There is no globbing or regex support; entries are matched literally and are case-sensitive.
-- `baseline-file`: a JSON file containing previously accepted finding tuples (`ruleId`, `file`, and optional `line`). When provided, TrustMCP still reports the full finding list for visibility, but `--fail-on` only evaluates findings that are not present in the baseline.
-- `baseline-output`: a file path where TrustMCP writes the current finding tuples as reusable baseline JSON. This is the explicit “accept current findings” path for later `baseline-file` runs.
+- `baseline-file`: a JSON file containing previously accepted findings. Preferred entries include `fingerprint`, `ruleId`, `file`, and optional `line`; older tuple-only entries remain readable for compatibility. When provided, TrustMCP still reports the full finding list for visibility, but `--fail-on` only evaluates findings that are not present in the baseline.
+- `baseline-output`: a file path where TrustMCP writes the current finding identities as reusable baseline JSON. This is the explicit “accept current findings” path for later `baseline-file` runs.
 
 Both `ignore-rules` and `ignore-paths` are best reserved for short-lived noise gating when you already trust the other findings and you are confident that the ignored rows represent accepted risk. They do not change the rule evaluation itself; they only suppress matching findings from the emitted summary and report output.
 
-`baseline-file` solves a different adoption problem: it lets an existing repository keep historical findings visible while failing CI only on newly introduced findings. Baseline matching is exact and literal after the same path normalization TrustMCP uses for report output. There is no globbing, regex matching, or automatic baseline update flow in this first slice.
+`baseline-file` solves a different adoption problem: it lets an existing repository keep historical findings visible while failing CI only on newly introduced findings. Baseline matching is fingerprint-first, with compatibility fallback for older `ruleId` + `file` + optional `line` entries. There is no globbing, regex matching, or automatic baseline update flow in this first slice.
 
 If you want to create that baseline file from a real scan instead of writing it by hand, run:
 
@@ -293,7 +323,15 @@ node dist/cli/main.js https://github.com/modelcontextprotocol/servers --format j
 
 ## Use TrustMCP in GitHub Actions
 
-TrustMCP now ships a reusable composite action at the repository root. For copy-pasteable workflows, start from [`./.github/examples/trustmcp-gate.yml`](./.github/examples/trustmcp-gate.yml) for the checked-out workspace case, [`./.github/examples/trustmcp-public-target.yml`](./.github/examples/trustmcp-public-target.yml) for an explicit public GitHub target, [`./.github/examples/trustmcp-artifact.yml`](./.github/examples/trustmcp-artifact.yml) to retain a rendered markdown report, [`./.github/examples/trustmcp-json-artifact.yml`](./.github/examples/trustmcp-json-artifact.yml) for a retained JSON report, [`./.github/examples/trustmcp-sarif-artifact.yml`](./.github/examples/trustmcp-sarif-artifact.yml) for a retained SARIF file, or [`./.github/examples/trustmcp-upload-sarif.yml`](./.github/examples/trustmcp-upload-sarif.yml) for the GitHub code-scanning upload path.
+TrustMCP now ships a reusable composite action at the repository root. For copy-pasteable workflows, start from [`./.github/examples/trustmcp-gate.yml`](./.github/examples/trustmcp-gate.yml) for the checked-out workspace case, [`./.github/examples/trustmcp-public-target.yml`](./.github/examples/trustmcp-public-target.yml) for an explicit public GitHub target, [`./.github/examples/trustmcp-artifact.yml`](./.github/examples/trustmcp-artifact.yml) to retain a rendered markdown report, [`./.github/examples/trustmcp-pr-comment.yml`](./.github/examples/trustmcp-pr-comment.yml) to keep a sticky PR comment updated with the current markdown report, [`./.github/examples/trustmcp-json-artifact.yml`](./.github/examples/trustmcp-json-artifact.yml) for a retained JSON report, [`./.github/examples/trustmcp-sarif-artifact.yml`](./.github/examples/trustmcp-sarif-artifact.yml) for a retained SARIF file, or [`./.github/examples/trustmcp-upload-sarif.yml`](./.github/examples/trustmcp-upload-sarif.yml) for the GitHub code-scanning upload path.
+
+If you are choosing between those examples:
+
+- use `trustmcp-gate.yml` when you only need CI pass/fail behavior
+- use `trustmcp-baseline-gate.yml` when historical findings should stay visible but only new findings should fail CI
+- use `trustmcp-artifact.yml` or `trustmcp-json-artifact.yml` when later workflow steps need a saved report
+- use `trustmcp-pr-comment.yml` when reviewers should see the markdown report directly on the PR
+- use `trustmcp-sarif-artifact.yml` or `trustmcp-upload-sarif.yml` when a security workflow or code-scanning consumer expects SARIF
 
 Minimal external usage looks like this:
 
@@ -304,25 +342,36 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - id: trustmcp
-        uses: Gujiassh/trustmcp@v0.1.0
+        uses: Gujiassh/trustmcp@main
         with:
           target: ${{ github.workspace }}
           format: json
           fail-on: high
       - run: |
           echo "findings=${{ steps.trustmcp.outputs.finding-count }}"
+          echo "rules=${{ steps.trustmcp.outputs.rule-count }}"
           echo "high=${{ steps.trustmcp.outputs.high-count }}"
+          echo "new_findings=${{ steps.trustmcp.outputs.new-finding-count }}"
+          echo "new_rules=${{ steps.trustmcp.outputs.new-rule-count }}"
+          echo "baseline_applied=${{ steps.trustmcp.outputs.baseline-applied }}"
+          echo "summary=${{ steps.trustmcp.outputs.summary-message }}"
 ```
 
-The action builds TrustMCP from its own source tree on each run and then scans the checked-out target path or public GitHub URL you pass in. It does not rely on a published npm package or marketplace wrapper. The example above uses the current stable tag `v0.1.0`; if you need stricter supply-chain pinning, use a specific commit SHA.
+The action builds TrustMCP from its own source tree on each run and then scans the checked-out target path or public GitHub URL you pass in. Relative local target paths are resolved from `${{ github.workspace }}`. It does not rely on a published npm package or marketplace wrapper. The examples in this repository track the current repo surface on `@main`; if you need stricter supply-chain pinning, replace `@main` with a commit SHA or a future release tag that includes the same Action inputs and outputs.
 
-The reusable action exposes `finding-count`, `low-count`, `medium-count`, and `high-count` outputs derived from the same report summary that the CLI emits in JSON.
+The reusable action exposes `finding-count`, `rule-count`, `low-count`, `medium-count`, and `high-count` outputs for total visible findings, plus `new-finding-count`, `new-rule-count`, `new-low-count`, `new-medium-count`, and `new-high-count` for the baseline-filtered "new findings" subset when you use baseline gating. It also emits `gated-finding-count`, `gated-rule-count`, `gated-low-count`, `gated-medium-count`, and `gated-high-count` for the exact set currently used for policy failure, `baseline-applied` so later steps can tell whether the scan ran with baseline gating enabled even if the checked-in baseline file is currently empty, and `summary-message` so lightweight jobs can reuse the exact one-line TrustMCP summary without reparsing JSON output.
+
+SARIF output now also carries the stable TrustMCP finding fingerprint in each result's `properties.fingerprint` and SARIF-native `partialFingerprints.primaryLocationLineHash`, plus TrustMCP policy-state flags such as `properties.baselineApplied`, `properties.isNewFinding`, and `properties.isGatedFinding`, so code-scanning consumers can align SARIF results with JSON reports and baseline entries more reliably.
 
 When `GITHUB_STEP_SUMMARY` is available, the reusable action also appends the compact TrustMCP markdown report there automatically for easier job review.
 
-To reuse CLI defaults inside GitHub Actions, pass the new `config-file` input pointing at your `trustmcp.config.json`. The action resolves relative paths against `${{ github.workspace }}` before building, so `config-file: trustmcp.config.json` simply reuses the same config file you use with the CLI and honors the same `format`, `fail-on`, `ignore-rules`, `ignore-paths`, `baseline-file`, `baseline-output`, and `summary-only` settings. Dedicated `summary-only`, `baseline-file`, and `baseline-output` inputs also let the workflow override those values explicitly; `summary-only` stays empty by default so a config file can keep driving the value. The action enforces the same `summary-only` + `format: sarif` restriction as the CLI, so shared configs behave identically between local and CI runs.
+To reuse CLI defaults inside GitHub Actions, pass the new `config-file` input pointing at your `trustmcp.config.json`. The action resolves the config file path itself from `${{ github.workspace }}` before building, then resolves config-owned relative paths such as `baseline-file` and `baseline-output` from that config file's directory, just like the CLI. Dedicated `summary-only`, `baseline-file`, and `baseline-output` inputs still let the workflow override those values explicitly; those explicit action inputs remain workspace-relative. The action enforces the same `summary-only` + `format: sarif` restriction as the CLI, so shared configs behave identically between local and CI runs.
+
+If you want the recommended baseline-first CI rollout pattern, start from [TrustMCP project-level policy adoption](./docs/project-policy-adoption.md) and the example workflow at [`.github/examples/trustmcp-baseline-gate.yml`](./.github/examples/trustmcp-baseline-gate.yml).
 
 If a later workflow step needs a concrete report file, set `output-file`, for example `output-file: reports/trustmcp.md`. Relative paths are resolved from the checked-out workspace, and the parent directory must already exist.
+
+If you want the markdown report to stay visible directly in PR review without downloading artifacts, start from [`.github/examples/trustmcp-pr-comment.yml`](./.github/examples/trustmcp-pr-comment.yml). That example writes `reports/trustmcp.md` and then upserts a sticky pull-request comment instead of creating a new comment on every run.
 
 ## Real scan examples
 
@@ -341,11 +390,11 @@ Evidence: execSync('node cli.js --help > help.txt');
 
 This is a point-in-time heuristic capability match, not a blanket judgment of the project. In this case, TrustMCP matched shell execution in repository scripts and maintenance paths, which is exactly the kind of capability surface this tool is meant to surface before deeper review.
 
-For a balanced no-match example, at pinned ref `b1575edfefde09e3cf7c805aea79a92131271659`, TrustMCP reported the following on `github/github-mcp-server`:
+For a balanced no-match example, at pinned ref `e874a073288981779e14a489b7f9b10f4b576b3c`, TrustMCP reported the following on `okooo5km/memory-mcp-server`:
 
 ```text
-Target: github/github-mcp-server
-Ref: main@b1575edfefde09e3cf7c805aea79a92131271659
+Target: okooo5km/memory-mcp-server
+Ref: main@e874a073288981779e14a489b7f9b10f4b576b3c
 Summary: No matching rules were triggered. Static heuristics only; this does not mean the target is safe.
 ```
 
@@ -357,12 +406,16 @@ Run the included checks:
 npm test
 npm run build
 npm run smoke
+npm run reference:check
+npm run reference:scan
+npm run release:check
+npm run release:check:strict
 ```
 
 ## Example output
 
 ```text
-TrustMCP v0.1.0
+TrustMCP v0.2.0-dev
 Target: /absolute/path/to/local-risky
 Source: local-directory
 Summary: 3 finding(s) across 3 rule(s). Static heuristics only.
@@ -397,7 +450,7 @@ TrustMCP is honest about scope:
 - no web UI, registry, or hosted service
 - no guarantee that a target is safe or complete coverage of all MCP risks
 
-This first release is designed for a 60-second demo and a practical first pass, not a full security review.
+The current TrustMCP surface is designed for a fast first pass and practical CI/review use, not a full security review.
 
 ## Contribution path
 

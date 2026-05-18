@@ -17,12 +17,17 @@ jobs:
       - run: mkdir -p reports
 
       - id: trustmcp
-        uses: Gujiassh/trustmcp@v0.1.0
+        uses: Gujiassh/trustmcp@main
         with:
           target: ${{ github.workspace }}
           format: sarif
           fail-on: high
           output-file: reports/trustmcp.sarif
+
+      - run: |
+          echo "visible=${{ steps.trustmcp.outputs.finding-count }}"
+          echo "gated=${{ steps.trustmcp.outputs.gated-finding-count }}"
+          echo "summary=${{ steps.trustmcp.outputs.summary-message }}"
 
       - uses: github/codeql-action/upload-sarif@v3
         with:

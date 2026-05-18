@@ -1,8 +1,10 @@
+import { dirname } from "node:path";
+
 import { looksLikeUrl } from "../core/rule-helpers.js";
 import { getUnsupportedGitHubUrlMessage, parseGitHubRepositoryUrl } from "../inputs/github.js";
 import { materializeLocalDirectory } from "../inputs/local.js";
 import { TRUSTMCP_VERSION } from "../core/version.js";
-import { loadCliConfig } from "./config.js";
+import { loadBaselineEntries, loadCliConfig } from "./config.js";
 import { validateNodeRuntimeVersion } from "./node-runtime.js";
 import { validateCliOptionCompatibility } from "./validate-cli-options.js";
 import { validateOutputFilePath } from "../utils/write-rendered-output.js";
@@ -22,6 +24,7 @@ export interface DoctorCheckResult {
 export interface DoctorTargetCheckResult extends DoctorCheckResult {
   kind?: "local-directory" | "public-github-repo";
   displayName?: string;
+  resolvedRef?: string;
 }
 
 export interface DoctorResult {
@@ -99,9 +102,24 @@ async function validateConfigFile(configFile?: string): Promise<DoctorCheckResul
       await validateOutputFilePath(config.outputFile);
     }
 
+    if (config.baselineOutput !== undefined) {
+      await validateOutputFilePath(config.baselineOutput);
+    }
+
+    let baselineMessage = "";
+    if (config.baselineFile !== undefined) {
+      await loadBaselineEntries(config.baselineFile, dirname(configFile));
+      baselineMessage = ` (baseline-file OK: ${config.baselineFile})`;
+    }
+
+    const outputFileMessage =
+      config.outputFile === undefined ? "" : ` (output-file OK: ${config.outputFile})`;
+    const baselineOutputMessage =
+      config.baselineOutput === undefined ? "" : ` (baseline-output OK: ${config.baselineOutput})`;
+
     return {
       ok: true,
-      message: config.outputFile === undefined ? configFile : `${configFile} (output-file OK: ${config.outputFile})`
+      message: `${configFile}${outputFileMessage}${baselineOutputMessage}${baselineMessage}`
     };
   } catch (error) {
     return {
@@ -118,7 +136,11 @@ async function validateTarget(target: string): Promise<DoctorTargetCheckResult> 
       displayName: gitHubReference.displayName,
       kind: "public-github-repo",
       ok: true,
-      message: `GitHub repository input (${gitHubReference.displayName})`
+      ...(gitHubReference.requestedRef === undefined ? {} : { resolvedRef: gitHubReference.requestedRef }),
+      message:
+        gitHubReference.requestedRef === undefined
+          ? `GitHub repository input (${gitHubReference.displayName})`
+          : `GitHub repository input (${gitHubReference.displayName} @ ${gitHubReference.requestedRef})`
     };
   }
 
@@ -133,7 +155,8 @@ async function validateTarget(target: string): Promise<DoctorTargetCheckResult> 
   if (looksLikeUrl(target)) {
     return {
       ok: false,
-      message: "Unsupported URL. TrustMCP doctor accepts local directories, GitHub repository root URLs, or gh:owner/repo."
+      message:
+        "Unsupported URL. TrustMCP doctor accepts local directories, GitHub repository root URLs, or gh:owner/repo, optionally with an explicit ref."
     };
   }
 

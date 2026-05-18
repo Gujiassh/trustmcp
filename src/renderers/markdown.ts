@@ -32,6 +32,9 @@ export function renderMarkdownReport(report: AuditReport): string {
     lines.push(`- Rule: \`${finding.ruleId}\``);
     lines.push(`- Severity: \`${finding.severity}\``);
     lines.push(`- Confidence: \`${finding.confidence}\``);
+    if (finding.confidenceReason !== undefined) {
+      lines.push(`- Confidence reason: \`${finding.confidenceReason}\``);
+    }
     lines.push(`- Location: \`${formatLocation(finding)}\``);
     lines.push(`- Evidence: ${finding.evidence}`);
     lines.push(`- Why it matters: ${finding.whyItMatters}`);

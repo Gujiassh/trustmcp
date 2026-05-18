@@ -12,7 +12,7 @@ jobs:
 
     steps:
       - id: trustmcp
-        uses: Gujiassh/trustmcp@v0.1.0
+        uses: Gujiassh/trustmcp@main
         with:
           target: https://github.com/modelcontextprotocol/servers
           format: markdown
@@ -20,4 +20,9 @@ jobs:
 
       - run: |
           echo "findings=${{ steps.trustmcp.outputs.finding-count }}"
+          echo "rules=${{ steps.trustmcp.outputs.rule-count }}"
           echo "high=${{ steps.trustmcp.outputs.high-count }}"
+          echo "new_findings=${{ steps.trustmcp.outputs.new-finding-count }}"
+          echo "new_rules=${{ steps.trustmcp.outputs.new-rule-count }}"
+          echo "baseline_applied=${{ steps.trustmcp.outputs.baseline-applied }}"
+          echo "summary=${{ steps.trustmcp.outputs.summary-message }}"

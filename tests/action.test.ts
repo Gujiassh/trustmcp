@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { runAction } from "../src/action/main.js";
 import type { AuditReport, Severity } from "../src/core/types.js";
+import { TRUSTMCP_VERSION } from "../src/core/version.js";
 
 const tempDirectories: string[] = [];
 
@@ -38,9 +39,22 @@ describe("runAction", () => {
     expect(stdout.join("")).toContain('"findingCount": 3');
     expect(await readOutputs(outputPath)).toEqual({
       "finding-count": "3",
+      "rule-count": "3",
       "low-count": "0",
       "medium-count": "1",
-      "high-count": "2"
+      "high-count": "2",
+      "new-finding-count": "3",
+      "new-rule-count": "3",
+      "new-low-count": "0",
+      "new-medium-count": "1",
+      "new-high-count": "2",
+      "gated-finding-count": "3",
+      "gated-rule-count": "3",
+      "gated-low-count": "0",
+      "gated-medium-count": "1",
+      "gated-high-count": "2",
+      "baseline-applied": "false",
+      "summary-message": "3 finding(s) across 3 rule(s). Static heuristics only."
     });
     expect(await readFile(summaryPath, "utf8")).toBe(`# TrustMCP Report
 
@@ -57,6 +71,7 @@ describe("runAction", () => {
 - Rule: \`rule-1\`
 - Severity: \`high\`
 - Confidence: \`high\`
+- Confidence reason: \`rule-specific-test-reason-1\`
 - Location: \`src/example-1.ts:1\`
 - Evidence: evidence-1
 - Why it matters: why-1
@@ -66,6 +81,7 @@ describe("runAction", () => {
 - Rule: \`rule-2\`
 - Severity: \`high\`
 - Confidence: \`high\`
+- Confidence reason: \`rule-specific-test-reason-2\`
 - Location: \`src/example-2.ts:2\`
 - Evidence: evidence-2
 - Why it matters: why-2
@@ -75,6 +91,7 @@ describe("runAction", () => {
 - Rule: \`rule-3\`
 - Severity: \`medium\`
 - Confidence: \`high\`
+- Confidence reason: \`rule-specific-test-reason-3\`
 - Location: \`src/example-3.ts:3\`
 - Evidence: evidence-3
 - Why it matters: why-3
@@ -100,9 +117,22 @@ describe("runAction", () => {
     expect(exitCode).toBe(0);
     expect(await readOutputs(outputPath)).toEqual({
       "finding-count": "0",
+      "rule-count": "0",
       "low-count": "0",
       "medium-count": "0",
-      "high-count": "0"
+      "high-count": "0",
+      "new-finding-count": "0",
+      "new-rule-count": "0",
+      "new-low-count": "0",
+      "new-medium-count": "0",
+      "new-high-count": "0",
+      "gated-finding-count": "0",
+      "gated-rule-count": "0",
+      "gated-low-count": "0",
+      "gated-medium-count": "0",
+      "gated-high-count": "0",
+      "baseline-applied": "false",
+      "summary-message": "No matching rules were triggered. Static heuristics only; this does not mean the target is safe."
     });
   });
 
@@ -135,9 +165,22 @@ describe("runAction", () => {
     expect(stdout.join("")).toBe(reportContent);
     expect(await readOutputs(outputPath)).toEqual({
       "finding-count": "2",
+      "rule-count": "2",
       "low-count": "0",
       "medium-count": "1",
-      "high-count": "1"
+      "high-count": "1",
+      "new-finding-count": "2",
+      "new-rule-count": "2",
+      "new-low-count": "0",
+      "new-medium-count": "1",
+      "new-high-count": "1",
+      "gated-finding-count": "2",
+      "gated-rule-count": "2",
+      "gated-low-count": "0",
+      "gated-medium-count": "1",
+      "gated-high-count": "1",
+      "baseline-applied": "false",
+      "summary-message": "2 finding(s) across 2 rule(s). Static heuristics only."
     });
     expect(await readFile(summaryPath, "utf8")).toContain("# TrustMCP Report");
   });
@@ -196,7 +239,7 @@ describe("runAction", () => {
     await writeFile(
       baselinePath,
       JSON.stringify([
-        { ruleId: "rule-1", file: "src/example-1.ts", line: 1 }
+        { fingerprint: "rule-1|src/example-1.ts|evidence-1", ruleId: "rule-1", file: "src/example-1.ts", line: 1 }
       ]),
       "utf8"
     );
@@ -223,7 +266,7 @@ describe("runAction", () => {
       ignoreRules: ["rule-1"],
       ignorePaths: ["src/vendor"],
       baselineEntries: [
-        { ruleId: "rule-1", file: "src/example-1.ts", line: 1 }
+        { fingerprint: "rule-1|src/example-1.ts|evidence-1", ruleId: "rule-1", file: "src/example-1.ts", line: 1 }
       ]
     });
     expect(stdout.join("")).toContain("# TrustMCP Report");
@@ -234,7 +277,7 @@ describe("runAction", () => {
     await writeFile(
       baselinePath,
       JSON.stringify([
-        { ruleId: "rule-1", file: "src/example-1.ts", line: 1 }
+        { fingerprint: "rule-1|src/example-1.ts|evidence-1", ruleId: "rule-1", file: "src/example-1.ts", line: 1 }
       ]),
       "utf8"
     );
@@ -259,8 +302,129 @@ describe("runAction", () => {
     expect(exitCode).toBe(0);
     expect(receivedOptions).toEqual({
       baselineEntries: [
-        { ruleId: "rule-1", file: "src/example-1.ts", line: 1 }
+        { fingerprint: "rule-1|src/example-1.ts|evidence-1", ruleId: "rule-1", file: "src/example-1.ts", line: 1 }
       ]
+    });
+  });
+
+  it("writes total and new finding counts separately when a baseline is applied", async () => {
+    const outputPath = await createOutputPath();
+    const baselinePath = await createBaselinePath("trustmcp-action-baseline.json");
+    await writeFile(
+      baselinePath,
+      JSON.stringify([{ ruleId: "rule-3", file: "src/example-3.ts", line: 3 }]),
+      "utf8"
+    );
+
+    const report = createReport("local-directory", ["high", "medium", "low"]);
+    report.newFindings = report.findings.slice(0, 2);
+    report.summary.baselineApplied = true;
+    report.summary.newFindingCount = 2;
+    report.summary.gatedFindingCount = 2;
+    report.summary.newTriggeredRuleCount = 2;
+    report.summary.gatedTriggeredRuleCount = 2;
+    report.summary.newSeverityCounts = {
+      low: 0,
+      medium: 1,
+      high: 1
+    };
+    report.summary.gatedSeverityCounts = {
+      low: 0,
+      medium: 1,
+      high: 1
+    };
+    report.summary.message = "3 finding(s) across 3 rule(s). Static heuristics only. 2 new finding(s) across 2 rule(s).";
+
+    const exitCode = await runAction(
+      {
+        target: "./fixtures/local-risky",
+        format: "json",
+        baselineFile: baselinePath
+      },
+      {
+        auditTarget: async () => report,
+        stdout: createWriter([]),
+        githubOutputPath: outputPath
+      }
+    );
+
+    expect(exitCode).toBe(0);
+    expect(await readOutputs(outputPath)).toEqual({
+      "finding-count": "3",
+      "rule-count": "3",
+      "low-count": "1",
+      "medium-count": "1",
+      "high-count": "1",
+      "new-finding-count": "2",
+      "new-rule-count": "2",
+      "new-low-count": "0",
+      "new-medium-count": "1",
+      "new-high-count": "1",
+      "gated-finding-count": "2",
+      "gated-rule-count": "2",
+      "gated-low-count": "0",
+      "gated-medium-count": "1",
+      "gated-high-count": "1",
+      "baseline-applied": "true",
+      "summary-message": "3 finding(s) across 3 rule(s). Static heuristics only. 2 new finding(s) across 2 rule(s)."
+    });
+  });
+
+  it("treats an empty baseline file as baseline-applied for action outputs", async () => {
+    const outputPath = await createOutputPath();
+    const baselinePath = await createBaselinePath("trustmcp-action-empty-baseline.json");
+    await writeFile(baselinePath, "[]", "utf8");
+
+    const report = createReport("local-directory", ["high", "medium"]);
+    report.summary.baselineApplied = true;
+    report.summary.newFindingCount = 2;
+    report.summary.gatedFindingCount = 2;
+    report.summary.newTriggeredRuleCount = 2;
+    report.summary.gatedTriggeredRuleCount = 2;
+    report.summary.newSeverityCounts = {
+      low: 0,
+      medium: 1,
+      high: 1
+    };
+    report.summary.gatedSeverityCounts = {
+      low: 0,
+      medium: 1,
+      high: 1
+    };
+    report.summary.message = "2 finding(s) across 2 rule(s). Static heuristics only. 2 new finding(s) across 2 rule(s).";
+
+    const exitCode = await runAction(
+      {
+        target: "./fixtures/local-risky",
+        format: "json",
+        baselineFile: baselinePath
+      },
+      {
+        auditTarget: async () => report,
+        stdout: createWriter([]),
+        githubOutputPath: outputPath
+      }
+    );
+
+    expect(exitCode).toBe(0);
+    expect(await readOutputs(outputPath)).toEqual({
+      "finding-count": "2",
+      "rule-count": "2",
+      "low-count": "0",
+      "medium-count": "1",
+      "high-count": "1",
+      "new-finding-count": "2",
+      "new-rule-count": "2",
+      "new-low-count": "0",
+      "new-medium-count": "1",
+      "new-high-count": "1",
+      "gated-finding-count": "2",
+      "gated-rule-count": "2",
+      "gated-low-count": "0",
+      "gated-medium-count": "1",
+      "gated-high-count": "1",
+      "baseline-applied": "true",
+      "summary-message": "2 finding(s) across 2 rule(s). Static heuristics only. 2 new finding(s) across 2 rule(s)."
     });
   });
 
@@ -282,11 +446,13 @@ describe("runAction", () => {
     expect(exitCode).toBe(0);
     expect(await readFile(baselineOutput, "utf8")).toBe(`[
   {
+    "fingerprint": "rule-1|src/example-1.ts|evidence-1",
     "ruleId": "rule-1",
     "file": "src/example-1.ts",
     "line": 1
   },
   {
+    "fingerprint": "rule-2|src/example-2.ts|evidence-2",
     "ruleId": "rule-2",
     "file": "src/example-2.ts",
     "line": 2
@@ -332,6 +498,32 @@ describe("runAction", () => {
     });
   });
 
+  it("resolves relative local targets against the workspace directory", async () => {
+    const workspaceDir = await createTempDirectory("trustmcp-action-workspace-test-");
+    const repoDir = join(workspaceDir, "server");
+    await mkdir(repoDir, { recursive: true });
+
+    let receivedTarget: string | undefined;
+
+    const exitCode = await runAction(
+      {
+        target: "./server",
+        format: "json"
+      },
+      {
+        workspaceDir,
+        auditTarget: async (target) => {
+          receivedTarget = target;
+          return createReport("local-directory", ["medium"]);
+        },
+        stdout: createWriter([])
+      }
+    );
+
+    expect(exitCode).toBe(0);
+    expect(receivedTarget).toBe(join(workspaceDir, "server"));
+  });
+
   it("resolves config output-file paths relative to GITHUB_WORKSPACE", async () => {
     const workspace = await createTempDirectory("trustmcp-action-workspace-test-");
     const configPath = join(workspace, "trustmcp.config.json");
@@ -371,6 +563,99 @@ describe("runAction", () => {
         process.env.GITHUB_WORKSPACE = previousWorkspace;
       }
     }
+  });
+
+  it("resolves config baseline-file paths relative to the config file directory", async () => {
+    const workspace = await createTempDirectory("trustmcp-action-workspace-test-");
+    const configDirectory = join(workspace, "configs");
+    const configPath = join(configDirectory, "trustmcp.config.json");
+    const baselinePath = join(configDirectory, "trustmcp.baseline.json");
+    await mkdir(configDirectory, { recursive: true });
+    await writeFile(
+      configPath,
+      JSON.stringify({
+        "baseline-file": "trustmcp.baseline.json"
+      }),
+      "utf8"
+    );
+    await writeFile(
+      baselinePath,
+      JSON.stringify([
+        { fingerprint: "rule-1|src/example-1.ts|evidence-1", ruleId: "rule-1", file: "src/example-1.ts", line: 1 }
+      ]),
+      "utf8"
+    );
+
+    let receivedOptions: Record<string, unknown> | undefined;
+
+    const exitCode = await runAction(
+      {
+        target: "./fixtures/local-risky",
+        configFile: "configs/trustmcp.config.json"
+      },
+      {
+        workspaceDir: workspace,
+        auditTarget: async (_target, options) => {
+          receivedOptions = options;
+          return createReport("local-directory", ["medium"]);
+        },
+        stdout: createWriter([])
+      }
+    );
+
+    expect(exitCode).toBe(0);
+    expect(receivedOptions).toEqual({
+      baselineEntries: [
+        { fingerprint: "rule-1|src/example-1.ts|evidence-1", ruleId: "rule-1", file: "src/example-1.ts", line: 1 }
+      ]
+    });
+  });
+
+  it("resolves config baseline-output paths relative to the config file directory", async () => {
+    const workspace = await createTempDirectory("trustmcp-action-workspace-test-");
+    const configDirectory = join(workspace, "configs");
+    const configPath = join(configDirectory, "trustmcp.config.json");
+    const baselineDirectory = join(configDirectory, "artifacts");
+    const baselinePath = join(baselineDirectory, "trustmcp.baseline.json");
+    await mkdir(configDirectory, { recursive: true });
+    await mkdir(baselineDirectory, { recursive: true });
+    await writeFile(
+      configPath,
+      JSON.stringify({
+        "baseline-output": "artifacts/trustmcp.baseline.json"
+      }),
+      "utf8"
+    );
+
+    const exitCode = await runAction(
+      {
+        target: "./fixtures/local-risky",
+        format: "json",
+        configFile: "configs/trustmcp.config.json"
+      },
+      {
+        workspaceDir: workspace,
+        auditTarget: async () => createReport("local-directory", ["high", "medium"]),
+        stdout: createWriter([])
+      }
+    );
+
+    expect(exitCode).toBe(0);
+    expect(await readFile(baselinePath, "utf8")).toBe(`[
+  {
+    "fingerprint": "rule-1|src/example-1.ts|evidence-1",
+    "ruleId": "rule-1",
+    "file": "src/example-1.ts",
+    "line": 1
+  },
+  {
+    "fingerprint": "rule-2|src/example-2.ts|evidence-2",
+    "ruleId": "rule-2",
+    "file": "src/example-2.ts",
+    "line": 2
+  }
+]
+`);
   });
 
   it("honors summary-only from config when rendering the action output", async () => {
@@ -424,6 +709,38 @@ describe("runAction", () => {
     expect(output).not.toContain("## Findings");
   });
 
+  it("lets an explicit summary-only=false input override config summary-only=true", async () => {
+    const configPath = await createConfigPath("trustmcp.config.json");
+    await writeFile(
+      configPath,
+      JSON.stringify({
+        "format": "markdown",
+        "summary-only": true
+      }),
+      "utf8"
+    );
+
+    const stdout: string[] = [];
+
+    const exitCode = await runAction(
+      {
+        target: "./fixtures/local-risky",
+        configFile: configPath,
+        summaryOnly: false
+      },
+      {
+        auditTarget: async () => createReport("local-directory", ["medium"]),
+        stdout: createWriter(stdout)
+      }
+    );
+
+    const output = stdout.join("");
+    expect(exitCode).toBe(0);
+    expect(output).toContain("# TrustMCP Report");
+    expect(output).toContain("## Findings");
+    expect(output).not.toContain("TrustMCP Summary");
+  });
+
   it("fails early when summary-only is combined with sarif format", async () => {
     const stderr: string[] = [];
 
@@ -446,10 +763,28 @@ describe("runAction", () => {
 });
 
 function createReport(sourceType: "local-directory" | "public-github-repo", severities: Severity[]): AuditReport {
+  const findings = severities.map((severity, index) => ({
+    fingerprint: `rule-${index + 1}|src/example-${index + 1}.ts|evidence-${index + 1}`,
+    ruleId: `rule-${index + 1}`,
+    severity,
+    confidence: "high" as const,
+    confidenceReason: `rule-specific-test-reason-${index + 1}`,
+    title: severity === "high"
+      ? "Shell execution capability detected"
+      : severity === "medium"
+        ? "Outbound network request capability detected"
+        : "Low severity placeholder finding",
+    file: `src/example-${index + 1}.ts`,
+    line: index + 1,
+    evidence: `evidence-${index + 1}`,
+    whyItMatters: `why-${index + 1}`,
+    remediation: `remediation-${index + 1}`
+  }));
+
   return {
     tool: {
       name: "TrustMCP",
-      version: "0.1.0"
+      version: TRUSTMCP_VERSION
     },
     target: {
       input: sourceType === "local-directory" ? "./fixtures/local-risky" : "https://github.com/example/risky-mcp",
@@ -462,9 +797,13 @@ function createReport(sourceType: "local-directory" | "public-github-repo", seve
       "No finding set should be interpreted as a safety guarantee."
     ],
     summary: {
+      baselineApplied: false,
       findingCount: severities.length,
       newFindingCount: severities.length,
+      gatedFindingCount: severities.length,
       triggeredRuleCount: severities.length,
+      newTriggeredRuleCount: severities.length,
+      gatedTriggeredRuleCount: severities.length,
       newSeverityCounts: {
         low: severities.filter((severity) => severity === "low").length,
         medium: severities.filter((severity) => severity === "medium").length,
@@ -475,40 +814,17 @@ function createReport(sourceType: "local-directory" | "public-github-repo", seve
         medium: severities.filter((severity) => severity === "medium").length,
         high: severities.filter((severity) => severity === "high").length
       },
+      gatedSeverityCounts: {
+        low: severities.filter((severity) => severity === "low").length,
+        medium: severities.filter((severity) => severity === "medium").length,
+        high: severities.filter((severity) => severity === "high").length
+      },
       message: severities.length === 0
         ? "No matching rules were triggered. Static heuristics only; this does not mean the target is safe."
         : `${severities.length} finding(s) across ${severities.length} rule(s). Static heuristics only.`
     },
-    findings: severities.map((severity, index) => ({
-      ruleId: `rule-${index + 1}`,
-      severity,
-      confidence: "high",
-      title: severity === "high"
-        ? "Shell execution capability detected"
-        : severity === "medium"
-          ? "Outbound network request capability detected"
-          : "Low severity placeholder finding",
-      file: `src/example-${index + 1}.ts`,
-      line: index + 1,
-      evidence: `evidence-${index + 1}`,
-      whyItMatters: `why-${index + 1}`,
-      remediation: `remediation-${index + 1}`
-    })),
-    newFindings: severities.map((severity, index) => ({
-      ruleId: `rule-${index + 1}`,
-      severity,
-      confidence: "high",
-      title: severity === "high"
-        ? "Shell execution capability detected"
-        : severity === "medium"
-          ? "Outbound network request capability detected"
-          : "Low severity placeholder finding",
-      file: `src/example-${index + 1}.ts`,
-      line: index + 1,
-      evidence: `evidence-${index + 1}`,
-      whyItMatters: `why-${index + 1}`,
-      remediation: `remediation-${index + 1}`
-    }))
+    findings,
+    newFindings: findings
   };
 }
 

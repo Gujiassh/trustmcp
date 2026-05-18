@@ -13,6 +13,7 @@ interface GitHubRepositoryReference {
   repo: string;
   canonicalUrl: string;
   displayName: string;
+  requestedRef?: string;
 }
 
 interface HttpResult {
@@ -21,7 +22,7 @@ interface HttpResult {
 }
 
 interface GitHubRepositoryMetadata {
-  defaultBranch: string;
+  resolvedRefName: string;
   headSha: string;
 }
 
@@ -31,7 +32,7 @@ type GitHubUrlAnalysis =
   | { kind: "not-github" };
 
 const MAX_REDIRECTS = 5;
-const REQUEST_TIMEOUT_MS = 15_000;
+const REQUEST_TIMEOUT_MS = 45_000;
 const MAX_RESPONSE_BYTES = 25_000_000;
 const GITHUB_SHORTHAND_PREFIX = "gh:";
 const GITHUB_SHORTHAND_MESSAGE = "GitHub shorthand inputs must look like gh:<owner>/<repo>.";
@@ -69,6 +70,7 @@ function analyzeGitHubRepositoryUrl(input: string): GitHubUrlAnalysis {
     }
 
     const repo = repoPart.replace(/\.git$/, "");
+    const requestedRef = normalizeRequestedRef(url.searchParams.get("ref"));
 
     if (owner.length === 0 || repo.length === 0) {
       return {
@@ -84,7 +86,7 @@ function analyzeGitHubRepositoryUrl(input: string): GitHubUrlAnalysis {
       return {
         kind: "unsupported-shape",
         message:
-          `${detail} TrustMCP scans GitHub repository roots only and resolves the current default-branch head SHA.` +
+          `${detail} TrustMCP scans GitHub repository roots only and resolves the default-branch head SHA or an explicit requested ref.` +
           ` Use the repository root URL instead: ${canonicalUrl}`
       };
     }
@@ -95,7 +97,8 @@ function analyzeGitHubRepositoryUrl(input: string): GitHubUrlAnalysis {
         owner,
         repo,
         canonicalUrl,
-        displayName: `${owner}/${repo}`
+        displayName: `${owner}/${repo}`,
+        ...(requestedRef === undefined ? {} : { requestedRef })
       }
     };
   } catch {
@@ -105,7 +108,10 @@ function analyzeGitHubRepositoryUrl(input: string): GitHubUrlAnalysis {
 
 function analyzeGitHubShorthand(input: string): GitHubUrlAnalysis {
   const shorthand = input.slice(GITHUB_SHORTHAND_PREFIX.length);
-  const parts = shorthand.split("/");
+  const atIndex = shorthand.lastIndexOf("@");
+  const requestedRef = atIndex === -1 ? undefined : normalizeRequestedRef(shorthand.slice(atIndex + 1));
+  const repositoryPart = atIndex === -1 ? shorthand : shorthand.slice(0, atIndex);
+  const parts = repositoryPart.split("/");
   const owner = parts[0];
   const repoPart = parts[1];
 
@@ -131,9 +137,19 @@ function analyzeGitHubShorthand(input: string): GitHubUrlAnalysis {
       owner,
       repo,
       canonicalUrl: `https://github.com/${owner}/${repo}`,
-      displayName: `${owner}/${repo}`
+      displayName: `${owner}/${repo}`,
+      ...(requestedRef === undefined ? {} : { requestedRef })
     }
   };
+}
+
+function normalizeRequestedRef(value: string | null | undefined): string | undefined {
+  if (value === null || value === undefined) {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length === 0 ? undefined : trimmed;
 }
 
 function describeUnsupportedGitHubPath(segment: string | undefined): string {
@@ -170,7 +186,7 @@ export async function materializeGitHubRepository(input: string): Promise<Materi
         input,
         displayName: reference.displayName,
         sourceType: "public-github-repo",
-        resolvedRef: `${metadata.defaultBranch}@${metadata.headSha}`
+        resolvedRef: `${metadata.resolvedRefName}@${metadata.headSha}`
       },
       cleanup: async () => {
         await rm(tempRoot, { recursive: true, force: true });
@@ -197,21 +213,22 @@ async function fetchRepositoryMetadata(
     throw new Error(`GitHub API response for ${reference.displayName} did not include a default branch.`);
   }
 
-  const branchUrl = `https://api.github.com/repos/${reference.owner}/${reference.repo}/branches/${encodeURIComponent(payload.default_branch)}`;
-  const branchResponse = await requestUrl(branchUrl, "application/vnd.github+json");
+  const resolvedRefName = reference.requestedRef ?? payload.default_branch;
+  const commitUrl = `https://api.github.com/repos/${reference.owner}/${reference.repo}/commits/${encodeURIComponent(resolvedRefName)}`;
+  const commitResponse = await requestUrl(commitUrl, "application/vnd.github+json");
 
-  if (branchResponse.statusCode < 200 || branchResponse.statusCode >= 300) {
-    throw new Error(buildHttpError(branchUrl, branchResponse));
+  if (commitResponse.statusCode < 200 || commitResponse.statusCode >= 300) {
+    throw new Error(buildHttpError(commitUrl, commitResponse));
   }
 
-  const branchPayload = JSON.parse(branchResponse.body.toString("utf8"));
-  if (!isGitHubBranchPayload(branchPayload)) {
-    throw new Error(`GitHub branch response for ${reference.displayName} did not include a commit SHA.`);
+  const commitPayload = JSON.parse(commitResponse.body.toString("utf8"));
+  if (!isGitHubCommitPayload(commitPayload)) {
+    throw new Error(`GitHub commit response for ${reference.displayName} did not include a commit SHA.`);
   }
 
   return {
-    defaultBranch: payload.default_branch,
-    headSha: branchPayload.commit.sha
+    resolvedRefName,
+    headSha: commitPayload.sha
   };
 }
 
@@ -350,11 +367,11 @@ function isGitHubMetadataPayload(value: unknown): value is { default_branch: str
   return typeof candidate.default_branch === "string" && candidate.default_branch.length > 0;
 }
 
-function isGitHubBranchPayload(value: unknown): value is { commit: { sha: string } } {
+function isGitHubCommitPayload(value: unknown): value is { sha: string } {
   if (typeof value !== "object" || value === null) {
     return false;
   }
 
-  const candidate = value as { commit?: { sha?: unknown } };
-  return typeof candidate.commit?.sha === "string" && candidate.commit.sha.length > 0;
+  const candidate = value as { sha?: unknown };
+  return typeof candidate.sha === "string" && candidate.sha.length > 0;
 }

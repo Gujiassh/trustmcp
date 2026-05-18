@@ -48,34 +48,35 @@ export async function runAction(
   try {
     const workspaceDir = dependencies.workspaceDir ?? process.env.GITHUB_WORKSPACE ?? process.cwd();
     const { config, configPath } = await loadActionConfig(options, workspaceDir);
-    const resolved = resolveActionOptions(options, config);
+    const configBaseDir = configPath === undefined ? workspaceDir : dirname(configPath);
+    const resolved = resolveActionOptions(options, config, workspaceDir, configBaseDir);
+    const resolvedTarget = resolveActionTarget(resolved.target, workspaceDir);
     const compatibilityOptions: Parameters<typeof validateCliOptionCompatibility>[0] = { format: resolved.format };
     if (resolved.summaryOnly !== undefined) {
       compatibilityOptions.summaryOnly = resolved.summaryOnly;
     }
     validateCliOptionCompatibility(compatibilityOptions, "action inputs");
 
-    const baselineBaseDir = configPath === undefined ? workspaceDir : dirname(configPath);
-    const baselineEntries = await loadBaselineEntries(resolved.baselineFile, baselineBaseDir);
+    const baselineEntries = await loadBaselineEntries(resolved.baselineFile, configBaseDir);
     const auditOptions = {
       ...(resolved.ignoreRules === undefined ? {} : { ignoreRules: resolved.ignoreRules }),
       ...(resolved.ignorePaths === undefined ? {} : { ignorePaths: resolved.ignorePaths }),
       ...(baselineEntries === undefined ? {} : { baselineEntries })
     };
 
-    const report = await auditTarget(resolved.target, auditOptions);
+    const report = await auditTarget(resolvedTarget, auditOptions);
 
     const output = resolved.summaryOnly ? renderSummaryReport(report, resolved.format) : renderReport(report, resolved.format);
-    const baselineOutputPath =
-      resolved.baselineOutput === undefined
-        ? undefined
-        : resolveRelativePath(resolved.baselineOutput, configPath === undefined ? workspaceDir : dirname(configPath));
     await writeRenderedOutput(output, resolved.outputFile);
-    if (baselineOutputPath !== undefined) {
-      await writeBaselineFile(baselineOutputPath, findingsToBaselineEntries(report.findings));
+    if (resolved.baselineOutput !== undefined) {
+      await writeBaselineFile(resolved.baselineOutput, findingsToBaselineEntries(report.findings));
     }
     stdout.write(`${output}\n`);
-    await writeActionOutputs(report, dependencies.githubOutputPath ?? process.env.GITHUB_OUTPUT);
+    await writeActionOutputs(
+      report,
+      baselineEntries !== undefined,
+      dependencies.githubOutputPath ?? process.env.GITHUB_OUTPUT
+    );
     await writeActionSummary(report, dependencies.githubStepSummaryPath ?? process.env.GITHUB_STEP_SUMMARY);
     return shouldFailForThreshold(report, resolved.failOn) ? 2 : 0;
   } catch (error) {
@@ -85,16 +86,33 @@ export async function runAction(
   }
 }
 
-export async function writeActionOutputs(report: AuditReport, githubOutputPath?: string): Promise<void> {
+export async function writeActionOutputs(
+  report: AuditReport,
+  baselineApplied: boolean,
+  githubOutputPath?: string
+): Promise<void> {
   if (githubOutputPath === undefined || githubOutputPath.length === 0) {
     return;
   }
 
   const outputLines = [
     `finding-count=${report.summary.findingCount}`,
+    `rule-count=${report.summary.triggeredRuleCount}`,
     `low-count=${report.summary.severityCounts.low}`,
     `medium-count=${report.summary.severityCounts.medium}`,
-    `high-count=${report.summary.severityCounts.high}`
+    `high-count=${report.summary.severityCounts.high}`,
+    `new-finding-count=${report.summary.newFindingCount}`,
+    `new-rule-count=${report.summary.newTriggeredRuleCount}`,
+    `new-low-count=${report.summary.newSeverityCounts.low}`,
+    `new-medium-count=${report.summary.newSeverityCounts.medium}`,
+    `new-high-count=${report.summary.newSeverityCounts.high}`,
+    `gated-finding-count=${report.summary.gatedFindingCount}`,
+    `gated-rule-count=${report.summary.gatedTriggeredRuleCount}`,
+    `gated-low-count=${report.summary.gatedSeverityCounts.low}`,
+    `gated-medium-count=${report.summary.gatedSeverityCounts.medium}`,
+    `gated-high-count=${report.summary.gatedSeverityCounts.high}`,
+    `baseline-applied=${baselineApplied ? "true" : "false"}`,
+    `summary-message=${sanitizeGitHubOutputValue(report.summary.message)}`
   ];
 
   await appendFile(githubOutputPath, `${outputLines.join("\n")}\n`);
@@ -200,9 +218,14 @@ function resolveConfigPath(configFile: string, workspaceDir: string): string {
   return isAbsolute(configFile) ? configFile : resolve(workspaceDir, configFile);
 }
 
-function resolveActionOptions(options: ActionOptions, config: CliConfig): ResolvedActionOptions {
+function resolveActionOptions(
+  options: ActionOptions,
+  config: CliConfig,
+  workspaceDir: string,
+  configBaseDir: string
+): ResolvedActionOptions {
   const resolvedFormat = options.format ?? config.format ?? "json";
-  const resolvedOutputFile = options.outputFile ?? resolveWorkspaceRelativePath(config.outputFile);
+  const resolvedOutputFile = resolveWorkspaceRelativePath(options.outputFile ?? config.outputFile, workspaceDir);
   const resolved: ResolvedActionOptions = {
     target: options.target,
     format: resolvedFormat
@@ -217,7 +240,10 @@ function resolveActionOptions(options: ActionOptions, config: CliConfig): Resolv
     resolved.outputFile = resolvedOutputFile;
   }
 
-  const resolvedBaselineOutput = options.baselineOutput ?? config.baselineOutput;
+  const resolvedBaselineOutput = resolveActionConfigRelativePath(
+    options.baselineOutput ?? config.baselineOutput,
+    configBaseDir
+  );
   if (resolvedBaselineOutput !== undefined) {
     resolved.baselineOutput = resolvedBaselineOutput;
   }
@@ -230,7 +256,10 @@ function resolveActionOptions(options: ActionOptions, config: CliConfig): Resolv
     resolved.ignorePaths = config.ignorePaths;
   }
 
-  const baselineFile = options.baselineFile ?? config.baselineFile;
+  const baselineFile = resolveActionConfigRelativePath(
+    options.baselineFile ?? config.baselineFile,
+    configBaseDir
+  );
   if (baselineFile !== undefined) {
     resolved.baselineFile = baselineFile;
   }
@@ -243,21 +272,35 @@ function resolveActionOptions(options: ActionOptions, config: CliConfig): Resolv
   return resolved;
 }
 
-function resolveWorkspaceRelativePath(filePath?: string): string | undefined {
+function resolveWorkspaceRelativePath(filePath: string | undefined, workspaceDir: string): string | undefined {
   if (filePath === undefined || filePath.length === 0 || isAbsolute(filePath)) {
     return filePath;
   }
 
-  const workspaceRoot = process.env.GITHUB_WORKSPACE;
-  if (workspaceRoot === undefined || workspaceRoot.length === 0) {
+  return resolve(workspaceDir, filePath);
+}
+
+function resolveActionConfigRelativePath(
+  filePath: string | undefined,
+  configBaseDir: string
+): string | undefined {
+  if (filePath === undefined || filePath.length === 0 || isAbsolute(filePath)) {
     return filePath;
   }
 
-  return resolve(workspaceRoot, filePath);
+  return resolve(configBaseDir, filePath);
 }
 
-function resolveRelativePath(filePath: string, baseDirectory: string): string {
-  return isAbsolute(filePath) ? filePath : resolve(baseDirectory, filePath);
+function resolveActionTarget(target: string, workspaceDir: string): string {
+  if (target.startsWith("gh:") || target.startsWith("http://") || target.startsWith("https://") || isAbsolute(target)) {
+    return target;
+  }
+
+  return resolve(workspaceDir, target);
+}
+
+function sanitizeGitHubOutputValue(value: string): string {
+  return value.replace(/\r/g, "%0D").replace(/\n/g, "%0A");
 }
 
 const isMainModule =

@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { auditTarget } from "../src/core/audit.js";
 import type { AuditReport } from "../src/core/types.js";
+import { TRUSTMCP_VERSION } from "../src/core/version.js";
 import { renderJsonReport } from "../src/renderers/json.js";
 import { renderMarkdownReport } from "../src/renderers/markdown.js";
 import { renderSummaryReport } from "../src/renderers/output.js";
@@ -30,11 +31,11 @@ describe("renderers", () => {
     };
 
     expect(first).toBe(second);
-    expect(parsed.summary.findingCount).toBe(3);
+    expect(parsed.summary.findingCount).toBe(21);
     expect(parsed.summary.severityCounts).toEqual({
       low: 0,
-      medium: 1,
-      high: 2
+      medium: 8,
+      high: 13
     });
     expect(parsed.findings[0]?.ruleId).toBe("mcp/broad-filesystem");
   });
@@ -90,6 +91,7 @@ describe("renderers", () => {
 - Rule: \`mcp/shell-exec\`
 - Severity: \`high\`
 - Confidence: \`high\`
+- Confidence reason: \`rule-specific-test-reason-1\`
 - Location: \`src/example-1.ts:1\`
 - Evidence: evidence-1
 - Why it matters: why-1
@@ -99,6 +101,7 @@ describe("renderers", () => {
 - Rule: \`mcp/outbound-fetch\`
 - Severity: \`medium\`
 - Confidence: \`high\`
+- Confidence reason: \`rule-specific-test-reason-2\`
 - Location: \`src/example-2.ts:2\`
 - Evidence: evidence-2
 - Why it matters: why-2
@@ -137,7 +140,7 @@ No matching rules were triggered.`);
     expect(renderSummaryReport(createReport([]), "json")).toBe(`{
   "tool": {
     "name": "TrustMCP",
-    "version": "0.1.0"
+    "version": "${TRUSTMCP_VERSION}"
   },
   "target": {
     "input": "https://github.com/example/risky-mcp",
@@ -146,15 +149,24 @@ No matching rules were triggered.`);
     "resolvedRef": "main@abc123def456"
   },
   "summary": {
+    "baselineApplied": false,
     "findingCount": 0,
     "newFindingCount": 0,
+    "gatedFindingCount": 0,
     "triggeredRuleCount": 0,
+    "newTriggeredRuleCount": 0,
+    "gatedTriggeredRuleCount": 0,
     "severityCounts": {
       "low": 0,
       "medium": 0,
       "high": 0
     },
     "newSeverityCounts": {
+      "low": 0,
+      "medium": 0,
+      "high": 0
+    },
+    "gatedSeverityCounts": {
       "low": 0,
       "medium": 0,
       "high": 0
@@ -173,7 +185,7 @@ No matching rules were triggered.`);
       "tool": {
         "driver": {
           "name": "TrustMCP",
-          "version": "0.1.0",
+          "version": "${TRUSTMCP_VERSION}",
           "informationUri": "https://github.com/Gujiassh/trustmcp",
           "rules": [
             {
@@ -191,8 +203,35 @@ No matching rules were triggered.`);
                 "text": "remediation-2"
               },
               "properties": {
+                "ruleId": "mcp/outbound-fetch",
                 "confidence": "high",
-                "severity": "medium"
+                "severity": "medium",
+                "confidenceLevels": [
+                  "medium",
+                  "high"
+                ],
+                "confidenceReasons": [
+                  "literal-fetch-call",
+                  "non-fetch-network-client",
+                  "tool-controlled-url"
+                ],
+                "confidenceGuidance": [
+                  {
+                    "level": "medium",
+                    "reason": "literal-fetch-call",
+                    "description": "A plain fetch call was matched without clear tool-controlled destination evidence."
+                  },
+                  {
+                    "level": "high",
+                    "reason": "non-fetch-network-client",
+                    "description": "A stronger network client surface such as axios, http(s), got, or undici was matched."
+                  },
+                  {
+                    "level": "high",
+                    "reason": "tool-controlled-url",
+                    "description": "The destination URL appears to come from tool or request input."
+                  }
+                ]
               }
             },
             {
@@ -210,8 +249,22 @@ No matching rules were triggered.`);
                 "text": "remediation-1"
               },
               "properties": {
+                "ruleId": "mcp/shell-exec",
                 "confidence": "high",
-                "severity": "high"
+                "severity": "high",
+                "confidenceLevels": [
+                  "high"
+                ],
+                "confidenceReasons": [
+                  "direct-command-execution-api"
+                ],
+                "confidenceGuidance": [
+                  {
+                    "level": "high",
+                    "reason": "direct-command-execution-api",
+                    "description": "Direct command execution primitives such as child_process, execa, or Bun.spawn were matched."
+                  }
+                ]
               }
             }
           ]
@@ -223,6 +276,9 @@ No matching rules were triggered.`);
           "level": "error",
           "message": {
             "text": "Shell execution capability detected"
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "mcp/shell-exec|src/example-1.ts|evidence-1"
           },
           "locations": [
             {
@@ -237,7 +293,12 @@ No matching rules were triggered.`);
             }
           ],
           "properties": {
+            "fingerprint": "mcp/shell-exec|src/example-1.ts|evidence-1",
+            "baselineApplied": false,
+            "isNewFinding": true,
+            "isGatedFinding": true,
             "confidence": "high",
+            "confidenceReason": "rule-specific-test-reason-1",
             "severity": "high",
             "evidence": "evidence-1",
             "whyItMatters": "why-1",
@@ -249,6 +310,9 @@ No matching rules were triggered.`);
           "level": "warning",
           "message": {
             "text": "Outbound network request capability detected"
+          },
+          "partialFingerprints": {
+            "primaryLocationLineHash": "mcp/outbound-fetch|src/example-2.ts|evidence-2"
           },
           "locations": [
             {
@@ -263,7 +327,12 @@ No matching rules were triggered.`);
             }
           ],
           "properties": {
+            "fingerprint": "mcp/outbound-fetch|src/example-2.ts|evidence-2",
+            "baselineApplied": false,
+            "isNewFinding": true,
+            "isGatedFinding": true,
             "confidence": "high",
+            "confidenceReason": "rule-specific-test-reason-2",
             "severity": "medium",
             "evidence": "evidence-2",
             "whyItMatters": "why-2",
@@ -275,13 +344,67 @@ No matching rules were triggered.`);
   ]
 }`);
   });
+
+  it("marks SARIF results with baseline and gated finding semantics", () => {
+    const report = createReport(["high", "medium"]);
+    report.summary.baselineApplied = true;
+    report.summary.newFindingCount = 1;
+    report.summary.gatedFindingCount = 1;
+    report.summary.newTriggeredRuleCount = 1;
+    report.summary.gatedTriggeredRuleCount = 1;
+    report.summary.newSeverityCounts = { low: 0, medium: 0, high: 1 };
+    report.summary.gatedSeverityCounts = { low: 0, medium: 0, high: 1 };
+    report.summary.message = "2 finding(s) across 2 rule(s). Static heuristics only. 1 new finding(s) across 1 rule(s).";
+    report.newFindings = report.findings.slice(0, 1);
+
+    const parsed = JSON.parse(renderSarifReport(report)) as {
+      runs: Array<{
+        results: Array<{
+          properties: {
+            baselineApplied: boolean;
+            isNewFinding: boolean;
+            isGatedFinding: boolean;
+          };
+        }>;
+      }>;
+    };
+
+    expect(parsed.runs[0]?.results[0]?.properties).toMatchObject({
+      baselineApplied: true,
+      isNewFinding: true,
+      isGatedFinding: true
+    });
+    expect(parsed.runs[0]?.results[1]?.properties).toMatchObject({
+      baselineApplied: true,
+      isNewFinding: false,
+      isGatedFinding: false
+    });
+  });
 });
 
 function createReport(severities: Array<"high" | "medium" | "low">): AuditReport {
+    const findings = severities.map((severity, index) => ({
+      fingerprint: `${severity === "high" ? "mcp/shell-exec" : severity === "medium" ? "mcp/outbound-fetch" : "mcp/example-low"}|src/example-${index + 1}.ts|evidence-${index + 1}`,
+      ruleId: severity === "high" ? "mcp/shell-exec" : severity === "medium" ? "mcp/outbound-fetch" : "mcp/example-low",
+      severity,
+      confidence: "high" as const,
+      confidenceReason: `rule-specific-test-reason-${index + 1}`,
+      title: severity === "high"
+        ? "Shell execution capability detected"
+        : severity === "medium"
+        ? "Outbound network request capability detected"
+        : "Low severity placeholder finding",
+    file: `src/example-${index + 1}.ts`,
+    line: index + 1,
+    evidence: `evidence-${index + 1}`,
+    whyItMatters: `why-${index + 1}`,
+    remediation: `remediation-${index + 1}`
+  }));
+
   return {
     tool: {
       name: "TrustMCP",
-      version: "0.1.0"
+      version: TRUSTMCP_VERSION
     },
     target: {
       input: "https://github.com/example/risky-mcp",
@@ -295,9 +418,13 @@ function createReport(severities: Array<"high" | "medium" | "low">): AuditReport
       "No finding set should be interpreted as a safety guarantee."
     ],
     summary: {
+      baselineApplied: false,
       findingCount: severities.length,
       newFindingCount: severities.length,
+      gatedFindingCount: severities.length,
       triggeredRuleCount: severities.length,
+      newTriggeredRuleCount: severities.length,
+      gatedTriggeredRuleCount: severities.length,
       severityCounts: {
         low: severities.filter((severity) => severity === "low").length,
         medium: severities.filter((severity) => severity === "medium").length,
@@ -308,39 +435,16 @@ function createReport(severities: Array<"high" | "medium" | "low">): AuditReport
         medium: severities.filter((severity) => severity === "medium").length,
         high: severities.filter((severity) => severity === "high").length
       },
+      gatedSeverityCounts: {
+        low: severities.filter((severity) => severity === "low").length,
+        medium: severities.filter((severity) => severity === "medium").length,
+        high: severities.filter((severity) => severity === "high").length
+      },
       message: severities.length === 0
         ? "No matching rules were triggered. Static heuristics only; this does not mean the target is safe."
         : `${severities.length} finding(s) across ${severities.length} rule(s). Static heuristics only.`
     },
-    findings: severities.map((severity, index) => ({
-      ruleId: severity === "high" ? "mcp/shell-exec" : severity === "medium" ? "mcp/outbound-fetch" : "mcp/example-low",
-      severity,
-      confidence: "high",
-      title: severity === "high"
-        ? "Shell execution capability detected"
-        : severity === "medium"
-          ? "Outbound network request capability detected"
-          : "Low severity placeholder finding",
-      file: `src/example-${index + 1}.ts`,
-      line: index + 1,
-      evidence: `evidence-${index + 1}`,
-      whyItMatters: `why-${index + 1}`,
-      remediation: `remediation-${index + 1}`
-    })),
-    newFindings: severities.map((severity, index) => ({
-      ruleId: severity === "high" ? "mcp/shell-exec" : severity === "medium" ? "mcp/outbound-fetch" : "mcp/example-low",
-      severity,
-      confidence: "high",
-      title: severity === "high"
-        ? "Shell execution capability detected"
-        : severity === "medium"
-          ? "Outbound network request capability detected"
-          : "Low severity placeholder finding",
-      file: `src/example-${index + 1}.ts`,
-      line: index + 1,
-      evidence: `evidence-${index + 1}`,
-      whyItMatters: `why-${index + 1}`,
-      remediation: `remediation-${index + 1}`
-    }))
+    findings,
+    newFindings: findings
   };
 }

@@ -221,7 +221,15 @@ function validateBaselineEntries(value: unknown, baselinePath: string): Baseline
       );
     }
 
+    const fingerprint = entry.fingerprint;
+    if (fingerprint !== undefined && (typeof fingerprint !== "string" || fingerprint.length === 0)) {
+      throw new Error(
+        `Baseline file ${baselinePath}: entry at index ${index} has invalid 'fingerprint'. Expected a non-empty string.`
+      );
+    }
+
     return normalizeBaselineEntry({
+      ...(fingerprint === undefined ? {} : { fingerprint }),
       ruleId,
       file,
       ...(line === undefined ? {} : { line })

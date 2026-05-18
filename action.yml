@@ -5,6 +5,9 @@ outputs:
   finding-count:
     description: Total findings reported by TrustMCP.
     value: ${{ steps.scan.outputs.finding-count }}
+  rule-count:
+    description: Count of unique rules triggered across all findings.
+    value: ${{ steps.scan.outputs.rule-count }}
   low-count:
     description: Count of low-severity findings.
     value: ${{ steps.scan.outputs.low-count }}
@@ -14,6 +17,42 @@ outputs:
   high-count:
     description: Count of high-severity findings.
     value: ${{ steps.scan.outputs.high-count }}
+  new-finding-count:
+    description: Count of findings that are not present in the supplied baseline.
+    value: ${{ steps.scan.outputs.new-finding-count }}
+  new-rule-count:
+    description: Count of unique rules triggered by findings not present in the supplied baseline.
+    value: ${{ steps.scan.outputs.new-rule-count }}
+  new-low-count:
+    description: Count of new low-severity findings after baseline filtering.
+    value: ${{ steps.scan.outputs.new-low-count }}
+  new-medium-count:
+    description: Count of new medium-severity findings after baseline filtering.
+    value: ${{ steps.scan.outputs.new-medium-count }}
+  new-high-count:
+    description: Count of new high-severity findings after baseline filtering.
+    value: ${{ steps.scan.outputs.new-high-count }}
+  gated-finding-count:
+    description: Count of findings currently used for policy gating.
+    value: ${{ steps.scan.outputs.gated-finding-count }}
+  gated-rule-count:
+    description: Count of unique rules currently used for policy gating.
+    value: ${{ steps.scan.outputs.gated-rule-count }}
+  gated-low-count:
+    description: Count of gated low-severity findings.
+    value: ${{ steps.scan.outputs.gated-low-count }}
+  gated-medium-count:
+    description: Count of gated medium-severity findings.
+    value: ${{ steps.scan.outputs.gated-medium-count }}
+  gated-high-count:
+    description: Count of gated high-severity findings.
+    value: ${{ steps.scan.outputs.gated-high-count }}
+  baseline-applied:
+    description: Whether the action ran with baseline entries supplied for this scan, including an empty baseline file.
+    value: ${{ steps.scan.outputs.baseline-applied }}
+  summary-message:
+    description: Single-line summary text for the completed scan.
+    value: ${{ steps.scan.outputs.summary-message }}
 
 inputs:
   target:
@@ -41,7 +80,7 @@ inputs:
     required: false
     default: ""
   baseline-file:
-    description: Optional path to a JSON baseline file listing known findings (ruleId, file, line).
+    description: Optional path to a JSON baseline file listing known findings (preferred: fingerprint + ruleId/file/line; legacy tuple shape still accepted).
     required: false
     default: ""
   summary-only:
@@ -141,6 +180,10 @@ runs:
         case "$target" in
           gh:*|http://*|https://*) ;;
           *)
+            case "$target" in
+              /*) ;;
+              *) target="$GITHUB_WORKSPACE/$target" ;;
+            esac
             if [ ! -e "$target" ]; then
               printf '%s\n' "TrustMCP action error: target does not exist: $target" >&2
               exit 1

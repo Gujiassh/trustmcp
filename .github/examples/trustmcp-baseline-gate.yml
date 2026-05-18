@@ -1,0 +1,30 @@
+name: TrustMCP baseline gate
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  trustmcp:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: mkdir -p reports
+
+      - id: trustmcp
+        uses: Gujiassh/trustmcp@main
+        with:
+          target: ${{ github.workspace }}
+          config-file: trustmcp.config.json
+
+      - run: |
+          echo "visible=${{ steps.trustmcp.outputs.finding-count }}"
+          echo "new=${{ steps.trustmcp.outputs.new-finding-count }}"
+          echo "gated=${{ steps.trustmcp.outputs.gated-finding-count }}"
+          echo "baseline=${{ steps.trustmcp.outputs.baseline-applied }}"
+          echo "summary=${{ steps.trustmcp.outputs.summary-message }}"

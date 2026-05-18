@@ -26,6 +26,13 @@ npx trustmcp --version
 npx trustmcp gh:modelcontextprotocol/servers --format text
 ```
 
+If you want a reproducible pinned GitHub scan from the published CLI, you can also pass an explicit ref:
+
+```bash
+trustmcp gh:modelcontextprotocol/servers@main --format text
+npx trustmcp "https://github.com/modelcontextprotocol/servers?ref=main" --format text
+```
+
 ## Use a source checkout today
 
 Run:
@@ -109,6 +116,16 @@ That command packs the repository, installs the tarball into a temporary directo
 
 If you are preparing for the eventual manual registry step, check out the [npm publish checklist for TrustMCP](./npm-publish-checklist.md).
 
+If you are validating the current repository tip before a release rather than installing the published package, also use:
+
+```bash
+npm run reference:check
+npm run reference:scan
+npm run release:check
+```
+
+Those commands are source-checkout release-confidence gates, not install commands.
+
 ## Choose the path that matches what you need
 
 Use:
@@ -117,5 +134,8 @@ Use:
 - `npm link` when you want a convenient local command name
 - `npm run pack:check` when you want to verify future npm tarball readiness without publishing
 - `npm run pack:smoke` when you want a stronger tarball installability check before any future publication work
+- `npm run reference:check` when you want to validate the checked-in reference-target manifest
+- `npm run reference:scan` when you want to replay the checked-in public reference scans
+- `npm run release:check` when you want the full local release-confidence + packaging gate
 
 If you are unsure whether your target or config is valid before running a real scan, check out [TrustMCP troubleshooting](./troubleshooting.md) and use the `doctor` command.
