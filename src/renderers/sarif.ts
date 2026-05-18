@@ -49,28 +49,29 @@ function buildSarifRules(findings: Finding[]) {
     .map(([, finding]) => {
       const listedRule = listedRules.get(finding.ruleId);
       return {
-      id: finding.ruleId,
-      shortDescription: {
-        text: finding.title
-      },
-      fullDescription: {
-        text: finding.whyItMatters
-      },
-      defaultConfiguration: {
-        level: toSarifLevel(finding.severity)
-      },
-      help: {
-        text: finding.remediation
-      },
-      properties: {
-        ruleId: finding.ruleId,
-        confidence: finding.confidence,
-        severity: finding.severity,
-        ...(listedRule?.confidenceLevels === undefined ? {} : { confidenceLevels: listedRule.confidenceLevels }),
-        ...(listedRule?.confidenceReasons === undefined ? {} : { confidenceReasons: listedRule.confidenceReasons }),
-        ...(listedRule?.confidenceGuidance === undefined ? {} : { confidenceGuidance: listedRule.confidenceGuidance })
-      }
-    };});
+        id: finding.ruleId,
+        shortDescription: {
+          text: finding.title
+        },
+        fullDescription: {
+          text: finding.whyItMatters
+        },
+        defaultConfiguration: {
+          level: toSarifLevel(finding.severity)
+        },
+        help: {
+          text: finding.remediation
+        },
+        properties: {
+          ruleId: finding.ruleId,
+          confidence: finding.confidence,
+          severity: finding.severity,
+          ...(listedRule?.confidenceLevels === undefined ? {} : { confidenceLevels: listedRule.confidenceLevels }),
+          ...(listedRule?.confidenceReasons === undefined ? {} : { confidenceReasons: listedRule.confidenceReasons }),
+          ...(listedRule?.confidenceGuidance === undefined ? {} : { confidenceGuidance: listedRule.confidenceGuidance })
+        }
+      };
+    });
 }
 
 function buildSarifResult(

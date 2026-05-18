@@ -28,6 +28,7 @@ The CLI now also ships an explicit `init-config` helper for scaffolding a starte
 The CLI now also ships an explicit `doctor` command for read-only first-use validation of targets and optional config files.
 
 The CLI now also ships an explicit `list-rules` command for compact introspection of the current shipped rule set.
+CLI argument parsing now lives in `src/cli/arguments.ts`, while `src/cli/main.ts` stays focused on command dispatch and scan execution orchestration. Parser-specific tests live in `tests/cli-arguments.test.ts`; execution behavior remains in `tests/cli.test.ts`.
 The JSON form of `list-rules` now also exposes machine-readable rule metadata including default severity, possible `confidenceLevels`, stable `confidenceReasons`, and optional `confidenceGuidance` descriptions.
 
 Public docs now also include a dedicated explainer for what TrustMCP scans, what it does not scan, and how that differs from `npm audit`.
