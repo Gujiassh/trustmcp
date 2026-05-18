@@ -5,6 +5,7 @@ import { broadFilesystemRule } from "./broad-filesystem.js";
 import { downloadWriteExecRule } from "./download-write-exec.js";
 import { dynamicCodeExecRule } from "./dynamic-code-exec.js";
 import { envSecretExposureRule } from "./env-secret-exposure.js";
+import { internalNetworkAccessRule } from "./internal-network-access.js";
 import { localServiceBindingRule } from "./local-service-binding.js";
 import { outboundFetchRule } from "./outbound-fetch.js";
 import { scriptRunnerExecRule } from "./script-runner-exec.js";
@@ -22,6 +23,7 @@ const ALL_RULES: Rule[] = [
   downloadWriteExecRule,
   dynamicCodeExecRule,
   envSecretExposureRule,
+  internalNetworkAccessRule,
   localServiceBindingRule,
   toolMetadataRiskRule,
   subprocessNetworkExfilRule,

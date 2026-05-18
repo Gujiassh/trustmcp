@@ -11,7 +11,7 @@ They solve different problems.
 
 ## What TrustMCP scans today
 
-TrustMCP currently ships twelve static rules:
+TrustMCP currently ships thirteen static rules:
 
 - `mcp/shell-exec`
 - `mcp/outbound-fetch`
@@ -20,6 +20,7 @@ TrustMCP currently ships twelve static rules:
 - `mcp/download-write-exec`
 - `mcp/dynamic-code-exec`
 - `mcp/env-secret-exposure`
+- `mcp/internal-network-access`
 - `mcp/subprocess-network-exfil`
 - `mcp/tool-metadata-risk`
 - `mcp/script-runner-exec`
@@ -30,6 +31,7 @@ In practice, that means TrustMCP looks for source patterns that suggest an MCP s
 
 - execute shell commands on the host
 - make outbound network requests
+- reach local, private, or metadata-service network targets
 - access broad or tool-controlled filesystem paths
 - evaluate or compile dynamic code
 - read local secret-bearing paths
@@ -74,7 +76,7 @@ When TrustMCP says `No matching rules were triggered.`, that means the current r
 
 TrustMCP asks a repository capability question:
 
-- does this MCP server source code appear able to execute commands, call out to the network, reach broad filesystem paths, expose local secrets, or chain those capabilities together?
+- does this MCP server source code appear able to execute commands, call out to the network, reach internal network targets, reach broad filesystem paths, expose local secrets, or chain those capabilities together?
 
 That difference matters because an MCP server can be risky even when its dependency tree is clean.
 

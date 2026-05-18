@@ -44,7 +44,7 @@ TrustMCP intentionally stays small:
 - one reusable GitHub Action
 - static heuristics only
 - public GitHub repo root URLs or local folders
-- twelve evidence-backed rules
+- thirteen evidence-backed rules
 
 It does **not** claim a target is safe.
 
@@ -67,6 +67,7 @@ For a rule-by-rule explainer, check out [TrustMCP rules explained](./docs/trustm
 - `mcp/download-write-exec`
 - `mcp/dynamic-code-exec`
 - `mcp/env-secret-exposure`
+- `mcp/internal-network-access`
 - `mcp/subprocess-network-exfil`
 - `mcp/tool-metadata-risk`
 - `mcp/script-runner-exec`
@@ -77,6 +78,8 @@ For the stable JSON, baseline, and GitHub Action machine-readable contract, see 
 For the recommended single-repository baseline and CI rollout path, see [TrustMCP project-level policy adoption](./docs/project-policy-adoption.md).
 
 Some repositories may legitimately trigger both `mcp/broad-filesystem` and `mcp/sensitive-local-data` on the same file path. TrustMCP currently keeps both findings because they answer different trust-review questions: broad host-path reach versus direct access to credential/secret-bearing locations.
+
+Some repositories may also trigger `mcp/internal-network-access` alongside `mcp/outbound-fetch` when a request targets localhost, private network ranges, link-local metadata services, `.local`, or `.internal` hosts. TrustMCP keeps those findings separate because a generic outbound request and a request into local or internal infrastructure answer different trust-review questions.
 
 Some repositories may also trigger `mcp/local-service-binding` when they open listeners or bind ports from MCP-controlled flows. That rule is intentionally separate from fetch and execution rules because it answers a different trust question: whether the repository expands its reachable surface by starting a local or publicly bound service.
 

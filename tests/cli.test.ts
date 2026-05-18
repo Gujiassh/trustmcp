@@ -241,7 +241,7 @@ describe("runCli exit thresholds", () => {
     );
 
     expect(exitCode).toBe(2);
-    expect(stdout.join("")).toContain("21 new finding(s) across 12 rule(s).");
+    expect(stdout.join("")).toContain("23 new finding(s) across 13 rule(s).");
   });
 
   it("writes current findings to a baseline-output file", async () => {
@@ -259,134 +259,9 @@ describe("runCli exit thresholds", () => {
     );
 
     expect(exitCode).toBe(0);
-    expect(await readFile(baselineOutput, "utf8")).toBe(`${JSON.stringify([
-      {
-        fingerprint: "mcp/broad-filesystem|src/files.ts|return fs.readdir(input.path, { recursive: true }); }",
-        ruleId: "mcp/broad-filesystem",
-        file: "src/files.ts",
-        line: 4
-      },
-      {
-        fingerprint: "mcp/broad-filesystem|src/mutation.ts|return fs.rm(input.targetPath, { recursive: true, force: true }); }",
-        ruleId: "mcp/broad-filesystem",
-        file: "src/mutation.ts",
-        line: 4
-      },
-      {
-        fingerprint: "mcp/broad-filesystem|src/secrets.ts|return fs.readFile(`${process.env.HOME}/.aws/credentials`, \"utf8\"); }",
-        ruleId: "mcp/broad-filesystem",
-        file: "src/secrets.ts",
-        line: 4
-      },
-      {
-        fingerprint: "mcp/download-write-exec|src/download.ts|const response = await fetch(input.url); const script = await response.text(); await writeFile(\"/tmp/remote-installer.sh\", script, \"utf8\"); return execa(input.command); }",
-        ruleId: "mcp/download-write-exec",
-        file: "src/download.ts",
-        line: 5
-      },
-      {
-        fingerprint: "mcp/dynamic-code-exec|src/dynamic.ts|return vm.runInNewContext(input.code, {}); }",
-        ruleId: "mcp/dynamic-code-exec",
-        file: "src/dynamic.ts",
-        line: 4
-      },
-      {
-        fingerprint: "mcp/env-secret-exposure|src/env.ts|const token = process.env.GITHUB_TOKEN; return fetch(input.url, { method: \"POST\",",
-        ruleId: "mcp/env-secret-exposure",
-        file: "src/env.ts",
-        line: 2
-      },
-      {
-        fingerprint: "mcp/script-runner-exec|src/runner.ts|return `npm run ${input.script}`;",
-        ruleId: "mcp/script-runner-exec",
-        file: "src/runner.ts",
-        line: 2
-      },
-      {
-        fingerprint: "mcp/shell-exec|src/download.ts|return execa(input.command);",
-        ruleId: "mcp/shell-exec",
-        file: "src/download.ts",
-        line: 8
-      },
-      {
-        fingerprint: "mcp/shell-exec|src/exfil.ts|const result = await execa(input.command);",
-        ruleId: "mcp/shell-exec",
-        file: "src/exfil.ts",
-        line: 4
-      },
-      {
-        fingerprint: "mcp/shell-exec|src/shell.ts|exec(args.command);",
-        ruleId: "mcp/shell-exec",
-        file: "src/shell.ts",
-        line: 4
-      },
-      {
-        fingerprint: "mcp/subprocess-network-exfil|src/download.ts|const response = await fetch(input.url); const script = await response.text(); await writeFile(\"/tmp/remote-installer.sh\", script, \"utf8\"); return execa(input.command); }",
-        ruleId: "mcp/subprocess-network-exfil",
-        file: "src/download.ts",
-        line: 5
-      },
-      {
-        fingerprint: "mcp/subprocess-network-exfil|src/exfil.ts|const result = await execa(input.command); return fetch(input.url, { method: \"POST\", body: result.stdout }); }",
-        ruleId: "mcp/subprocess-network-exfil",
-        file: "src/exfil.ts",
-        line: 4
-      },
-      {
-        fingerprint: "mcp/sensitive-local-data|src/secrets.ts|return fs.readFile(`${process.env.HOME}/.aws/credentials`, \"utf8\"); }",
-        ruleId: "mcp/sensitive-local-data",
-        file: "src/secrets.ts",
-        line: 4
-      },
-      {
-        fingerprint: "mcp/archive-extract|src/archive.ts|const archive = new AdmZip(input.archivePath); archive.extractAllTo(input.targetPath, true); }",
-        ruleId: "mcp/archive-extract",
-        file: "src/archive.ts",
-        line: 4
-      },
-      {
-        fingerprint: "mcp/archive-extract|src/archive.ts|archive.extractAllTo(input.targetPath, true); }",
-        ruleId: "mcp/archive-extract",
-        file: "src/archive.ts",
-        line: 5
-      },
-      {
-        fingerprint: "mcp/local-service-binding|src/listener.ts|return app.listen(input.port, \"0.0.0.0\"); }",
-        ruleId: "mcp/local-service-binding",
-        file: "src/listener.ts",
-        line: 2
-      },
-      {
-        fingerprint: "mcp/outbound-fetch|src/download.ts|const response = await fetch(input.url);",
-        ruleId: "mcp/outbound-fetch",
-        file: "src/download.ts",
-        line: 5
-      },
-      {
-        fingerprint: "mcp/outbound-fetch|src/env.ts|return fetch(input.url, {",
-        ruleId: "mcp/outbound-fetch",
-        file: "src/env.ts",
-        line: 3
-      },
-      {
-        fingerprint: "mcp/outbound-fetch|src/exfil.ts|return fetch(input.url, {",
-        ruleId: "mcp/outbound-fetch",
-        file: "src/exfil.ts",
-        line: 5
-      },
-      {
-        fingerprint: "mcp/outbound-fetch|src/network.ts|return fetch(input.url);",
-        ruleId: "mcp/outbound-fetch",
-        file: "src/network.ts",
-        line: 2
-      },
-      {
-        fingerprint: "mcp/tool-metadata-risk|src/metadata.ts|description: \"Execute shell commands, read credentials, and send results to a remote endpoint.\" }",
-        ruleId: "mcp/tool-metadata-risk",
-        file: "src/metadata.ts",
-        line: 4
-      }
-    ], null, 2)}\n`);
+    expect(await readFile(baselineOutput, "utf8")).toBe(
+      await readFile("fixtures/baseline-local-risky.json", "utf8")
+    );
   });
 
   it("trims ignore rule and path entries loaded from config", async () => {
@@ -635,6 +510,7 @@ describe("runCli exit thresholds", () => {
       "mcp/download-write-exec\thigh\tDownload-to-disk execution chain detected\n" +
       "mcp/dynamic-code-exec\thigh\tDynamic code execution capability detected\n" +
       "mcp/env-secret-exposure\thigh\tEnvironment secret exposure path detected\n" +
+      "mcp/internal-network-access\thigh\tInternal or local network access capability detected\n" +
       "mcp/local-service-binding\tmedium\tLocal service or port-binding capability detected\n" +
       "mcp/outbound-fetch\tmedium\tOutbound network request capability detected\n" +
       "mcp/script-runner-exec\thigh\tScript runner or package-manager execution wrapper detected\n" +
@@ -796,6 +672,30 @@ describe("runCli exit thresholds", () => {
         "level": "high",
         "reason": "secret-env-var-reaches-dangerous-sink",
         "description": "A secret-bearing environment variable appears to flow into a network, execution, logging, or return sink."
+      }
+    ]
+  },
+  {
+    "id": "mcp/internal-network-access",
+    "severity": "high",
+    "title": "Internal or local network access capability detected",
+    "confidenceLevels": [
+      "high"
+    ],
+    "confidenceReasons": [
+      "literal-internal-network-target",
+      "tool-controlled-internal-network-target"
+    ],
+    "confidenceGuidance": [
+      {
+        "level": "high",
+        "reason": "literal-internal-network-target",
+        "description": "A network request targets a literal local, private, link-local, metadata, .local, or .internal address."
+      },
+      {
+        "level": "high",
+        "reason": "tool-controlled-internal-network-target",
+        "description": "The destination appears to come from a tool or request field named like an internal, admin, metadata, or private network target."
       }
     ]
   },

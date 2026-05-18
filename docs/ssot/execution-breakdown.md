@@ -41,13 +41,13 @@ The first `v0.2` foundation wave has already landed on `main`. Do not treat thes
 
 ### Completed: Dynamic Code Execution And Adjacent Rule Expansion
 
-TrustMCP now ships twelve capability-focused rules, including `mcp/dynamic-code-exec`, `mcp/script-runner-exec`, `mcp/env-secret-exposure`, `mcp/archive-extract`, `mcp/download-write-exec`, `mcp/local-service-binding`, `mcp/sensitive-local-data`, `mcp/subprocess-network-exfil`, and `mcp/tool-metadata-risk`.
+TrustMCP now ships thirteen capability-focused rules, including `mcp/dynamic-code-exec`, `mcp/script-runner-exec`, `mcp/env-secret-exposure`, `mcp/internal-network-access`, `mcp/archive-extract`, `mcp/download-write-exec`, `mcp/local-service-binding`, `mcp/sensitive-local-data`, `mcp/subprocess-network-exfil`, and `mcp/tool-metadata-risk`.
 
 Evidence:
 
 - `src/rules/` contains the expanded rule set.
-- `tests/audit.test.ts` asserts the full risky fixture inventory across twelve rules.
-- `docs/trustmcp-rules.md` and `docs/what-trustmcp-scans.md` describe the current twelve-rule scanner surface.
+- `tests/audit.test.ts` asserts the full risky fixture inventory across thirteen rules.
+- `docs/trustmcp-rules.md` and `docs/what-trustmcp-scans.md` describe the current thirteen-rule scanner surface.
 
 ### Completed: Machine-Readable Output Contract
 
@@ -125,6 +125,21 @@ Evidence:
 - `tests/cli-arguments.test.ts` covers parser behavior separately from `tests/cli.test.ts` execution behavior.
 - `docs/ssot/README.md` records the CLI responsibility boundary.
 
+### Completed: Internal Network Access Rule Family
+
+Status: completed on `main`.
+
+Outcome:
+
+TrustMCP now separates local, private, link-local metadata-service, `.local`, and `.internal` network targets from generic outbound fetch capability without broadening into general SAST or DNS reputation scoring.
+
+Evidence:
+
+- `src/rules/internal-network-access.ts` implements the narrow rule with stable high-confidence reason codes.
+- `fixtures/local-risky/src/internal.ts` and `fixtures/baseline-local-risky.json` record the regression fixture and baseline identity.
+- `tests/rules.test.ts`, `tests/audit.test.ts`, and `tests/cli.test.ts` cover rule boundaries, risky fixture inventory, and `list-rules` metadata.
+- `docs/trustmcp-rules.md`, `docs/what-trustmcp-scans.md`, and `README.md` document the thirteen-rule surface and the intentional overlap with `mcp/outbound-fetch`.
+
 ## Current Slice 3: Policy Ergonomics From Real Feedback
 
 ### Outcome
@@ -151,7 +166,7 @@ Current status: mostly implemented on `main` as `0.2.0-dev`.
 
 Already covered:
 
-- expanded twelve-rule scanner surface
+- expanded thirteen-rule scanner surface, including internal/local network access
 - machine-readable output contract docs
 - finding fingerprint and baseline identity
 - SARIF parity foundation
@@ -207,12 +222,11 @@ Choose the next PR using these rules:
 4. Avoid adding config complexity before the baseline identity model is clearer.
 5. If a slice changes public structured output, treat it as release-note-worthy by default.
 
-## Recommended Next 3 PRs
+## Recommended Next Slices
 
-If execution starts immediately, the best next three PRs are:
+If execution starts immediately, the best next slices are:
 
 1. Improve baseline, ignore, or config ergonomics only where a real workflow pain point has been identified.
-2. Add another adjacent high-value rule family only when it can ship with fixtures, docs, and confidence metadata in one coherent change.
-3. Expand public examples for realistic CI, team, platform-owner, or multi-repo usage without broadening product scope.
+2. Expand public examples for realistic CI, team, platform-owner, or multi-repo usage without broadening product scope.
 
 That sequence keeps the repo's process memory aligned with the code that now exists, while continuing to improve automation and contributor safety without reopening product-scope drift.

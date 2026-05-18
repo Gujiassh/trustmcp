@@ -88,7 +88,7 @@ node dist/cli/main.js gh:modelcontextprotocol/servers --format json --output-fil
 
 ## When you are not sure what TrustMCP is checking
 
-TrustMCP currently ships twelve rules.
+TrustMCP currently ships thirteen rules.
 
 To list them from the CLI:
 

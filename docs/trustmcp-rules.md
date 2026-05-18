@@ -1,6 +1,6 @@
 # TrustMCP rules explained
 
-TrustMCP currently ships twelve rules for JavaScript and TypeScript MCP server repositories: `mcp/shell-exec`, `mcp/outbound-fetch`, `mcp/broad-filesystem`, `mcp/archive-extract`, `mcp/download-write-exec`, `mcp/dynamic-code-exec`, `mcp/env-secret-exposure`, `mcp/subprocess-network-exfil`, `mcp/tool-metadata-risk`, `mcp/script-runner-exec`, `mcp/sensitive-local-data`, and `mcp/local-service-binding`.
+TrustMCP currently ships thirteen rules for JavaScript and TypeScript MCP server repositories: `mcp/shell-exec`, `mcp/outbound-fetch`, `mcp/broad-filesystem`, `mcp/archive-extract`, `mcp/download-write-exec`, `mcp/dynamic-code-exec`, `mcp/env-secret-exposure`, `mcp/internal-network-access`, `mcp/subprocess-network-exfil`, `mcp/tool-metadata-risk`, `mcp/script-runner-exec`, `mcp/sensitive-local-data`, and `mcp/local-service-binding`.
 
 This page explains what each rule is trying to catch, what evidence usually causes a match, and what the rule is **not** claiming.
 
@@ -70,6 +70,31 @@ Typical matched evidence looks like:
 This rule is **not** claiming that every outbound request is malicious or that every network-capable MCP server is unacceptable.
 
 It is also **not** trying to classify remote destinations as safe or unsafe. The point is narrower: if a repository appears able to make outbound requests, that capability matters because prompts, tokens, or local data can leave the machine.
+
+## `mcp/internal-network-access`
+
+This rule is trying to catch network request paths that reach local, private, or metadata-service targets instead of ordinary public destinations.
+
+### What usually causes a match
+
+TrustMCP looks for HTTP request calls whose destination is clearly internal, such as:
+
+- `localhost`, `127.0.0.1`, `0.0.0.0`, `::`, or `::1`
+- RFC1918 private IPv4 ranges such as `10.0.0.0/8`, `172.16.0.0/12`, or `192.168.0.0/16`
+- link-local addresses such as `169.254.169.254`, including cloud metadata-service paths
+- `.local` or `.internal` hostnames
+- tool-controlled fields named like `internalUrl`, `metadataUrl`, `adminEndpoint`, or `privateHost`
+
+Typical matched evidence looks like:
+
+- `fetch("http://169.254.169.254/latest/meta-data/")`
+- `axios.get(input.internalUrl)`
+
+### What the rule is not claiming
+
+This rule is **not** claiming that every internal request is malicious or always reachable from a deployed environment.
+
+The narrower claim is that an MCP server appears able to reach local, private, or metadata-service network surfaces. That is a different trust-review question from generic outbound network capability, so this rule may intentionally overlap with `mcp/outbound-fetch`.
 
 ## `mcp/broad-filesystem`
 
@@ -363,6 +388,7 @@ They answer questions like:
 
 - does this repository appear able to execute commands?
 - does it appear able to make outbound requests?
+- does it appear able to reach local, private, or metadata-service network targets?
 - does it appear able to reach broad or tool-controlled filesystem paths?
 - does it appear able to unpack archive content onto the host?
 - does it appear able to execute dynamic code strings at runtime?

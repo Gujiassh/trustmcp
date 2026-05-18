@@ -6,6 +6,7 @@ import { broadFilesystemRule } from "../src/rules/broad-filesystem.js";
 import { downloadWriteExecRule } from "../src/rules/download-write-exec.js";
 import { dynamicCodeExecRule } from "../src/rules/dynamic-code-exec.js";
 import { envSecretExposureRule } from "../src/rules/env-secret-exposure.js";
+import { internalNetworkAccessRule } from "../src/rules/internal-network-access.js";
 import { localServiceBindingRule } from "../src/rules/local-service-binding.js";
 import { outboundFetchRule } from "../src/rules/outbound-fetch.js";
 import { sensitiveLocalDataRule } from "../src/rules/sensitive-local-data.js";
@@ -184,6 +185,41 @@ describe("rule boundaries", () => {
         "src/env.ts",
         'export function mode() { return process.env.NODE_ENV ?? "development"; }'
       )
+    ]);
+
+    expect(findings).toHaveLength(0);
+  });
+
+  it("flags literal internal network targets at high confidence", () => {
+    const findings = internalNetworkAccessRule.evaluate([
+      createScanFile(
+        "src/internal.ts",
+        'export async function metadata() { return fetch("http://169.254.169.254/latest/meta-data/"); }'
+      )
+    ]);
+
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.title).toContain("Internal or local network access");
+    expect(findings[0]?.confidence).toBe("high");
+    expect(findings[0]?.confidenceReason).toBe("literal-internal-network-target");
+  });
+
+  it("flags tool-controlled internal network destinations by explicit field name", () => {
+    const findings = internalNetworkAccessRule.evaluate([
+      createScanFile(
+        "src/internal.ts",
+        "export async function proxy(input: { internalUrl: string }) { return fetch(input.internalUrl); }"
+      )
+    ]);
+
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.confidence).toBe("high");
+    expect(findings[0]?.confidenceReason).toBe("tool-controlled-internal-network-target");
+  });
+
+  it("does not flag ordinary external network targets as internal access", () => {
+    const findings = internalNetworkAccessRule.evaluate([
+      createScanFile("src/network.ts", 'export async function ping() { return fetch("https://example.com/health"); }')
     ]);
 
     expect(findings).toHaveLength(0);

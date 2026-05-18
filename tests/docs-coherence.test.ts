@@ -17,12 +17,14 @@ const releaseConfidencePath = fileURLToPath(new URL("../docs/release-confidence-
 const referenceTargetsPath = fileURLToPath(new URL("../fixtures/reference-targets.json", import.meta.url));
 
 describe("docs coherence", () => {
-  it("keeps the public scanner-surface docs aligned with the twelve-rule baseline", async () => {
+  it("keeps the public scanner-surface docs aligned with the thirteen-rule baseline", async () => {
     const whatScans = await readFile(whatScansPath, "utf8");
     const troubleshooting = await readFile(troubleshootingPath, "utf8");
 
-    expect(whatScans).toContain("TrustMCP currently ships twelve static rules");
-    expect(troubleshooting).toContain("TrustMCP currently ships twelve rules.");
+    expect(whatScans).toContain("TrustMCP currently ships thirteen static rules");
+    expect(troubleshooting).toContain("TrustMCP currently ships thirteen rules.");
+    expect(whatScans).toContain("mcp/internal-network-access");
+    expect(whatScans).toContain("reach local, private, or metadata-service network targets");
   });
 
   it("keeps machine-readable rule metadata entry points visible in user-facing docs", async () => {
@@ -66,6 +68,7 @@ describe("docs coherence", () => {
     expect(executionBreakdown).toContain("Completed: Rule Metadata Consumer Examples");
     expect(executionBreakdown).toContain("Completed: Release And Reference-Target Guardrail Tightening");
     expect(executionBreakdown).toContain("Completed: CLI Argument Parsing Boundary Cleanup");
+    expect(executionBreakdown).toContain("Completed: Internal Network Access Rule Family");
     expect(executionBreakdown).toContain("Current Slice 3: Policy Ergonomics From Real Feedback");
     expect(executionBreakdown).not.toContain("Current Slice 1: Rule Metadata Consumer Examples");
     expect(executionBreakdown).not.toContain("Current Slice 2: Release And Reference-Target Guardrail Tightening");

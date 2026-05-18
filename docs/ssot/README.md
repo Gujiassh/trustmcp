@@ -34,7 +34,7 @@ The JSON form of `list-rules` now also exposes machine-readable rule metadata in
 Public docs now also include a dedicated explainer for what TrustMCP scans, what it does not scan, and how that differs from `npm audit`.
 
 Public docs now also include a dedicated rule explainer for the currently shipped checks and their intended evidence patterns.
-Public docs now also describe the current shipped scanner surface as a twelve-rule capability review tool rather than the original three-rule baseline.
+Public docs now also describe the current shipped scanner surface as a thirteen-rule capability review tool rather than the original three-rule baseline. The latest rule family is `mcp/internal-network-access`, which separates local, private, link-local metadata-service, `.local`, and `.internal` network targets from generic outbound fetch capability.
 
 Public docs now also include a compact troubleshooting guide for common TrustMCP setup and input errors.
 

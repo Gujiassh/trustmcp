@@ -31,11 +31,11 @@ describe("renderers", () => {
     };
 
     expect(first).toBe(second);
-    expect(parsed.summary.findingCount).toBe(21);
+    expect(parsed.summary.findingCount).toBe(23);
     expect(parsed.summary.severityCounts).toEqual({
       low: 0,
-      medium: 8,
-      high: 13
+      medium: 9,
+      high: 14
     });
     expect(parsed.findings[0]?.ruleId).toBe("mcp/broad-filesystem");
   });

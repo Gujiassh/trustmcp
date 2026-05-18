@@ -29,9 +29,9 @@ As of the current `0.2.0-dev` repository baseline, TrustMCP already provides:
 - local directory and public GitHub repository inputs
 - text, JSON, Markdown, summary-only, and SARIF output paths
 - baseline, ignore, config, doctor, init-config, and list-rules workflows
-- twelve capability-focused rules covering:
+- thirteen capability-focused rules covering:
   - command execution
-  - outbound fetch and exfiltration chains
+  - outbound fetch, internal network access, and exfiltration chains
   - broad filesystem and sensitive local data access
   - dynamic code execution
   - download/write/execute chains
@@ -271,7 +271,7 @@ Status: implemented on `main` as the current `0.2.0-dev` baseline. Treat this ph
 
 Completed scope:
 
-- expanded the scanner to twelve capability-focused rules across adjacent MCP risk areas
+- expanded the scanner to thirteen capability-focused rules across adjacent MCP risk areas, including the latest internal/local network access family
 - documented the machine-readable output contract for JSON reports, action outputs, baseline entries, `list-rules --json`, and SARIF projection
 - added finding fingerprints and fingerprint-first baseline identity while preserving legacy tuple baseline entries
 - improved SARIF parity with TrustMCP finding identity, baseline state, gated/new finding semantics, and rule metadata
@@ -280,7 +280,7 @@ Completed scope:
 Remaining release-readiness notes:
 
 - keep consumer-facing `list-rules --json` examples easy to copy into downstream automation
-- keep roadmap docs aligned with the shipped twelve-rule surface
+- keep roadmap docs aligned with the shipped thirteen-rule surface
 - run the full release gate before cutting the final `v0.2.0` public tag
 
 ## Phase 2: `v0.3` signal quality and policy ergonomics
@@ -377,7 +377,6 @@ The next meaningful slices should come from this order:
 1. Improve consumer-facing `list-rules --json` examples so rule metadata is easier to automate against.
 2. Tighten release/reference-target guardrails so release confidence does not depend on maintainer memory.
 3. Improve baseline, ignore, or config ergonomics only where real workflow pain already exists.
-4. Add another adjacent high-value rule family only when it can ship with fixtures, docs, and confidence metadata in one coherent change.
-5. Expand public examples to show more realistic CI consumption patterns.
+4. Expand public examples to show more realistic CI consumption patterns.
 
 That sequence keeps TrustMCP aligned with its strongest path: a small, credible, automation-friendly trust review tool for MCP repositories.

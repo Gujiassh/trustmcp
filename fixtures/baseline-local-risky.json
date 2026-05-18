@@ -36,6 +36,12 @@
     "line": 2
   },
   {
+    "fingerprint": "mcp/internal-network-access|src/internal.ts|return fetch(\"http://169.254.169.254/latest/meta-data/iam/security-credentials/\");",
+    "ruleId": "mcp/internal-network-access",
+    "file": "src/internal.ts",
+    "line": 2
+  },
+  {
     "fingerprint": "mcp/script-runner-exec|src/runner.ts|return `npm run ${input.script}`;",
     "ruleId": "mcp/script-runner-exec",
     "file": "src/runner.ts",
@@ -117,6 +123,12 @@
     "fingerprint": "mcp/outbound-fetch|src/network.ts|return fetch(input.url);",
     "ruleId": "mcp/outbound-fetch",
     "file": "src/network.ts",
+    "line": 2
+  },
+  {
+    "fingerprint": "mcp/outbound-fetch|src/internal.ts|return fetch(\"http://169.254.169.254/latest/meta-data/iam/security-credentials/\");",
+    "ruleId": "mcp/outbound-fetch",
+    "file": "src/internal.ts",
     "line": 2
   },
   {
