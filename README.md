@@ -31,6 +31,7 @@ TrustMCP is usable today from npm, `npx`, and source checkout/local build.
 - Use `npm run publish:check` when you only want the packaging-oriented local release preflight.
 - Use `npm run release:check` when you want the full local release-confidence + packaging gate in one command.
 - Use `npm run release:check:strict` when you also want to require real reference-target scans before release.
+- Use [TrustMCP release confidence and reference targets](./docs/release-confidence-and-reference-targets.md#release-gate-chooser) to choose between docs-only, packaging, scanner/output, reference-target, and final release gates.
 - Use [the npm publish checklist](./docs/npm-publish-checklist.md) and [CONTRIBUTING.md](./CONTRIBUTING.md) for future package updates and manual GitHub release steps.
 
 ## Why scan MCP servers

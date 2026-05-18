@@ -13,6 +13,8 @@ const installingPath = fileURLToPath(new URL("../docs/installing-trustmcp.md", i
 const contributingPath = fileURLToPath(new URL("../CONTRIBUTING.md", import.meta.url));
 const machineReadableContractPath = fileURLToPath(new URL("../docs/machine-readable-output-contract.md", import.meta.url));
 const contributorTaskMapPath = fileURLToPath(new URL("../docs/contributor-task-map.md", import.meta.url));
+const releaseConfidencePath = fileURLToPath(new URL("../docs/release-confidence-and-reference-targets.md", import.meta.url));
+const referenceTargetsPath = fileURLToPath(new URL("../fixtures/reference-targets.json", import.meta.url));
 
 describe("docs coherence", () => {
   it("keeps the public scanner-surface docs aligned with the twelve-rule baseline", async () => {
@@ -69,6 +71,42 @@ describe("docs coherence", () => {
 
     expect(publishChecklist).toContain("npm run release:check");
     expect(publishChecklist).toContain("If you only need the packaging-oriented subset, run:");
+    expect(publishChecklist).toContain("release gate chooser");
+    expect(publishChecklist).toContain("`release:check` does not replay live public reference-target scans");
+    expect(publishChecklist).toContain("choose the right gate from the release gate chooser");
+    expect(publishChecklist).toContain("use `npm run release:check:strict` when release notes or public examples claim current live reference-target confidence");
+  });
+
+  it("keeps release gate selection explicit for maintainers", async () => {
+    const readme = await readFile(readmePath, "utf8");
+    const contributorTaskMap = await readFile(contributorTaskMapPath, "utf8");
+    const releaseConfidence = await readFile(releaseConfidencePath, "utf8");
+
+    expect(readme).toContain("release-confidence-and-reference-targets.md#release-gate-chooser");
+    expect(contributorTaskMap).toContain("release gate chooser");
+    expect(releaseConfidence).toContain("## Release gate chooser");
+    expect(releaseConfidence).toContain("Docs-only wording or navigation");
+    expect(releaseConfidence).toContain("Packaging or install-path changes");
+    expect(releaseConfidence).toContain("This checks tarball/install readiness, not live scanner credibility.");
+    expect(releaseConfidence).toContain("Rule, finding, baseline, JSON, Action, or SARIF changes");
+    expect(releaseConfidence).toContain("`fixtures/reference-targets.json` changes");
+    expect(releaseConfidence).toContain("Final public release candidate");
+    expect(releaseConfidence).toContain("`npm run release:check:strict` is the only bundled gate");
+    expect(releaseConfidence).toContain("do not imply live reference targets were replayed");
+    expect(releaseConfidence).toContain("update `fixtures/reference-targets.json`, this checked-in target list, and any release notes or public examples");
+  });
+
+  it("keeps reference target docs aligned with the manifest", async () => {
+    const releaseConfidence = await readFile(releaseConfidencePath, "utf8");
+    const manifest = JSON.parse(await readFile(referenceTargetsPath, "utf8")) as {
+      targets: Array<{ target: string }>;
+    };
+
+    for (const target of manifest.targets) {
+      const targetUrl = new URL(target.target);
+      const documentedRoot = `${targetUrl.origin}${targetUrl.pathname}`;
+      expect(releaseConfidence).toContain(documentedRoot);
+    }
   });
 
   it("keeps install guidance aligned with current source-checkout release gates", async () => {

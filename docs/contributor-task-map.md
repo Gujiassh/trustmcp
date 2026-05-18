@@ -41,7 +41,8 @@ Use this page when you know the job you need to do, but do not remember which fi
 - Check out [CHANGELOG.md](../CHANGELOG.md) for the public release history and the `Unreleased` section.
 - Follow the manual GitHub release notes in [CONTRIBUTING.md](../CONTRIBUTING.md).
 - Check out [the npm publish checklist](./npm-publish-checklist.md) for the final manual registry preflight when the project is actually ready to publish.
-- Use [TrustMCP release confidence and reference targets](./release-confidence-and-reference-targets.md) when the release changes scanning behavior, machine-readable outputs, or SARIF.
+- Use [TrustMCP release confidence and reference targets](./release-confidence-and-reference-targets.md) when the release changes scanning behavior, machine-readable outputs, SARIF, or reference-target expectations.
+- Use its [release gate chooser](./release-confidence-and-reference-targets.md#release-gate-chooser) to choose between docs-only, packaging-only, scanner/output, reference-target, and final release gates.
 - Run `npm run reference:check` when you want to validate the checked-in reference-target manifest before a release-confidence pass.
 - Run `npm run reference:scan` when you want to replay the current scans for those checked-in public reference targets.
 - Run `npm run release:check` when you want the full local release-confidence + packaging gate in one command.

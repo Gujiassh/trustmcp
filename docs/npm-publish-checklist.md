@@ -27,6 +27,8 @@ That command validates the full local release gate without publishing:
 - `reference:check` passes for the checked-in reference-target manifest
 - packaging-oriented local checks still pass through `publish:check`
 
+Use [the release gate chooser](./release-confidence-and-reference-targets.md#release-gate-chooser) before deciding whether this is enough for the slice. `release:check` does not replay live public reference-target scans; use `release:check:strict` when the release claims strict reference-target confidence.
+
 If you only need the packaging-oriented subset, run:
 
 ```bash
@@ -61,9 +63,10 @@ It is only a final manual preflight for the moment when maintainers decide the p
 The current lightweight release path is:
 
 1. update `package.json` and `CHANGELOG.md`
-2. run `npm run release:check`
-3. create the GitHub release through the manual workflow
-4. make sure npm login, package name, and publish intent are correct
-5. run the final manual npm publish step when the project is ready
+2. choose the right gate from the release gate chooser, then run at least `npm run release:check`
+3. use `npm run release:check:strict` when release notes or public examples claim current live reference-target confidence
+4. create the GitHub release through the manual workflow
+5. make sure npm login, package name, and publish intent are correct
+6. run the final manual npm publish step when the project is ready
 
 If you only need local or source-based usage today, check out [Installing TrustMCP today](./installing-trustmcp.md).

@@ -52,6 +52,20 @@ That command is now opinionated enough to fail non-zero when the checked-in targ
 
 Because those runs fetch real GitHub repository metadata and archives, they can take noticeably longer than local fixture checks. Treat them as release-confidence gates, not as a replacement for the fast deterministic local test suite.
 
+## Release gate chooser
+
+Use the smallest gate that matches the slice, then run the broader release gate before a public release.
+
+| Slice type | Minimum local gate | Use strict live reference scans when | Notes |
+| --- | --- | --- | --- |
+| Docs-only wording or navigation | `npm test -- tests/docs-coherence.test.ts` | The docs cite current real-target behavior. | Do not call this release-ready by itself. It only protects documented invariants. |
+| Packaging or install-path changes | `npm run publish:check` | The change also affects scanner behavior or release-confidence examples. | This checks tarball/install readiness, not live scanner credibility. |
+| Rule, finding, baseline, JSON, Action, or SARIF changes | `npm run release:check` | The release notes, README, or examples claim current real-target behavior. | Inspect fixture output and affected contract docs before relying on the gate. |
+| `fixtures/reference-targets.json` changes | `npm run reference:check` plus `npm run reference:scan` | Always, unless the PR explicitly documents why live scans were skipped. | Update this guide's checked-in target list and the release notes/docs that depend on the target set. |
+| Final public release candidate | `npm run release:check` | Use `npm run release:check:strict` when the release claims strict reference-target confidence. | If strict was skipped, say that directly; do not imply live reference targets were replayed. |
+
+`npm run release:check:strict` is the only bundled gate that both validates package readiness and replays the current public reference targets. If it was not run, release notes should say `release:check` passed, not that strict live reference-target confidence passed.
+
 Both commands also accept `--json` after the script, for example:
 
 ```bash
@@ -139,7 +153,7 @@ The repository currently tracks these categories in `fixtures/reference-targets.
 - `sarif-relevant`
   - `https://github.com/modelcontextprotocol/servers`
 
-Treat these as maintainable defaults, not eternal truth. If a target stops fitting its category, update the manifest and the surrounding release notes together.
+Treat these as maintainable defaults, not eternal truth. If a target stops fitting its category, update `fixtures/reference-targets.json`, this checked-in target list, and any release notes or public examples that depend on the target behavior in the same slice.
 
 ## How to use reference targets
 
