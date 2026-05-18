@@ -63,7 +63,12 @@ describe("docs coherence", () => {
     expect(longTermSpec).toContain("Completed Phase 1: `v0.2` foundation hardening");
     expect(longTermSpec).toContain("Treat this phase as historical context");
     expect(executionBreakdown).toContain("Foundation Slices Already Completed In `0.2.0-dev`");
-    expect(executionBreakdown).toContain("Current Slice 1: Rule Metadata Consumer Examples");
+    expect(executionBreakdown).toContain("Completed: Rule Metadata Consumer Examples");
+    expect(executionBreakdown).toContain("Completed: Release And Reference-Target Guardrail Tightening");
+    expect(executionBreakdown).toContain("Completed: CLI Argument Parsing Boundary Cleanup");
+    expect(executionBreakdown).toContain("Current Slice 3: Policy Ergonomics From Real Feedback");
+    expect(executionBreakdown).not.toContain("Current Slice 1: Rule Metadata Consumer Examples");
+    expect(executionBreakdown).not.toContain("Current Slice 2: Release And Reference-Target Guardrail Tightening");
   });
 
   it("keeps the publish checklist aligned with the current full release gate", async () => {

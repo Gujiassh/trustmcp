@@ -78,54 +78,52 @@ Evidence:
 - `tests/renderers.test.ts` guards SARIF structure.
 - `.github/examples/trustmcp-upload-sarif.yml` and related examples document adoption paths.
 
-## Current Slice 1: Rule Metadata Consumer Examples
+## Completed Recent Slices
 
-### Outcome
+### Completed: Rule Metadata Consumer Examples
 
-Make `list-rules --json` easier for downstream users to consume without reading source code or reverse-engineering the JSON shape.
+Status: completed on `main`.
 
-### Why first
+Outcome:
 
-The machine-readable rule metadata now exists, but the next adoption gap is practical usage: users need copy-paste examples for extracting rule IDs, severities, confidence reason codes, and guidance in scripts or CI.
+`list-rules --json` is easier for downstream users to consume without reading source code or reverse-engineering the JSON shape.
 
-### Scope
+Evidence:
 
-- add or expand docs showing realistic `list-rules --json` consumption with `jq` or small shell snippets
-- explain when to use rule metadata versus scan-report JSON
-- keep examples focused on metadata inspection, not policy-language expansion
-- update docs-coherence tests so this guidance cannot disappear silently
+- `README.md` shows copy-paste `jq` examples for rule IDs, severities, and confidence reason codes.
+- `docs/machine-readable-output-contract.md` explains that `list-rules --json` is rule inventory metadata, not per-run finding JSON.
+- `docs/contributor-task-map.md` points maintainers to compact rule/severity and confidence reason commands.
+- `tests/docs-coherence.test.ts` guards the rule metadata examples and metadata-vs-report distinction.
 
-### Done means
+### Completed: Release And Reference-Target Guardrail Tightening
 
-- a user can copy one command to list rule IDs and severities
-- a user can copy one command to inspect confidence reason codes for a rule
-- docs distinguish rule metadata from per-run findings
-- tests assert these entry points remain documented
+Status: completed on `main`.
 
-### Suggested artifact set
+Outcome:
 
-- `README.md`
-- `docs/machine-readable-output-contract.md`
-- `docs/contributor-task-map.md`
-- `tests/docs-coherence.test.ts`
+Release and reference-target paths are easier to follow and harder to overstate.
 
-## Current Slice 2: Release And Reference-Target Guardrail Tightening
+Evidence:
 
-### Outcome
+- `docs/release-confidence-and-reference-targets.md` includes a release gate chooser for docs-only, packaging, scanner/output, reference-target manifest, and final release slices.
+- `docs/npm-publish-checklist.md` says `release:check` does not replay live public reference-target scans and points to `release:check:strict` when release notes or public examples claim live reference-target confidence.
+- `README.md` and `docs/contributor-task-map.md` link maintainers to the gate chooser.
+- `tests/docs-coherence.test.ts` guards the `publish:check` / `release:check` / `release:check:strict` boundary and checks the reference-target manifest stays reflected in release-confidence docs.
 
-Reduce maintainer memory required before a release by making the release/reference-target path easier to follow and harder to skip accidentally.
+### Completed: CLI Argument Parsing Boundary Cleanup
 
-### Scope
+Status: completed on `main` as architecture maintenance after the global drift audit.
 
-- tighten docs around which release gate to run for code, docs-only, output-contract, and rule changes
-- ensure reference-target manifest changes are tied to release notes and docs
-- add tests only where a concrete doc invariant matters
+Outcome:
 
-### Done means
+The CLI entrypoint is back to command dispatch and scan execution orchestration instead of owning argument parsing.
 
-- maintainers can identify the right release gate without reading multiple files end-to-end
-- release docs clearly separate `publish:check`, `release:check`, and `release:check:strict`
-- docs discourage claiming release readiness when strict live reference scans were skipped
+Evidence:
+
+- `src/cli/arguments.ts` owns CLI command parsing, command type guards, usage text, and option resolution.
+- `src/cli/main.ts` imports those helpers and stays focused on executing parsed commands.
+- `tests/cli-arguments.test.ts` covers parser behavior separately from `tests/cli.test.ts` execution behavior.
+- `docs/ssot/README.md` records the CLI responsibility boundary.
 
 ## Current Slice 3: Policy Ergonomics From Real Feedback
 
@@ -162,7 +160,6 @@ Already covered:
 
 Remaining release-readiness work:
 
-- improve consumer-facing rule metadata examples
 - keep roadmap docs aligned with the shipped surface
 - run the full release gate before cutting the final `v0.2.0` tag
 
@@ -214,8 +211,8 @@ Choose the next PR using these rules:
 
 If execution starts immediately, the best next three PRs are:
 
-1. Finish refreshing roadmap and public docs so they no longer describe the original three-rule baseline.
-2. Extend rule metadata ergonomics further, for example richer `list-rules --json` guidance and consumer-facing examples.
-3. Keep tightening contributor guardrails and release/reference-target documentation so the larger shipped rule set stays maintainable.
+1. Improve baseline, ignore, or config ergonomics only where a real workflow pain point has been identified.
+2. Add another adjacent high-value rule family only when it can ship with fixtures, docs, and confidence metadata in one coherent change.
+3. Expand public examples for realistic CI, team, platform-owner, or multi-repo usage without broadening product scope.
 
 That sequence keeps the repo's process memory aligned with the code that now exists, while continuing to improve automation and contributor safety without reopening product-scope drift.
