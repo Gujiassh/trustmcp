@@ -14,6 +14,8 @@ Use this page when you know the job you need to do, but do not remember which fi
 - Use [TrustMCP rules explained](./trustmcp-rules.md) when you need the public rule intent and boundaries.
 - Use `node dist/cli/main.js list-rules` when you need a compact machine-friendly list.
 - Use `node dist/cli/main.js list-rules --json` when a consumer needs stable rule metadata instead of just IDs and titles.
+- Use `node dist/cli/main.js list-rules --json | jq -r '.[] | "\(.id)\t\(.severity)"'` when a consumer wants a compact rule/severity inventory.
+- Use `node dist/cli/main.js list-rules --json | jq -r '.[] | select(.id == "mcp/outbound-fetch") | .confidenceReasons[]'` when a consumer wants the stable reason codes a specific rule can emit.
 - When changing a rule, follow the rule-change notes in [CONTRIBUTING.md](../CONTRIBUTING.md).
 - Use [TrustMCP rule contribution and regression corpus](./rule-contribution-and-regression-corpus.md) when you need the full maintainer checklist for fixtures, tests, docs, and contract-safe rule changes.
 

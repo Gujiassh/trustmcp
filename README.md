@@ -90,12 +90,15 @@ If you want to persist the shipped rule metadata to a file, run:
 node dist/cli/main.js list-rules --json --output-file rules.json
 ```
 
-If you want a copy-paste automation path, for example in shell scripts:
+If you want copy-paste automation paths, for example in shell scripts:
 
 ```bash
 node dist/cli/main.js doctor gh:modelcontextprotocol/servers --json | jq '.ok'
-node dist/cli/main.js list-rules --json | jq '.[].id'
+node dist/cli/main.js list-rules --json | jq -r '.[] | "\(.id)\t\(.severity)"'
+node dist/cli/main.js list-rules --json | jq -r '.[] | select(.id == "mcp/outbound-fetch") | .confidenceReasons[]'
 ```
+
+Use `list-rules --json` for shipped rule metadata: rule IDs, default severities, possible confidence levels, stable confidence reason codes, and guidance descriptions. Use scan report JSON (`--format json`) for per-run findings, target metadata, baseline state, and summary counts.
 
 Every finding includes:
 

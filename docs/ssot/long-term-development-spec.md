@@ -1,6 +1,6 @@
 # TrustMCP Long-Term Development Spec
 
-This document describes the long-range product and engineering plan for evolving TrustMCP beyond the current `v0.1.x` baseline.
+This document describes the long-range product and engineering plan for evolving TrustMCP beyond the current `0.2.0-dev` baseline.
 
 It is intentionally product-shaped rather than issue-shaped: the point is to keep future work aligned with the core promise of the project instead of growing a pile of unrelated scanner features.
 
@@ -22,7 +22,7 @@ TrustMCP should **not** drift into a general-purpose SAST platform, hosted secur
 
 ## Current Baseline
 
-As of the current public baseline, TrustMCP already provides:
+As of the current `0.2.0-dev` repository baseline, TrustMCP already provides:
 
 - a Node.js CLI
 - a reusable GitHub Action
@@ -40,12 +40,12 @@ As of the current public baseline, TrustMCP already provides:
   - environment secret exposure
   - risky tool metadata
 
-This is a usable `v0.1` product, but it is still early in four important ways:
+This is a usable early product, but it is still maturing in four important ways:
 
-1. Rule coverage is materially stronger than the initial baseline, but not yet complete enough to remove all first-pass review gaps.
-2. Finding quality and suppression ergonomics are good enough for early adopters, but not yet strong enough for broad CI standardization.
-3. Workflow outputs are improving, but not yet complete as a stable automation contract.
-4. Project-level trust still depends heavily on docs clarity and regression discipline, not just feature count.
+1. Rule coverage is materially stronger than the initial baseline, but new capability families should still be added only when they preserve evidence quality.
+2. Finding quality and suppression ergonomics are good enough for early adopters, but still need real-feedback-driven refinement before broad CI standardization.
+3. Workflow outputs now have an explicit public contract, so future additions must preserve compatibility and documentation discipline.
+4. Project-level trust still depends heavily on docs clarity, release discipline, and regression safety, not just feature count.
 
 ## Product Thesis
 
@@ -265,24 +265,23 @@ The project needs a stronger “maintained tool” posture, not just more featur
 
 ## Roadmap
 
-## Phase 1: `v0.2` foundation hardening
+## Completed Phase 1: `v0.2` foundation hardening
 
-Objective: make TrustMCP more dependable for repeated CI use without changing its product shape.
+Status: implemented on `main` as the current `0.2.0-dev` baseline. Treat this phase as historical context and do not re-plan it as future roadmap work unless a regression appears.
 
-Scope:
+Completed scope:
 
-- add 2-4 high-value rules in adjacent capability areas
-- formalize JSON/output compatibility expectations
-- improve SARIF and workflow output completeness
-- expand fixtures and regression tests
-- refine docs around baseline, ignore, and CI adoption
+- expanded the scanner to twelve capability-focused rules across adjacent MCP risk areas
+- documented the machine-readable output contract for JSON reports, action outputs, baseline entries, `list-rules --json`, and SARIF projection
+- added finding fingerprints and fingerprint-first baseline identity while preserving legacy tuple baseline entries
+- improved SARIF parity with TrustMCP finding identity, baseline state, gated/new finding semantics, and rule metadata
+- expanded fixtures, regression tests, and docs around baseline, ignore, CI adoption, and release confidence
 
-Exit criteria:
+Remaining release-readiness notes:
 
-- at least one new rule family ships with strong fixtures
-- machine-readable outputs cover the most common CI branching needs
-- docs explain baseline adoption cleanly
-- release notes are feature-complete and honest
+- keep consumer-facing `list-rules --json` examples easy to copy into downstream automation
+- keep roadmap docs aligned with the shipped twelve-rule surface
+- run the full release gate before cutting the final `v0.2.0` public tag
 
 ## Phase 2: `v0.3` signal quality and policy ergonomics
 
@@ -375,9 +374,10 @@ When there is a tradeoff, prefer:
 
 The next meaningful slices should come from this order:
 
-1. Add one adjacent high-value rule family with fixtures and docs.
-2. Harden the output contract and document JSON/action guarantees.
-3. Improve baseline/suppression ergonomics only where real workflow pain already exists.
-4. Expand public examples to show more realistic CI consumption patterns.
+1. Improve consumer-facing `list-rules --json` examples so rule metadata is easier to automate against.
+2. Tighten release/reference-target guardrails so release confidence does not depend on maintainer memory.
+3. Improve baseline, ignore, or config ergonomics only where real workflow pain already exists.
+4. Add another adjacent high-value rule family only when it can ship with fixtures, docs, and confidence metadata in one coherent change.
+5. Expand public examples to show more realistic CI consumption patterns.
 
 That sequence keeps TrustMCP aligned with its strongest path: a small, credible, automation-friendly trust review tool for MCP repositories.

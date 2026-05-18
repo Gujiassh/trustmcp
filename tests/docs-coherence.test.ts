@@ -11,6 +11,8 @@ const executionBreakdownPath = fileURLToPath(new URL("../docs/ssot/execution-bre
 const publishChecklistPath = fileURLToPath(new URL("../docs/npm-publish-checklist.md", import.meta.url));
 const installingPath = fileURLToPath(new URL("../docs/installing-trustmcp.md", import.meta.url));
 const contributingPath = fileURLToPath(new URL("../CONTRIBUTING.md", import.meta.url));
+const machineReadableContractPath = fileURLToPath(new URL("../docs/machine-readable-output-contract.md", import.meta.url));
+const contributorTaskMapPath = fileURLToPath(new URL("../docs/contributor-task-map.md", import.meta.url));
 
 describe("docs coherence", () => {
   it("keeps the public scanner-surface docs aligned with the twelve-rule baseline", async () => {
@@ -29,8 +31,21 @@ describe("docs coherence", () => {
     expect(readme).toContain("node dist/cli/main.js list-rules --json");
     expect(readme).toContain("confidenceLevels");
     expect(readme).toContain("confidenceGuidance");
+    expect(readme).toContain("jq -r '.[] | \"\\(.id)\\t\\(.severity)\"'");
+    expect(readme).toContain("select(.id == \"mcp/outbound-fetch\") | .confidenceReasons[]");
+    expect(readme).toContain("Use `list-rules --json` for shipped rule metadata");
     expect(whatScans).toContain("node dist/cli/main.js list-rules --json");
     expect(troubleshooting).toContain("node dist/cli/main.js list-rules --json");
+  });
+
+  it("keeps rule metadata consumer examples documented", async () => {
+    const machineReadableContract = await readFile(machineReadableContractPath, "utf8");
+    const contributorTaskMap = await readFile(contributorTaskMapPath, "utf8");
+
+    expect(machineReadableContract).toContain("It describes the scanner's rule inventory, not the findings from a specific scan.");
+    expect(machineReadableContract).toContain("jq -r '.[] | \"\\(.id)\\t\\(.severity)\"'");
+    expect(machineReadableContract).toContain("select(.id == \"mcp/outbound-fetch\") | .confidenceReasons[]");
+    expect(contributorTaskMap).toContain("select(.id == \"mcp/outbound-fetch\") | .confidenceReasons[]");
   });
 
   it("keeps internal roadmap docs from drifting back to the original three-rule baseline", async () => {
@@ -38,7 +53,15 @@ describe("docs coherence", () => {
     const executionBreakdown = await readFile(executionBreakdownPath, "utf8");
 
     expect(longTermSpec).not.toContain("three capability-focused rules");
-    expect(executionBreakdown).toContain("Finish refreshing roadmap and public docs so they no longer describe the original three-rule baseline.");
+    expect(longTermSpec).not.toContain("## Phase 1: `v0.2` foundation hardening");
+    expect(longTermSpec).not.toContain("Objective: make TrustMCP more dependable for repeated CI use without changing its product shape.");
+    expect(longTermSpec).not.toContain("add 2-4 high-value rules in adjacent capability areas");
+    expect(longTermSpec).not.toContain("formalize JSON/output compatibility expectations");
+    expect(longTermSpec).toContain("0.2.0-dev");
+    expect(longTermSpec).toContain("Completed Phase 1: `v0.2` foundation hardening");
+    expect(longTermSpec).toContain("Treat this phase as historical context");
+    expect(executionBreakdown).toContain("Foundation Slices Already Completed In `0.2.0-dev`");
+    expect(executionBreakdown).toContain("Current Slice 1: Rule Metadata Consumer Examples");
   });
 
   it("keeps the publish checklist aligned with the current full release gate", async () => {

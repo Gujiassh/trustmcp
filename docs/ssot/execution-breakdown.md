@@ -35,181 +35,136 @@ The work should be sequenced in this order:
 
 These are the next recommended implementation slices in strict priority order.
 
-## Slice 1: Dynamic Code Execution Rule
+## Foundation Slices Already Completed In `0.2.0-dev`
+
+The first `v0.2` foundation wave has already landed on `main`. Do not treat these as future work unless a regression appears.
+
+### Completed: Dynamic Code Execution And Adjacent Rule Expansion
+
+TrustMCP now ships twelve capability-focused rules, including `mcp/dynamic-code-exec`, `mcp/script-runner-exec`, `mcp/env-secret-exposure`, `mcp/archive-extract`, `mcp/download-write-exec`, `mcp/local-service-binding`, `mcp/sensitive-local-data`, `mcp/subprocess-network-exfil`, and `mcp/tool-metadata-risk`.
+
+Evidence:
+
+- `src/rules/` contains the expanded rule set.
+- `tests/audit.test.ts` asserts the full risky fixture inventory across twelve rules.
+- `docs/trustmcp-rules.md` and `docs/what-trustmcp-scans.md` describe the current twelve-rule scanner surface.
+
+### Completed: Machine-Readable Output Contract
+
+The public machine-readable contract is now documented for JSON reports, findings, baseline entries, GitHub Action outputs, `list-rules --json`, and SARIF projection.
+
+Evidence:
+
+- `docs/machine-readable-output-contract.md` is the contract source.
+- `tests/action.test.ts`, `tests/renderers.test.ts`, and `tests/cli.test.ts` cover the current structured outputs.
+
+### Completed: Finding Fingerprint And Baseline Identity
+
+Findings now carry stable fingerprints, generated baselines prefer fingerprint identity, and legacy tuple baseline entries remain accepted for compatibility.
+
+Evidence:
+
+- `src/core/baseline-entries.ts` defines fingerprint normalization and baseline entry conversion.
+- `tests/audit.test.ts` covers fingerprint-first matching, empty baselines, and legacy tuple compatibility.
+- `docs/project-policy-adoption.md` and `docs/troubleshooting.md` explain baseline usage.
+
+### Completed: SARIF Parity Foundation
+
+SARIF output now carries TrustMCP finding identity, baseline state, gated/new finding semantics, and rule metadata.
+
+Evidence:
+
+- `src/renderers/sarif.ts` projects fingerprint and baseline properties.
+- `tests/renderers.test.ts` guards SARIF structure.
+- `.github/examples/trustmcp-upload-sarif.yml` and related examples document adoption paths.
+
+## Current Slice 1: Rule Metadata Consumer Examples
 
 ### Outcome
 
-Add a new capability-focused rule for dynamic code execution patterns such as `eval(...)`, `new Function(...)`, and nearby user-input-driven dynamic execution paths.
+Make `list-rules --json` easier for downstream users to consume without reading source code or reverse-engineering the JSON shape.
 
 ### Why first
 
-This is the closest high-signal expansion to the current threat model. It stays aligned with the core product promise and increases first-pass review value immediately.
+The machine-readable rule metadata now exists, but the next adoption gap is practical usage: users need copy-paste examples for extracting rule IDs, severities, confidence reason codes, and guidance in scripts or CI.
 
 ### Scope
 
-- add one new rule file under `src/rules/`
-- register the rule in `src/rules/index.ts`
-- add positive and negative fixtures
-- add unit tests and renderer coverage where relevant
-- update rule docs and README references
+- add or expand docs showing realistic `list-rules --json` consumption with `jq` or small shell snippets
+- explain when to use rule metadata versus scan-report JSON
+- keep examples focused on metadata inspection, not policy-language expansion
+- update docs-coherence tests so this guidance cannot disappear silently
 
 ### Done means
 
-- the new rule appears in `list-rules`
-- the rule produces deterministic evidence strings
-- at least one risky fixture matches
-- at least one safe or intentionally non-matching fixture stays clean
-- public docs explain what the rule is and is not claiming
+- a user can copy one command to list rule IDs and severities
+- a user can copy one command to inspect confidence reason codes for a rule
+- docs distinguish rule metadata from per-run findings
+- tests assert these entry points remain documented
 
 ### Suggested artifact set
 
-- `src/rules/`
-- `tests/rules.test.ts`
-- `tests/audit.test.ts`
-- `docs/trustmcp-rules.md`
 - `README.md`
+- `docs/machine-readable-output-contract.md`
+- `docs/contributor-task-map.md`
+- `tests/docs-coherence.test.ts`
 
-## Slice 2: Output Contract Spec
-
-### Outcome
-
-Document the current JSON and GitHub Action machine-readable contract as an explicit public interface.
-
-### Why second
-
-The project is already exposing more structured outputs. Before adding more fields, the current contract should be frozen and explained.
-
-### Scope
-
-- add a dedicated public doc for JSON summary, finding fields, and action outputs
-- define compatibility expectations for adding or changing fields
-- clarify which fields downstream workflows should treat as stable
-
-### Done means
-
-- a user can read one document and know which machine-readable fields are safe to automate against
-- JSON summary fields and action outputs are listed explicitly
-- docs explain the difference between human-readable rendering and machine-readable contract
-
-### Suggested artifact set
-
-- new doc under `docs/`
-- `README.md`
-- `docs/ssot/README.md`
-
-## Slice 3: Finding Fingerprint And Baseline Identity Design
+## Current Slice 2: Release And Reference-Target Guardrail Tightening
 
 ### Outcome
 
-Define and implement a stable finding identity model that is strong enough for future baseline and suppression workflows.
-
-### Why third
-
-Baseline support exists today, but it is still a first-pass model. This slice gives future policy work a durable foundation.
+Reduce maintainer memory required before a release by making the release/reference-target path easier to follow and harder to skip accidentally.
 
 ### Scope
 
-- define fingerprint semantics for findings
-- decide whether fingerprinting remains internal-only first or becomes a public field
-- align baseline matching docs with the chosen identity model
-- add regression tests covering unchanged and moved findings where relevant
+- tighten docs around which release gate to run for code, docs-only, output-contract, and rule changes
+- ensure reference-target manifest changes are tied to release notes and docs
+- add tests only where a concrete doc invariant matters
 
 ### Done means
 
-- the project has one documented answer to “what makes two findings the same”
-- future baseline and ignore behavior can build on that answer without re-litigating the model
-- tests cover the chosen matching semantics
+- maintainers can identify the right release gate without reading multiple files end-to-end
+- release docs clearly separate `publish:check`, `release:check`, and `release:check:strict`
+- docs discourage claiming release readiness when strict live reference scans were skipped
 
-### Dependency note
-
-If this slice adds or changes public JSON fields, it is a public contract change and should be called out explicitly in release notes.
-
-## Slice 4: SARIF Parity Hardening
+## Current Slice 3: Policy Ergonomics From Real Feedback
 
 ### Outcome
 
-Make SARIF output more obviously aligned with the core TrustMCP report model and CI adoption story.
-
-### Why fourth
-
-SARIF matters for code-scanning workflows, but it should not lag behind the primary report model or feel under-documented.
+Improve baseline, ignore, or config ergonomics only after a concrete workflow pain point is identified.
 
 ### Scope
 
-- compare SARIF rendering against the current report summary and finding model
-- close obvious field parity gaps where appropriate
-- add doc examples for upload and interpretation
-- add tests that guard deterministic SARIF structure
+- do not add presets or nested policy syntax speculatively
+- prefer docs and examples before new config fields
+- if a new field is necessary, treat it as a public contract change
 
 ### Done means
 
-- SARIF output is clearly documented
-- test coverage guards key SARIF fields and ordering
-- the GitHub code-scanning example is still accurate after the changes
-
-### Suggested artifact set
-
-- `src/renderers/sarif.ts`
-- `tests/renderers.test.ts`
-- `.github/examples/`
-- `README.md`
-
-## Slice 5: Baseline And Ignore Workflow Cleanup
-
-### Outcome
-
-Make baseline adoption and ignore usage easier to understand without expanding into a full policy language.
-
-### Why fifth
-
-The current primitives are good enough to use, but still easy to misuse. This is a docs-plus-ergonomics slice, not a new abstraction layer.
-
-### Scope
-
-- clarify the recommended migration path for existing repositories
-- document when to use `ignore-rules`, `ignore-paths`, and `baseline-file`
-- tighten examples around “visibility shaping” versus “gating”
-- add one or two realistic CI snippets for baseline-first adoption
-
-### Done means
-
-- a maintainer can tell which knob to use for which problem
-- docs discourage permanent misuse of ignore fields
-- at least one example shows a realistic baseline-gated workflow
-
-## Slice 6: Regression Corpus And Contributor Guardrails
-
-### Outcome
-
-Make it harder to accidentally degrade signal quality when new rules are added.
-
-### Why sixth
-
-Once more rules exist, the real challenge becomes safe iteration, not just feature addition.
-
-### Scope
-
-- document rule contribution expectations more concretely
-- define a regression corpus strategy using fixtures and a small reference target set
-- update contributor docs to require public-doc alignment for rule changes
-
-### Done means
-
-- contributors have a clear checklist for adding or changing rules
-- regression expectations are written down
-- rule work no longer depends on maintainers remembering unwritten constraints
+- the change is tied to a real adoption problem
+- docs explain when to use the feature and when not to
+- tests cover the exact behavior or invariant being introduced
 
 ## Milestone Mapping
 
 ## `v0.2` milestone
 
-Target slices:
+Current status: mostly implemented on `main` as `0.2.0-dev`.
 
-- Slice 1: Dynamic Code Execution Rule
-- Slice 2: Output Contract Spec
-- Slice 3: Finding Fingerprint And Baseline Identity Design
-- Slice 4: SARIF Parity Hardening
-- one scoped subset of Slice 5 where docs are currently weakest
+Already covered:
+
+- expanded twelve-rule scanner surface
+- machine-readable output contract docs
+- finding fingerprint and baseline identity
+- SARIF parity foundation
+- baseline/action output parity
+- release-confidence and package-readiness gates
+
+Remaining release-readiness work:
+
+- improve consumer-facing rule metadata examples
+- keep roadmap docs aligned with the shipped surface
+- run the full release gate before cutting the final `v0.2.0` tag
 
 Release intent:
 
@@ -221,9 +176,9 @@ Release intent:
 
 Target slices:
 
-- remaining Slice 5 work
-- first half of Slice 6
-- clearer confidence / rule metadata semantics
+- real-feedback-driven policy ergonomics
+- continued false-positive and fixture quality improvements
+- contributor workflow hardening as the rule set grows
 
 Release intent:
 
@@ -235,9 +190,9 @@ Release intent:
 
 Target slices:
 
-- remaining Slice 6 work
-- release process hardening
-- richer example set for teams and platform owners
+- optional rule-group ergonomics if real usage justifies them
+- broader release/adoption maturity
+- richer examples for teams and platform owners
 
 Release intent:
 

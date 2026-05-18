@@ -238,7 +238,15 @@ The reusable action emits these stable output keys:
 
 ## `list-rules --json` contract
 
-The JSON form of `list-rules` emits one object per shipped rule.
+The JSON form of `list-rules` emits one object per shipped rule. It describes the scanner's rule inventory, not the findings from a specific scan. Use report JSON (`--format json`) when you need target-specific findings, baseline state, or summary counts.
+
+Common consumer examples:
+
+```bash
+node dist/cli/main.js list-rules --json | jq -r '.[] | "\(.id)\t\(.severity)"'
+node dist/cli/main.js list-rules --json | jq -r '.[] | select(.id == "mcp/outbound-fetch") | .confidenceReasons[]'
+node dist/cli/main.js list-rules --json | jq -r '.[] | select(.id == "mcp/outbound-fetch") | .confidenceGuidance[] | "\(.reason): \(.description)"'
+```
 
 Stable fields:
 
