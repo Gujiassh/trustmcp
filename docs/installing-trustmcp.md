@@ -2,7 +2,7 @@
 
 TrustMCP is published on npm as `trustmcp`. You can use it today via `npm install -g trustmcp`, `npx trustmcp ...`, or a source checkout when you want the local repository in hand.
 
-This page explains what works now, what source-based setup is still good for, and what the package-readiness checks mean now that npm publication is live.
+This page explains what works now, what source-based setup is still good for, and what the package-readiness checks mean now that npm publication is live. For a short runnable demo after installation, see [TrustMCP demo walkthrough](./demo-walkthrough.md).
 
 ## Use npm when you want the fastest install path
 
@@ -55,6 +55,8 @@ Then run the CLI directly from the built output:
 ```bash
 node dist/cli/main.js ./path-to-target
 ```
+
+For a reproducible no-network fixture demo, run the commands in [TrustMCP demo walkthrough](./demo-walkthrough.md).
 
 That is still a supported path for contributors and people who want the repository checked out locally.
 

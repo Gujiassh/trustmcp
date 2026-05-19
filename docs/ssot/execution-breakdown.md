@@ -125,6 +125,20 @@ Evidence:
 - `tests/cli-arguments.test.ts` covers parser behavior separately from `tests/cli.test.ts` execution behavior.
 - `docs/ssot/README.md` records the CLI responsibility boundary.
 
+### Completed: Stable Demo Walkthrough
+
+Status: completed on `feat/demo-walkthrough-20260519` and intended for `main`.
+
+Outcome:
+
+First-time users and maintainers now have a short demo path that separates network-dependent npm/public-repo usage from a stable source-checkout fixture demo.
+
+Evidence:
+
+- `docs/demo-walkthrough.md` documents the npm-first demo, no-network fixture demo, JSON summary example, and release-gate handoff.
+- `README.md`, `docs/installing-trustmcp.md`, and `docs/contributor-task-map.md` link to the walkthrough from the main entry points.
+- `tests/docs-coherence.test.ts` guards the current risky fixture expectation: 23 findings across 13 triggered rules, with 14 high and 9 medium findings.
+
 ### Completed: Internal Network Access Rule Family
 
 Status: completed on `main`.

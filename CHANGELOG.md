@@ -14,7 +14,7 @@ This changelog is the lightweight public release history for TrustMCP.
 - Improve GitHub Action parity with the CLI by fixing workspace-relative local targets, aligning config-file relative path behavior, and exposing baseline-aware machine-readable outputs consistently.
 - Extend SARIF so result entries carry stable TrustMCP finding identity plus baseline/new/gated policy-state metadata, and rule entries now expose machine-readable confidence guidance metadata.
 - Add the optional `confidenceReason` finding field plus rule-level `confidenceLevels`, `confidenceReasons`, and `confidenceGuidance` metadata for machine consumers.
-- Add or refresh operator-facing docs and examples for project-level policy adoption, release confidence checks, contributor regression guardrails, sticky PR comments, and the current twelve-rule scanner surface.
+- Add or refresh operator-facing docs and examples for project-level policy adoption, release confidence checks, contributor regression guardrails, sticky PR comments, and the current thirteen-rule scanner surface.
 
 ## v0.1.0 — npm published
 

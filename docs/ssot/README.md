@@ -40,6 +40,8 @@ Public docs now also include a compact troubleshooting guide for common TrustMCP
 
 Public docs now also include a dedicated install-path guide covering npm usage, source checkout, direct CLI use, `npm link`, and pack/release readiness without confusing the published package with the unreleased repository tip.
 
+Public docs now also include a dedicated demo walkthrough covering an npm-first live path and a no-network fixture path with the current 23-finding / 13-rule risky corpus expectation.
+
 The package scripts now also include a narrow `bootstrap` command for source-based local setup (`npm install && npm run build`).
 
 Public docs now also include a short future install migration note so source-based install guidance can evolve cleanly if packaged distribution is added later.

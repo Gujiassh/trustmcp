@@ -28,6 +28,7 @@ Use this page when you know the job you need to do, but do not remember which fi
 ## Install and use TrustMCP locally
 
 - Check out [Installing TrustMCP today](./installing-trustmcp.md) for source checkout, direct `node dist/cli/main.js ...`, and `npm link`.
+- Check out [TrustMCP demo walkthrough](./demo-walkthrough.md) when you need a short npm-first demo or stable local fixture demo.
 - Use the README quick start when you only need the shortest path.
 
 ## Validate package readiness

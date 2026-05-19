@@ -10,6 +10,8 @@ If you want the fuller comparison, check out [What TrustMCP scans, and how it di
 
 Release history: [CHANGELOG.md](./CHANGELOG.md)
 
+For a short repeatable demo, see [TrustMCP demo walkthrough](./docs/demo-walkthrough.md).
+
 ## Current status
 
 - npm install works today (`npm install -g trustmcp`, `npx trustmcp --version`)
@@ -135,7 +137,7 @@ Or run it without installing globally:
 npx trustmcp --version
 ```
 
-If you want the install options explained in one place, check out [Installing TrustMCP today](./docs/installing-trustmcp.md).
+If you want the install options explained in one place, check out [Installing TrustMCP today](./docs/installing-trustmcp.md). If you want a stable local fixture demo, use [TrustMCP demo walkthrough](./docs/demo-walkthrough.md).
 
 Install from source and build:
 
@@ -161,6 +163,8 @@ Run against a local folder:
 ```bash
 node dist/cli/main.js ./fixtures/local-risky
 ```
+
+For the fixture demo expectations, see [TrustMCP demo walkthrough](./docs/demo-walkthrough.md).
 
 Run against a public GitHub repository:
 

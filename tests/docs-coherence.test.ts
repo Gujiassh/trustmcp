@@ -14,6 +14,8 @@ const contributingPath = fileURLToPath(new URL("../CONTRIBUTING.md", import.meta
 const machineReadableContractPath = fileURLToPath(new URL("../docs/machine-readable-output-contract.md", import.meta.url));
 const contributorTaskMapPath = fileURLToPath(new URL("../docs/contributor-task-map.md", import.meta.url));
 const releaseConfidencePath = fileURLToPath(new URL("../docs/release-confidence-and-reference-targets.md", import.meta.url));
+const demoWalkthroughPath = fileURLToPath(new URL("../docs/demo-walkthrough.md", import.meta.url));
+const changelogPath = fileURLToPath(new URL("../CHANGELOG.md", import.meta.url));
 const referenceTargetsPath = fileURLToPath(new URL("../fixtures/reference-targets.json", import.meta.url));
 
 describe("docs coherence", () => {
@@ -115,6 +117,30 @@ describe("docs coherence", () => {
       const documentedRoot = `${targetUrl.origin}${targetUrl.pathname}`;
       expect(releaseConfidence).toContain(documentedRoot);
     }
+  });
+
+
+  it("keeps the fixture demo walkthrough aligned with the current local corpus", async () => {
+    const readme = await readFile(readmePath, "utf8");
+    const installing = await readFile(installingPath, "utf8");
+    const contributorTaskMap = await readFile(contributorTaskMapPath, "utf8");
+    const demoWalkthrough = await readFile(demoWalkthroughPath, "utf8");
+    const changelog = await readFile(changelogPath, "utf8");
+
+    expect(readme).toContain("./docs/demo-walkthrough.md");
+    expect(installing).toContain("./demo-walkthrough.md");
+    expect(contributorTaskMap).toContain("./demo-walkthrough.md");
+    expect(demoWalkthrough).toContain("node dist/cli/main.js ./fixtures/local-risky --summary-only");
+    expect(demoWalkthrough).toContain("node dist/cli/main.js ./fixtures/local-clean --summary-only");
+    expect(demoWalkthrough).toContain("23 finding(s) across 13 rule(s)");
+    expect(demoWalkthrough).toContain("23 findings");
+    expect(demoWalkthrough).toContain("13 triggered rules");
+    expect(demoWalkthrough).toContain("14 high-severity findings");
+    expect(demoWalkthrough).toContain("9 medium-severity findings");
+    expect(demoWalkthrough).toContain("does not mean the target is safe");
+    expect(demoWalkthrough).not.toContain("3 findings across 3 rules");
+    expect(changelog).toContain("thirteen-rule scanner surface");
+    expect(changelog).not.toContain("twelve-rule scanner surface");
   });
 
   it("keeps install guidance aligned with current source-checkout release gates", async () => {
