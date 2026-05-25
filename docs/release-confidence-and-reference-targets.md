@@ -52,6 +52,8 @@ That command is now opinionated enough to fail non-zero when the checked-in targ
 
 Because those runs fetch real GitHub repository metadata and archives, they can take noticeably longer than local fixture checks. Treat them as release-confidence gates, not as a replacement for the fast deterministic local test suite.
 
+When one reference target cannot be fetched or scanned, `reference:scan` keeps scanning the remaining targets and prints a target-level failure row plus a non-zero exit. That makes transient public GitHub archive or codeload failures diagnosable without discarding results from targets that completed successfully.
+
 ## Release gate chooser
 
 Use the smallest gate that matches the slice, then run the broader release gate before a public release.
@@ -165,11 +167,12 @@ Recommended workflow:
 2. run local tests first
 3. run `npm run reference:check`
 4. run `npm run reference:scan`
-5. compare the results to the expected category:
+5. if a target reports `scan failed`, inspect that target-level error before changing the manifest or release notes
+6. compare the successful results to the expected category:
    - still finding-producing
    - still mostly clean
    - still SARIF-coherent
-6. update docs/examples only if the scan output materially changed
+7. update docs/examples only if the scan output materially changed
 
 ## What to inspect on a reference run
 

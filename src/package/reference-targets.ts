@@ -15,7 +15,9 @@ export interface ReferenceTargetManifest {
   targets: ReferenceTargetEntry[];
 }
 
-export interface ReferenceTargetScanResult {
+export type ReferenceTargetScanResult = ReferenceTargetScanSuccess | ReferenceTargetScanFailure;
+
+export interface ReferenceTargetScanSuccess {
   id: string;
   target: string;
   expectedCategory: ReferenceTargetCategory;
@@ -24,6 +26,13 @@ export interface ReferenceTargetScanResult {
   findingCount: number;
   ruleCount: number;
   summaryMessage: string;
+}
+
+export interface ReferenceTargetScanFailure {
+  id: string;
+  target: string;
+  expectedCategory: ReferenceTargetCategory;
+  errorMessage: string;
 }
 
 export interface ReferenceTargetExpectationCheck {
@@ -70,17 +79,26 @@ export async function scanReferenceTargets(
   const results: ReferenceTargetScanResult[] = [];
 
   for (const target of targets) {
-    const report = await auditTarget(target.target);
-    results.push({
-      id: target.id,
-      target: target.target,
-      expectedCategory: target.expectedCategory,
-      displayName: report.target.displayName,
-      ...(report.target.resolvedRef === undefined ? {} : { resolvedRef: report.target.resolvedRef }),
-      findingCount: report.summary.findingCount,
-      ruleCount: report.summary.triggeredRuleCount,
-      summaryMessage: report.summary.message
-    });
+    try {
+      const report = await auditTarget(target.target);
+      results.push({
+        id: target.id,
+        target: target.target,
+        expectedCategory: target.expectedCategory,
+        displayName: report.target.displayName,
+        ...(report.target.resolvedRef === undefined ? {} : { resolvedRef: report.target.resolvedRef }),
+        findingCount: report.summary.findingCount,
+        ruleCount: report.summary.triggeredRuleCount,
+        summaryMessage: report.summary.message
+      });
+    } catch (error) {
+      results.push({
+        id: target.id,
+        target: target.target,
+        expectedCategory: target.expectedCategory,
+        errorMessage: normalizeErrorMessage(error)
+      });
+    }
   }
 
   return results;
@@ -92,6 +110,11 @@ export function validateReferenceTargetExpectations(
   const failures: string[] = [];
 
   for (const result of results) {
+    if (isReferenceTargetScanFailure(result)) {
+      failures.push(`${result.id} failed to scan: ${result.errorMessage}`);
+      continue;
+    }
+
     if (result.expectedCategory === "finding-producing" && result.findingCount === 0) {
       failures.push(`${result.id} expected findings but reported none.`);
     }
@@ -131,6 +154,11 @@ export function renderReferenceTargetScanText(
   const lines = [`Reference target scan run ${payload.ok ? "OK" : "FAILED"}`];
 
   for (const result of payload.targets) {
+    if (isReferenceTargetScanFailure(result)) {
+      lines.push(`- ${result.id}: ${result.expectedCategory} -> ${result.target} (scan failed: ${result.errorMessage})`);
+      continue;
+    }
+
     lines.push(
       `- ${result.id}: ${result.expectedCategory} -> ${result.displayName}` +
       `${result.resolvedRef === undefined ? "" : ` @ ${result.resolvedRef}`}` +
@@ -196,4 +224,12 @@ function validateReferenceTargetEntry(value: unknown, index: number): ReferenceT
     expectedCategory: candidate.expectedCategory as ReferenceTargetCategory,
     notes: candidate.notes.trim()
   };
+}
+
+function isReferenceTargetScanFailure(result: ReferenceTargetScanResult): result is ReferenceTargetScanFailure {
+  return "errorMessage" in result;
+}
+
+function normalizeErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }

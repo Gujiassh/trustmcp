@@ -247,6 +247,83 @@ describe("reference target manifest", () => {
     });
   });
 
+  it("keeps reference target scans target-scoped when one target fails", async () => {
+    const parsed = await loadReferenceTargetManifest(manifestPath);
+    const seenTargets: string[] = [];
+
+    const results = await scanReferenceTargets(parsed.targets, async (target) => {
+      seenTargets.push(target);
+      if (target.includes("memory-mcp-server")) {
+        throw new Error("GitHub codeload timeout");
+      }
+
+      return {
+        tool: {
+          name: "TrustMCP",
+          version: "0.2.0-dev"
+        },
+        target: {
+          input: target,
+          displayName: target.replace(/^https:\/\/github.com\//, ""),
+          sourceType: "public-github-repo",
+          resolvedRef: "main@abc123def456"
+        },
+        limitations: [],
+        summary: {
+          baselineApplied: false,
+          findingCount: 1,
+          newFindingCount: 1,
+          gatedFindingCount: 1,
+          triggeredRuleCount: 1,
+          newTriggeredRuleCount: 1,
+          gatedTriggeredRuleCount: 1,
+          severityCounts: { low: 0, medium: 0, high: 1 },
+          newSeverityCounts: { low: 0, medium: 0, high: 1 },
+          gatedSeverityCounts: { low: 0, medium: 0, high: 1 },
+          message: "1 finding(s) across 1 rule(s). Static heuristics only."
+        },
+        findings: [],
+        newFindings: []
+      };
+    });
+
+    expect(seenTargets).toHaveLength(3);
+    expect(results).toHaveLength(3);
+    expect(results[1]).toMatchObject({
+      id: "mostly-clean",
+      expectedCategory: "mostly-clean",
+      errorMessage: "GitHub codeload timeout"
+    });
+
+    const payload = buildReferenceTargetScanPayload(results);
+    expect(payload.ok).toBe(false);
+    expect(payload.failures).toContain("mostly-clean failed to scan: GitHub codeload timeout");
+
+    const rendered = renderReferenceTargetScanText(payload);
+    expect(rendered.stdout).toContain("Reference target scan run FAILED");
+    expect(rendered.stdout).toContain("mostly-clean: mostly-clean -> https://github.com/okooo5km/memory-mcp-server");
+    expect(rendered.stdout).toContain("scan failed: GitHub codeload timeout");
+    expect(rendered.stdout).toContain("sarif-relevant: sarif-relevant -> modelcontextprotocol/servers");
+    expect(rendered.stderr).toEqual([
+      "reference-targets failed: mostly-clean failed to scan: GitHub codeload timeout"
+    ]);
+
+    expect(JSON.parse(renderReferenceTargetScanJson(payload))).toMatchObject({
+      ok: false,
+      failures: ["mostly-clean failed to scan: GitHub codeload timeout"],
+      targets: [
+        expect.objectContaining({ id: "finding-producing", displayName: expect.any(String) }),
+        {
+          id: "mostly-clean",
+          target: "https://github.com/okooo5km/memory-mcp-server?ref=e874a073288981779e14a489b7f9b10f4b576b3c",
+          expectedCategory: "mostly-clean",
+          errorMessage: "GitHub codeload timeout"
+        },
+        expect.objectContaining({ id: "sarif-relevant", displayName: expect.any(String) })
+      ]
+    });
+  });
+
   it("validates reference target category expectations", () => {
     expect(validateReferenceTargetExpectations([
       {

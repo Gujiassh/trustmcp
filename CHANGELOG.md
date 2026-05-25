@@ -15,6 +15,7 @@ This changelog is the lightweight public release history for TrustMCP.
 - Extend SARIF so result entries carry stable TrustMCP finding identity plus baseline/new/gated policy-state metadata, and rule entries now expose machine-readable confidence guidance metadata.
 - Add the optional `confidenceReason` finding field plus rule-level `confidenceLevels`, `confidenceReasons`, and `confidenceGuidance` metadata for machine consumers.
 - Add or refresh operator-facing docs and examples for project-level policy adoption, release confidence checks, contributor regression guardrails, sticky PR comments, and the current thirteen-rule scanner surface.
+- Make live reference-target scans report target-level failures while preserving results for targets that completed, so release-confidence checks stay diagnosable when one public GitHub archive fetch fails.
 
 ## v0.1.0 — npm published
 

@@ -64,7 +64,7 @@ The repo now also ships an explicit npm pack validation path so future package d
 
 The repo now also ships a local tarball install smoke check so future package distribution can be validated beyond dry-run pack contents alone.
 The repo now also ships a checked-in reference-target manifest plus `npm run reference:check` so release-confidence target categories can be validated locally without relying on maintainer memory alone.
-The repo now also ships `npm run reference:scan` so maintainers can replay the current scans for those checked-in public reference targets from one documented command.
+The repo now also ships `npm run reference:scan` so maintainers can replay the current scans for those checked-in public reference targets from one documented command. Target-level scan failures are preserved in the output while later targets still run, and the command still exits non-zero when any target fails or violates its category expectation.
 The repo now also ships `npm run release:check` as the one-command local gate that combines reference-target validation with the existing packaging checks.
 The repo now also ships `npm run release:check:strict` as the stricter variant that requires the live reference targets themselves to continue matching their declared categories.
 
