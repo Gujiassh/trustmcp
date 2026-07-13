@@ -50,6 +50,15 @@ outputs:
   baseline-applied:
     description: Whether the action ran with baseline entries supplied for this scan, including an empty baseline file.
     value: ${{ steps.scan.outputs.baseline-applied }}
+  coverage-complete:
+    description: Whether all relevant source files within the documented scan policy were scanned.
+    value: ${{ steps.scan.outputs.coverage-complete }}
+  scanned-file-count:
+    description: Count of relevant source files scanned.
+    value: ${{ steps.scan.outputs.scanned-file-count }}
+  skipped-file-count:
+    description: Count of relevant source files skipped by safety limits or file policy.
+    value: ${{ steps.scan.outputs.skipped-file-count }}
   summary-message:
     description: Single-line summary text for the completed scan.
     value: ${{ steps.scan.outputs.summary-message }}

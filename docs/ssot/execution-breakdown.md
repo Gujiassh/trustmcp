@@ -35,9 +35,28 @@ The work should be sequenced in this order:
 
 These are the next recommended implementation slices in strict priority order.
 
-## Foundation Slices Already Completed In `0.2.0-dev`
+## Foundation Slices Already Completed In `0.2.0`
 
 The first `v0.2` foundation wave has already landed on `main`. Do not treat these as future work unless a regression appears.
+
+### Completed: Quality Audit Remediation
+
+Status: implemented for the `0.2.0` release candidate.
+
+Outcome:
+
+- executable-call rules use the TypeScript parser instead of raw comment/string matching
+- filesystem rules support `fs/promises` import forms and aliases
+- chain rules require function-scoped order and shallow value relationships
+- environment-secret findings require a source-to-sink flow
+- reports expose deterministic coverage for skipped relevant source files
+- public GitHub archives are bounded before extraction
+
+Evidence:
+
+- `src/analysis/` contains the shared syntax and shallow-flow analysis.
+- `tests/rule-regressions.test.ts`, `tests/source-files.test.ts`, and `tests/github-archive.test.ts` guard the verified audit cases.
+- `docs/quality-audit-and-fix-plan.md` records the semantic oracles, implementation status, and remaining external release boundary.
 
 ### Completed: Dynamic Code Execution And Adjacent Rule Expansion
 
@@ -137,7 +156,7 @@ Evidence:
 
 - `docs/demo-walkthrough.md` documents the npm-first demo, no-network fixture demo, JSON summary example, and release-gate handoff.
 - `README.md`, `docs/installing-trustmcp.md`, and `docs/contributor-task-map.md` link to the walkthrough from the main entry points.
-- `tests/docs-coherence.test.ts` guards the current risky fixture expectation: 23 findings across 13 triggered rules, with 14 high and 9 medium findings.
+- `tests/docs-coherence.test.ts` guards the current risky fixture expectation: 22 findings across 13 triggered rules, with 13 high and 9 medium findings. The removed high-severity row was the prior file-wide subprocess/network false positive in the download fixture.
 
 ### Completed: Internal Network Access Rule Family
 
@@ -176,7 +195,7 @@ Improve baseline, ignore, or config ergonomics only after a concrete workflow pa
 
 ## `v0.2` milestone
 
-Current status: mostly implemented on `main` as `0.2.0-dev`.
+Current status: implemented on `main` as the `0.2.0` release candidate; GitHub release creation and npm publication remain manual external steps.
 
 Already covered:
 

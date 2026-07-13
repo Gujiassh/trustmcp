@@ -1,4 +1,5 @@
 import type { AuditReport, Finding } from "../core/types.js";
+import { formatCoverageSummary, formatSkippedFile } from "./coverage.js";
 
 export function renderMarkdownReport(report: AuditReport): string {
   const lines = [
@@ -14,10 +15,19 @@ export function renderMarkdownReport(report: AuditReport): string {
 
   lines.push(`- Findings: ${report.summary.findingCount}`);
   lines.push(`- Rules triggered: ${report.summary.triggeredRuleCount}`);
+  lines.push(`- Coverage: ${formatCoverageSummary(report.coverage)}`);
   lines.push(
     `- Severity counts: low ${report.summary.severityCounts.low}, medium ${report.summary.severityCounts.medium}, high ${report.summary.severityCounts.high}`
   );
   lines.push(`- Summary: ${report.summary.message}`);
+  if (report.coverage.skippedFiles.length > 0) {
+    lines.push("");
+    lines.push("## Skipped Files");
+    lines.push("");
+    for (const skippedFile of report.coverage.skippedFiles) {
+      lines.push(`- \`${formatSkippedFile(skippedFile)}\``);
+    }
+  }
   lines.push("");
   lines.push("## Findings");
   lines.push("");

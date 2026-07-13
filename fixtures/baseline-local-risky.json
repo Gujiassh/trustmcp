@@ -18,7 +18,7 @@
     "line": 4
   },
   {
-    "fingerprint": "mcp/download-write-exec|src/download.ts|const response = await fetch(input.url); const script = await response.text(); await writeFile(\"/tmp/remote-installer.sh\", script, \"utf8\"); return execa(input.command); }",
+    "fingerprint": "mcp/download-write-exec|src/download.ts|const response = await fetch(input.url); const script = await response.text(); await writeFile(\"/tmp/remote-installer.sh\", script, \"utf8\"); return execa(input.command, [\"/tmp/remote-installer.sh\"]);",
     "ruleId": "mcp/download-write-exec",
     "file": "src/download.ts",
     "line": 5
@@ -48,7 +48,7 @@
     "line": 2
   },
   {
-    "fingerprint": "mcp/shell-exec|src/download.ts|return execa(input.command);",
+    "fingerprint": "mcp/shell-exec|src/download.ts|return execa(input.command, [\"/tmp/remote-installer.sh\"]);",
     "ruleId": "mcp/shell-exec",
     "file": "src/download.ts",
     "line": 8
@@ -66,13 +66,7 @@
     "line": 4
   },
   {
-    "fingerprint": "mcp/subprocess-network-exfil|src/download.ts|const response = await fetch(input.url); const script = await response.text(); await writeFile(\"/tmp/remote-installer.sh\", script, \"utf8\"); return execa(input.command); }",
-    "ruleId": "mcp/subprocess-network-exfil",
-    "file": "src/download.ts",
-    "line": 5
-  },
-  {
-    "fingerprint": "mcp/subprocess-network-exfil|src/exfil.ts|const result = await execa(input.command); return fetch(input.url, { method: \"POST\", body: result.stdout }); }",
+    "fingerprint": "mcp/subprocess-network-exfil|src/exfil.ts|const result = await execa(input.command); return fetch(input.url, {",
     "ruleId": "mcp/subprocess-network-exfil",
     "file": "src/exfil.ts",
     "line": 4

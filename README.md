@@ -19,10 +19,10 @@ For a short repeatable demo, see [TrustMCP demo walkthrough](./docs/demo-walkthr
 - GitHub Actions CI runs on Node 18 and 20
 - Package readiness checks exist: `npm run pack:check`, `npm run pack:smoke`, and `npm run publish:check`
 - GitHub release flow exists and stays manual
-- npm publication is live: the latest published package line starts at `trustmcp@0.1.0`
-- current unreleased repository surface is tracking the next development line: `0.2.0-dev`
+- npm publication is live, but npm `latest` remains `trustmcp@0.1.0` until the manual `0.2.0` publish step
+- the repository is prepared as the `0.2.0` release candidate
 
-That development suffix is intentional: before running the manual GitHub release workflow for the next public tag, move `package.json`, `package-lock.json`, and the related release notes from `0.2.0-dev` to the final release version.
+The source, CLI, package metadata, tests, and release notes now agree on `0.2.0`. Creating the `v0.2.0` GitHub release and publishing `trustmcp@0.2.0` to npm remain explicit maintainer actions.
 
 ## Install and release readiness
 
@@ -119,6 +119,8 @@ Every finding includes:
 - `whyItMatters`
 - `remediation`
 
+Every report also includes a `coverage` block. It distinguishes a complete no-match from a scan where relevant source files were skipped by the documented file policy.
+
 ## Quick start
 
 Requires Node.js 18.18+.
@@ -207,6 +209,8 @@ node dist/cli/main.js "https://github.com/modelcontextprotocol/servers?ref=main"
 ```
 
 GitHub scans accept **repository root inputs only**: either `https://github.com/owner/repo` or `gh:owner/repo`, optionally with an explicit ref selector (`?ref=` for full URLs or `@ref` for `gh:` shorthand). Trailing slashes, `.git`, and repo-root query fragments are normalized for full URLs. Copied `tree/...`, `blob/...`, and other GitHub subpath URLs are rejected with a hint to use the repository root URL instead. Invalid shorthand fails with `gh:<owner>/<repo>` guidance rather than falling through to local-path handling.
+
+Source files are bounded to 256,000 bytes each. Relevant oversized files, binary-content files, and symbolic links are recorded in report coverage instead of disappearing silently. TrustMCP intentionally ignores `.git`, dependency/build output, coverage output, and common test/fixture directories. Public GitHub ZIP inputs are also checked before extraction: at most 20,000 entries, 25,000,000 uncompressed bytes per entry, and 250,000,000 total uncompressed bytes.
 
 ### Output formats
 
@@ -370,7 +374,7 @@ jobs:
 
 The action builds TrustMCP from its own source tree on each run and then scans the checked-out target path or public GitHub URL you pass in. Relative local target paths are resolved from `${{ github.workspace }}`. It does not rely on a published npm package or marketplace wrapper. The examples in this repository track the current repo surface on `@main`; if you need stricter supply-chain pinning, replace `@main` with a commit SHA or a future release tag that includes the same Action inputs and outputs.
 
-The reusable action exposes `finding-count`, `rule-count`, `low-count`, `medium-count`, and `high-count` outputs for total visible findings, plus `new-finding-count`, `new-rule-count`, `new-low-count`, `new-medium-count`, and `new-high-count` for the baseline-filtered "new findings" subset when you use baseline gating. It also emits `gated-finding-count`, `gated-rule-count`, `gated-low-count`, `gated-medium-count`, and `gated-high-count` for the exact set currently used for policy failure, `baseline-applied` so later steps can tell whether the scan ran with baseline gating enabled even if the checked-in baseline file is currently empty, and `summary-message` so lightweight jobs can reuse the exact one-line TrustMCP summary without reparsing JSON output.
+The reusable action exposes `finding-count`, `rule-count`, `low-count`, `medium-count`, and `high-count` outputs for total visible findings, plus `new-finding-count`, `new-rule-count`, `new-low-count`, `new-medium-count`, and `new-high-count` for the baseline-filtered "new findings" subset when you use baseline gating. It also emits `gated-finding-count`, `gated-rule-count`, `gated-low-count`, `gated-medium-count`, and `gated-high-count` for the exact set currently used for policy failure, `baseline-applied` so later steps can tell whether baseline gating was active, `coverage-complete`, `scanned-file-count`, and `skipped-file-count` so workflows can detect incomplete scans, and `summary-message` so lightweight jobs can reuse the exact one-line summary without reparsing JSON output.
 
 SARIF output now also carries the stable TrustMCP finding fingerprint in each result's `properties.fingerprint` and SARIF-native `partialFingerprints.primaryLocationLineHash`, plus TrustMCP policy-state flags such as `properties.baselineApplied`, `properties.isNewFinding`, and `properties.isGatedFinding`, so code-scanning consumers can align SARIF results with JSON reports and baseline entries more reliably.
 
@@ -426,10 +430,11 @@ npm run release:check:strict
 ## Example output
 
 ```text
-TrustMCP v0.2.0-dev
+TrustMCP v0.2.0
 Target: /absolute/path/to/local-risky
 Source: local-directory
 Summary: 3 finding(s) across 3 rule(s). Static heuristics only.
+Coverage: complete (15 file(s) scanned)
 
 [HIGH][HIGH] Shell execution capability detected
 Rule: mcp/shell-exec
@@ -455,7 +460,7 @@ TrustMCP is honest about scope:
 - JavaScript and TypeScript repositories only
 - no runtime sandboxing
 - no private repo support
-- GitHub input is best-effort for small public repositories
+- GitHub input is bounded by explicit compressed download and uncompressed archive budgets
 - GitHub input supports repository root URLs only; tree/blob/subpath URLs are rejected instead of being scanned ambiguously
 - no auth flows
 - no web UI, registry, or hosted service

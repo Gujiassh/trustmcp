@@ -31,11 +31,11 @@ describe("renderers", () => {
     };
 
     expect(first).toBe(second);
-    expect(parsed.summary.findingCount).toBe(23);
+    expect(parsed.summary.findingCount).toBe(22);
     expect(parsed.summary.severityCounts).toEqual({
       low: 0,
       medium: 9,
-      high: 14
+      high: 13
     });
     expect(parsed.findings[0]?.ruleId).toBe("mcp/broad-filesystem");
   });
@@ -70,6 +70,23 @@ describe("renderers", () => {
     expect(rendered).toContain("does not mean the target is safe");
   });
 
+  it("surfaces incomplete coverage in every machine and human renderer", () => {
+    const report = createReport([]);
+    report.coverage = {
+      complete: false,
+      scannedFileCount: 1,
+      skippedFileCount: 1,
+      skippedFiles: [{ relativePath: "src/large.ts", reason: "file-too-large", sizeBytes: 300_000 }]
+    };
+    report.summary.message = "No matching rules were triggered in the scanned subset. Coverage incomplete: 1 relevant file(s) skipped. Static heuristics only; this does not mean the target is safe.";
+
+    expect(renderTextReport(report)).toContain("Coverage: incomplete (1 file(s) scanned, 1 skipped)");
+    expect(renderMarkdownReport(report)).toContain("`src/large.ts (file-too-large, 300000 bytes)`");
+    expect(JSON.parse(renderJsonReport(report)).coverage.complete).toBe(false);
+    expect(JSON.parse(renderSummaryReport(report, "json")).coverage.skippedFileCount).toBe(1);
+    expect(JSON.parse(renderSarifReport(report)).runs[0].properties.coverage).toEqual(report.coverage);
+  });
+
   it("renders deterministic markdown for findings", () => {
     const first = renderMarkdownReport(createReport(["high", "medium"]));
     const second = renderMarkdownReport(createReport(["high", "medium"]));
@@ -82,6 +99,7 @@ describe("renderers", () => {
 - Ref: \`main@abc123def456\`
 - Findings: 2
 - Rules triggered: 2
+- Coverage: complete (2 file(s) scanned)
 - Severity counts: low 0, medium 1, high 1
 - Summary: 2 finding(s) across 2 rule(s). Static heuristics only.
 
@@ -116,6 +134,7 @@ describe("renderers", () => {
 - Ref: \`main@abc123def456\`
 - Findings: 0
 - Rules triggered: 0
+- Coverage: complete (2 file(s) scanned)
 - Severity counts: low 0, medium 0, high 0
 - Summary: No matching rules were triggered. Static heuristics only; this does not mean the target is safe.
 
@@ -132,6 +151,7 @@ No matching rules were triggered.`);
 - Ref: \`main@abc123def456\`
 - Findings: 2
 - Rules triggered: 2
+- Coverage: complete (2 file(s) scanned)
 - Severity counts: low 0, medium 1, high 1
 - Summary: 2 finding(s) across 2 rule(s). Static heuristics only.`);
   });
@@ -147,6 +167,12 @@ No matching rules were triggered.`);
     "displayName": "example/risky-mcp",
     "sourceType": "public-github-repo",
     "resolvedRef": "main@abc123def456"
+  },
+  "coverage": {
+    "complete": true,
+    "scannedFileCount": 2,
+    "skippedFileCount": 0,
+    "skippedFiles": []
   },
   "summary": {
     "baselineApplied": false,
@@ -268,6 +294,14 @@ No matching rules were triggered.`);
               }
             }
           ]
+        }
+      },
+      "properties": {
+        "coverage": {
+          "complete": true,
+          "scannedFileCount": 2,
+          "skippedFileCount": 0,
+          "skippedFiles": []
         }
       },
       "results": [
@@ -411,6 +445,12 @@ function createReport(severities: Array<"high" | "medium" | "low">): AuditReport
       displayName: "example/risky-mcp",
       sourceType: "public-github-repo",
       resolvedRef: "main@abc123def456"
+    },
+    coverage: {
+      complete: true,
+      scannedFileCount: 2,
+      skippedFileCount: 0,
+      skippedFiles: []
     },
     limitations: [
       "Static heuristics only.",

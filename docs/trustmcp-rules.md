@@ -106,7 +106,7 @@ TrustMCP looks for filesystem access patterns such as:
 
 - `fs.readdir(...)`, `fs.opendir(...)`, `fs.rm(...)`, `fs.cp(...)`, `createReadStream(...)`, or `createWriteStream(...)`
 - recursive delete/copy flows and broad write paths
-- imported filesystem helpers used after `fs` imports
+- imported filesystem helpers from `fs`, `node:fs`, `fs/promises`, and `node:fs/promises`, including aliases and namespace imports
 - recursive operations like `{ recursive: true }`
 - home-directory or root-like path handling
 - path arguments that appear to come from request or tool input
@@ -139,6 +139,8 @@ TrustMCP looks for dynamic execution patterns such as:
 - `vm.compileFunction(...)`
 - similar imported `vm` execution helpers
 
+These matches come from executable syntax nodes. Comments and ordinary string literals that merely mention `eval(` or a VM helper do not trigger this rule.
+
 The confidence increases when the code string appears to come from tool input, request input, or similar user-controlled fields.
 
 Typical matched evidence looks like:
@@ -159,15 +161,17 @@ This rule is trying to catch download-to-disk execution chains where remote cont
 
 ### What usually causes a match
 
-TrustMCP looks for one-file chains that combine:
+TrustMCP looks for one-scope chains that combine, in executable order:
 
 - a network fetch/request
 - a local write operation
 - an execution or runner step
 
+The fetched value must reach the write data, and the written path must reach the later execution arguments. Calls in unrelated functions, reverse order, or unrelated values do not form a chain.
+
 Typical matched evidence looks like:
 
-- `const response = await fetch(input.url); ... await writeFile("/tmp/tool.sh", script, "utf8"); return execa(input.command);`
+- `const response = await fetch(input.url); ... await writeFile(path, script, "utf8"); return execa(input.command, [path]);`
 
 ### What the rule is not claiming
 
@@ -218,7 +222,7 @@ TrustMCP looks for environment reads like:
 - `process.env.AWS_SECRET_ACCESS_KEY`
 - similar variable names containing `TOKEN`, `SECRET`, `KEY`, `PASSWORD`, `CREDENTIAL`, or `AUTH`
 
-It then requires that the same snippet also shows a sink such as:
+It then tracks direct assignments and one-hop identifier propagation inside the same function and requires the secret value to reach a sink such as:
 
 - outbound request
 - host-side execution
@@ -359,14 +363,15 @@ The narrower claim is that the repository appears able to expand its reachable s
 
 ## `mcp/subprocess-network-exfil`
 
-This rule is trying to catch same-file flows that combine host-side command execution with outbound network delivery.
+This rule is trying to catch same-scope flows where host-side command output reaches outbound network delivery.
 
 ### What usually causes a match
 
-TrustMCP looks for files that contain both:
+TrustMCP requires:
 
 - a subprocess execution path
 - an outbound request path
+- subprocess output, or a directly derived identifier, in the later request arguments
 
 The confidence increases when the command, URL, output, or payload is controlled by tool or request input.
 

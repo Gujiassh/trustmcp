@@ -26,7 +26,7 @@ If you want the concrete install paths, use [Installing TrustMCP today](./instal
 Even with npm publication live, a source checkout is still the right path when you need to:
 
 - inspect or modify the repository
-- validate unreleased behavior such as `0.2.0-dev`
+- validate repository behavior before it is published to npm
 - run fixture, contract, and release-confidence checks before tagging a release
 - use `npm run smoke`, `npm run reference:check`, or `npm run release:check`
 

@@ -241,7 +241,7 @@ describe("runCli exit thresholds", () => {
     );
 
     expect(exitCode).toBe(2);
-    expect(stdout.join("")).toContain("23 new finding(s) across 13 rule(s).");
+    expect(stdout.join("")).toContain("22 new finding(s) across 13 rule(s).");
   });
 
   it("writes current findings to a baseline-output file", async () => {
@@ -1372,6 +1372,12 @@ function createReport(sourceType: "local-directory" | "public-github-repo", seve
       input: sourceType === "local-directory" ? "./fixtures/local-risky" : "https://github.com/example/risky-mcp",
       displayName: sourceType === "local-directory" ? "./fixtures/local-risky" : "example/risky-mcp",
       sourceType
+    },
+    coverage: {
+      complete: true,
+      scannedFileCount: 1,
+      skippedFileCount: 0,
+      skippedFiles: []
     },
     limitations: [
       "Static heuristics only.",

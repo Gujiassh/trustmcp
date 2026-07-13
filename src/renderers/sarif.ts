@@ -22,6 +22,9 @@ export function renderSarifReport(report: AuditReport): string {
               rules: buildSarifRules(report.findings)
             }
           },
+          properties: {
+            coverage: report.coverage
+          },
           results: report.findings.map((finding) => buildSarifResult(finding, {
             baselineApplied,
             isNewFinding: newFindingFingerprints.has(finding.fingerprint)

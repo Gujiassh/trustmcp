@@ -1,4 +1,5 @@
 import type { AuditReport } from "../core/types.js";
+import { formatCoverageSummary, formatSkippedFile } from "./coverage.js";
 
 export function renderSummaryReport(report: AuditReport, format: "json" | "markdown" | "sarif" | "text"): string {
   if (format === "sarif") {
@@ -10,6 +11,7 @@ export function renderSummaryReport(report: AuditReport, format: "json" | "markd
       {
         tool: report.tool,
         target: report.target,
+        coverage: report.coverage,
         summary: report.summary
       },
       null,
@@ -31,10 +33,14 @@ export function renderSummaryReport(report: AuditReport, format: "json" | "markd
 
     lines.push(`- Findings: ${report.summary.findingCount}`);
     lines.push(`- Rules triggered: ${report.summary.triggeredRuleCount}`);
+    lines.push(`- Coverage: ${formatCoverageSummary(report.coverage)}`);
     lines.push(
       `- Severity counts: low ${report.summary.severityCounts.low}, medium ${report.summary.severityCounts.medium}, high ${report.summary.severityCounts.high}`
     );
     lines.push(`- Summary: ${report.summary.message}`);
+    for (const skippedFile of report.coverage.skippedFiles) {
+      lines.push(`- Skipped: \`${formatSkippedFile(skippedFile)}\``);
+    }
 
     return lines.join("\n");
   }
@@ -50,5 +56,9 @@ export function renderSummaryReport(report: AuditReport, format: "json" | "markd
   }
 
   lines.push(`Summary: ${report.summary.message}`);
+  lines.push(`Coverage: ${formatCoverageSummary(report.coverage)}`);
+  for (const skippedFile of report.coverage.skippedFiles) {
+    lines.push(`Skipped: ${formatSkippedFile(skippedFile)}`);
+  }
   return lines.join("\n");
 }

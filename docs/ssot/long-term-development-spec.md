@@ -1,6 +1,6 @@
 # TrustMCP Long-Term Development Spec
 
-This document describes the long-range product and engineering plan for evolving TrustMCP beyond the current `0.2.0-dev` baseline.
+This document describes the long-range product and engineering plan for evolving TrustMCP beyond the current `0.2.0` release-candidate baseline.
 
 It is intentionally product-shaped rather than issue-shaped: the point is to keep future work aligned with the core promise of the project instead of growing a pile of unrelated scanner features.
 
@@ -22,7 +22,7 @@ TrustMCP should **not** drift into a general-purpose SAST platform, hosted secur
 
 ## Current Baseline
 
-As of the current `0.2.0-dev` repository baseline, TrustMCP already provides:
+As of the current `0.2.0` repository baseline, TrustMCP already provides:
 
 - a Node.js CLI
 - a reusable GitHub Action
@@ -267,7 +267,7 @@ The project needs a stronger “maintained tool” posture, not just more featur
 
 ## Completed Phase 1: `v0.2` foundation hardening
 
-Status: implemented on `main` as the current `0.2.0-dev` baseline. Treat this phase as historical context and do not re-plan it as future roadmap work unless a regression appears.
+Status: implemented on `main` as the current `0.2.0` baseline. Treat this phase as historical context and do not re-plan it as future roadmap work unless a regression appears.
 
 Completed scope:
 

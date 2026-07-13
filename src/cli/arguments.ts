@@ -587,7 +587,7 @@ export function resolveCliOptions(parsed: ParsedCliArguments, config: CliConfig)
 
 export function usage(): string {
   return [
-    "TrustMCP v0.2.0-dev",
+    `TrustMCP v${TRUSTMCP_VERSION}`,
     "",
     "Run a scan:",
     "  trustmcp <target> [--config path] [--baseline-file path] [--baseline-output path] [--format text|json|markdown|sarif] [--summary-only] [--fail-on low|medium|high] [--output-file path]",

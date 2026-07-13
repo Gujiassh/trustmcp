@@ -126,7 +126,7 @@ describe("reference target manifest", () => {
     const results = await scanReferenceTargets(parsed.targets, async (target) => ({
       tool: {
         name: "TrustMCP",
-        version: "0.2.0-dev"
+        version: "0.2.0"
       },
       target: {
         input: target,
@@ -134,6 +134,7 @@ describe("reference target manifest", () => {
         sourceType: "public-github-repo",
         resolvedRef: "main@abc123def456"
       },
+      coverage: { complete: true, scannedFileCount: 1, skippedFileCount: 0, skippedFiles: [] },
       limitations: [],
       summary: {
         baselineApplied: false,
@@ -162,7 +163,7 @@ describe("reference target manifest", () => {
     const results = await scanReferenceTargets(parsed.targets, async (target) => ({
       tool: {
         name: "TrustMCP",
-        version: "0.2.0-dev"
+        version: "0.2.0"
       },
       target: {
         input: target,
@@ -170,6 +171,7 @@ describe("reference target manifest", () => {
         sourceType: "public-github-repo",
         resolvedRef: "release-branch@abc123def456"
       },
+      coverage: { complete: true, scannedFileCount: 1, skippedFileCount: 0, skippedFiles: [] },
       limitations: [],
       summary: {
         baselineApplied: false,
@@ -207,7 +209,7 @@ describe("reference target manifest", () => {
     const results = await scanReferenceTargets(parsed.targets, async (target) => ({
       tool: {
         name: "TrustMCP",
-        version: "0.2.0-dev"
+        version: "0.2.0"
       },
       target: {
         input: target,
@@ -215,6 +217,7 @@ describe("reference target manifest", () => {
         sourceType: "public-github-repo",
         resolvedRef: "release-branch@abc123def456"
       },
+      coverage: { complete: true, scannedFileCount: 1, skippedFileCount: 0, skippedFiles: [] },
       limitations: [],
       summary: {
         baselineApplied: false,
@@ -260,7 +263,7 @@ describe("reference target manifest", () => {
       return {
         tool: {
           name: "TrustMCP",
-          version: "0.2.0-dev"
+          version: "0.2.0"
         },
         target: {
           input: target,
@@ -268,6 +271,7 @@ describe("reference target manifest", () => {
           sourceType: "public-github-repo",
           resolvedRef: "main@abc123def456"
         },
+        coverage: { complete: true, scannedFileCount: 1, skippedFileCount: 0, skippedFiles: [] },
         limitations: [],
         summary: {
           baselineApplied: false,

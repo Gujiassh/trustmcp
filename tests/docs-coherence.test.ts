@@ -63,10 +63,11 @@ describe("docs coherence", () => {
     expect(longTermSpec).not.toContain("Objective: make TrustMCP more dependable for repeated CI use without changing its product shape.");
     expect(longTermSpec).not.toContain("add 2-4 high-value rules in adjacent capability areas");
     expect(longTermSpec).not.toContain("formalize JSON/output compatibility expectations");
-    expect(longTermSpec).toContain("0.2.0-dev");
+    expect(longTermSpec).toContain("0.2.0");
     expect(longTermSpec).toContain("Completed Phase 1: `v0.2` foundation hardening");
     expect(longTermSpec).toContain("Treat this phase as historical context");
-    expect(executionBreakdown).toContain("Foundation Slices Already Completed In `0.2.0-dev`");
+    expect(executionBreakdown).toContain("Foundation Slices Already Completed In `0.2.0`");
+    expect(executionBreakdown).toContain("Completed: Quality Audit Remediation");
     expect(executionBreakdown).toContain("Completed: Rule Metadata Consumer Examples");
     expect(executionBreakdown).toContain("Completed: Release And Reference-Target Guardrail Tightening");
     expect(executionBreakdown).toContain("Completed: CLI Argument Parsing Boundary Cleanup");
@@ -132,11 +133,12 @@ describe("docs coherence", () => {
     expect(contributorTaskMap).toContain("./demo-walkthrough.md");
     expect(demoWalkthrough).toContain("node dist/cli/main.js ./fixtures/local-risky --summary-only");
     expect(demoWalkthrough).toContain("node dist/cli/main.js ./fixtures/local-clean --summary-only");
-    expect(demoWalkthrough).toContain("23 finding(s) across 13 rule(s)");
-    expect(demoWalkthrough).toContain("23 findings");
+    expect(demoWalkthrough).toContain("22 finding(s) across 13 rule(s)");
+    expect(demoWalkthrough).toContain("22 findings");
     expect(demoWalkthrough).toContain("13 triggered rules");
-    expect(demoWalkthrough).toContain("14 high-severity findings");
+    expect(demoWalkthrough).toContain("13 high-severity findings");
     expect(demoWalkthrough).toContain("9 medium-severity findings");
+    expect(demoWalkthrough).toContain("Coverage: complete (15 file(s) scanned)");
     expect(demoWalkthrough).toContain("does not mean the target is safe");
     expect(demoWalkthrough).not.toContain("3 findings across 3 rules");
     expect(changelog).toContain("thirteen-rule scanner surface");
@@ -157,7 +159,7 @@ describe("docs coherence", () => {
     const readme = await readFile(readmePath, "utf8");
 
     expect(contributing).toContain("provide a tag like `v0.2.0`");
-    expect(readme).toContain("0.2.0-dev");
-    expect(readme).toContain("before running the manual GitHub release workflow for the next public tag");
+    expect(readme).toContain("`0.2.0` release candidate");
+    expect(readme).toContain("Creating the `v0.2.0` GitHub release and publishing `trustmcp@0.2.0` to npm remain explicit maintainer actions.");
   });
 });

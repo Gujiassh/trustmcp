@@ -1,6 +1,6 @@
 {
   "name": "trustmcp",
-  "version": "0.2.0-dev",
+  "version": "0.2.0",
   "description": "CLI and GitHub Action for static security scanning of JavaScript/TypeScript Model Context Protocol (MCP) server repositories.",
   "type": "module",
   "bin": {
@@ -57,12 +57,12 @@
   },
   "license": "MIT",
   "dependencies": {
-    "adm-zip": "^0.5.16"
+    "adm-zip": "^0.5.16",
+    "typescript": "^5.9.3"
   },
   "devDependencies": {
     "@types/adm-zip": "^0.5.7",
     "@types/node": "^24.0.0",
-    "typescript": "^5.8.3",
     "vitest": "^3.1.1"
   }
 }

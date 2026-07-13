@@ -8,8 +8,11 @@ Public-facing documentation in this repo should stay aligned with shipped behavi
 
 For the forward-looking product and engineering roadmap, see [TrustMCP Long-Term Development Spec](./long-term-development-spec.md).
 For the implementation-level breakdown of the next slices and milestones, see [TrustMCP Execution Breakdown](./execution-breakdown.md).
+For the current verified quality findings and delegated remediation sequence, see [TrustMCP Quality Audit And Delegated Fix Plan](../quality-audit-and-fix-plan.md).
 
 Current public CLI surface includes text or JSON reports plus `--fail-on low|medium|high` for CI-oriented exit thresholds.
+
+The `0.2.0` release-candidate contract includes parser-backed high-risk rule analysis, explicit incomplete-scan coverage metadata, and bounded public GitHub archive extraction. GitHub release creation and npm publication remain separate maintainer actions.
 
 Public output formats now include `text`, `json`, `markdown`, and deterministic `sarif` rendering for code-scanning workflows.
 

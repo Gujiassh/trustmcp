@@ -61,10 +61,31 @@ export interface AuditReport {
     version: string;
   };
   target: AuditTarget;
+  coverage: AuditCoverage;
   limitations: string[];
   summary: AuditSummary;
   findings: Finding[];
   newFindings: Finding[];
+}
+
+export type SkippedFileReason = "binary-content" | "file-too-large" | "symbolic-link";
+
+export interface SkippedSourceFile {
+  relativePath: string;
+  reason: SkippedFileReason;
+  sizeBytes: number;
+}
+
+export interface SourceCollection {
+  files: ScanFile[];
+  skippedFiles: SkippedSourceFile[];
+}
+
+export interface AuditCoverage {
+  complete: boolean;
+  scannedFileCount: number;
+  skippedFileCount: number;
+  skippedFiles: SkippedSourceFile[];
 }
 
 export interface BaselineEntry {

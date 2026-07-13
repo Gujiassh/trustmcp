@@ -1,6 +1,6 @@
 import { collectSourceFiles } from "./source-files.js";
 import { looksLikeUrl, sortFindings } from "./rule-helpers.js";
-import type { AuditReport, AuditOptions, BaselineEntry, Finding, MaterializedSource } from "./types.js";
+import type { AuditCoverage, AuditReport, AuditOptions, BaselineEntry, Finding, MaterializedSource } from "./types.js";
 import { TRUSTMCP_VERSION } from "./version.js";
 import {
   getUnsupportedGitHubUrlMessage,
@@ -39,12 +39,18 @@ export async function auditTarget(
   const materializedSource = await materializeTarget(targetInput, dependencies);
 
   try {
-    const files = await dependencies.collectSourceFiles(materializedSource.rootDir);
-    const findings = sortFindings(runAllRules(files));
+    const collection = await dependencies.collectSourceFiles(materializedSource.rootDir);
+    const findings = sortFindings(runAllRules(collection.files));
     const filteredFindings = applyIgnoreFilters(findings, options);
     const newFindings = applyBaselineFilter(filteredFindings, options.baselineEntries);
     const baselineApplied = options.baselineEntries !== undefined;
-    return createReport(materializedSource, filteredFindings, newFindings, baselineApplied);
+    const coverage: AuditCoverage = {
+      complete: collection.skippedFiles.length === 0,
+      scannedFileCount: collection.files.length,
+      skippedFileCount: collection.skippedFiles.length,
+      skippedFiles: collection.skippedFiles
+    };
+    return createReport(materializedSource, filteredFindings, newFindings, baselineApplied, coverage);
   } finally {
     if (materializedSource.cleanup !== undefined) {
       await materializedSource.cleanup();
@@ -76,7 +82,8 @@ function createReport(
   materializedSource: MaterializedSource,
   findings: Finding[],
   newFindings: Finding[],
-  baselineApplied: boolean
+  baselineApplied: boolean,
+  coverage: AuditCoverage
 ): AuditReport {
   const triggeredRuleCount = new Set(findings.map((finding) => finding.ruleId)).size;
   const severityCounts = countFindingsBySeverity(findings);
@@ -85,10 +92,15 @@ function createReport(
   const gatedFindingCount = baselineApplied ? newFindings.length : findings.length;
   const gatedTriggeredRuleCount = baselineApplied ? newTriggeredRuleCount : triggeredRuleCount;
   const gatedSeverityCounts = baselineApplied ? newSeverityCounts : severityCounts;
+  const coverageMessage = coverage.complete
+    ? ""
+    : ` Coverage incomplete: ${coverage.skippedFileCount} relevant file(s) skipped.`;
   const baseMessage =
     findings.length === 0
-      ? "No matching rules were triggered. Static heuristics only; this does not mean the target is safe."
-      : `${findings.length} finding(s) across ${triggeredRuleCount} rule(s). Static heuristics only.`;
+      ? coverage.complete
+        ? "No matching rules were triggered. Static heuristics only; this does not mean the target is safe."
+        : `No matching rules were triggered in the scanned subset.${coverageMessage} Static heuristics only; this does not mean the target is safe.`
+      : `${findings.length} finding(s) across ${triggeredRuleCount} rule(s). Static heuristics only.${coverageMessage}`;
   const newMessage =
     newFindings.length === 0
       ? "No new findings."
@@ -101,6 +113,7 @@ function createReport(
       version: TRUSTMCP_VERSION
     },
     target: materializedSource.target,
+    coverage,
     limitations: DEFAULT_LIMITATIONS,
     summary: {
       baselineApplied,

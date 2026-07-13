@@ -1,4 +1,5 @@
 import type { AuditReport, Finding } from "../core/types.js";
+import { formatCoverageSummary, formatSkippedFile } from "./coverage.js";
 
 export function renderTextReport(report: AuditReport): string {
   const lines = [
@@ -12,6 +13,11 @@ export function renderTextReport(report: AuditReport): string {
   }
 
   lines.push(`Summary: ${report.summary.message}`);
+  lines.push(`Coverage: ${formatCoverageSummary(report.coverage)}`);
+
+  for (const skippedFile of report.coverage.skippedFiles) {
+    lines.push(`Skipped: ${formatSkippedFile(skippedFile)}`);
+  }
 
   if (report.findings.length === 0) {
     return lines.join("\n");

@@ -6,7 +6,7 @@ This changelog is the lightweight public release history for TrustMCP.
 - Keep entries short and human-readable.
 - Link deeper implementation detail from the repository when useful, but keep this file focused on shipped behavior.
 
-## Unreleased / v0.2.0
+## v0.2.0 — release candidate (2026-07-13)
 
 - Expand the shipped rule set beyond the original shell/network/filesystem baseline with dynamic code execution, script-runner wrappers, environment secret exposure, archive extraction, download-write-exec chains, local listener binding, sensitive local data access, subprocess-network exfiltration, and risky tool metadata coverage.
 - Add richer risky fixture coverage, including destructive filesystem mutation paths, and keep the accepted risky baseline corpus aligned with the current finding inventory.
@@ -16,6 +16,10 @@ This changelog is the lightweight public release history for TrustMCP.
 - Add the optional `confidenceReason` finding field plus rule-level `confidenceLevels`, `confidenceReasons`, and `confidenceGuidance` metadata for machine consumers.
 - Add or refresh operator-facing docs and examples for project-level policy adoption, release confidence checks, contributor regression guardrails, sticky PR comments, and the current thirteen-rule scanner surface.
 - Make live reference-target scans report target-level failures while preserving results for targets that completed, so release-confidence checks stay diagnosable when one public GitHub archive fetch fails.
+- Replace raw call-text matching in high-risk rules with parser-backed executable syntax analysis, add `fs/promises` import parity, require connected function-scoped data flow for chain findings, and add shallow environment-secret source-to-sink tracking.
+- Add deterministic scan coverage metadata for oversized, binary, and symbolic-link source files across JSON, text, Markdown, summary-only, SARIF, and GitHub Action outputs.
+- Bound public GitHub archive extraction by entry count, per-entry uncompressed size, total uncompressed size, and canonical destination validation before writing files.
+- Add focused source collector, adversarial rule, and GitHub archive regression suites. The final GitHub release and npm publication remain manual maintainer steps.
 
 ## v0.1.0 — npm published
 

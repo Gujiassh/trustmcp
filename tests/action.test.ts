@@ -54,6 +54,9 @@ describe("runAction", () => {
       "gated-medium-count": "1",
       "gated-high-count": "2",
       "baseline-applied": "false",
+      "coverage-complete": "true",
+      "scanned-file-count": "1",
+      "skipped-file-count": "0",
       "summary-message": "3 finding(s) across 3 rule(s). Static heuristics only."
     });
     expect(await readFile(summaryPath, "utf8")).toBe(`# TrustMCP Report
@@ -62,6 +65,7 @@ describe("runAction", () => {
 - Source: \`local-directory\`
 - Findings: 3
 - Rules triggered: 3
+- Coverage: complete (1 file(s) scanned)
 - Severity counts: low 0, medium 1, high 2
 - Summary: 3 finding(s) across 3 rule(s). Static heuristics only.
 
@@ -132,8 +136,42 @@ describe("runAction", () => {
       "gated-medium-count": "0",
       "gated-high-count": "0",
       "baseline-applied": "false",
+      "coverage-complete": "true",
+      "scanned-file-count": "1",
+      "skipped-file-count": "0",
       "summary-message": "No matching rules were triggered. Static heuristics only; this does not mean the target is safe."
     });
+  });
+
+  it("exposes incomplete coverage through action outputs and the step summary", async () => {
+    const outputPath = await createOutputPath();
+    const summaryPath = await createSummaryPath();
+    const report = createReport("local-directory", []);
+    report.coverage = {
+      complete: false,
+      scannedFileCount: 1,
+      skippedFileCount: 1,
+      skippedFiles: [{ relativePath: "src/large.ts", reason: "file-too-large", sizeBytes: 300_000 }]
+    };
+    report.summary.message = "No matching rules were triggered in the scanned subset. Coverage incomplete: 1 relevant file(s) skipped. Static heuristics only; this does not mean the target is safe.";
+
+    const exitCode = await runAction(
+      { target: "./fixtures/local-clean", format: "text" },
+      {
+        auditTarget: async () => report,
+        stdout: createWriter([]),
+        githubOutputPath: outputPath,
+        githubStepSummaryPath: summaryPath
+      }
+    );
+
+    expect(exitCode).toBe(0);
+    expect(await readOutputs(outputPath)).toMatchObject({
+      "coverage-complete": "false",
+      "scanned-file-count": "1",
+      "skipped-file-count": "1"
+    });
+    expect(await readFile(summaryPath, "utf8")).toContain("src/large.ts (file-too-large, 300000 bytes)");
   });
 
   it("writes the rendered report to an explicit file path without changing outputs or stdout", async () => {
@@ -180,6 +218,9 @@ describe("runAction", () => {
       "gated-medium-count": "1",
       "gated-high-count": "1",
       "baseline-applied": "false",
+      "coverage-complete": "true",
+      "scanned-file-count": "1",
+      "skipped-file-count": "0",
       "summary-message": "2 finding(s) across 2 rule(s). Static heuristics only."
     });
     expect(await readFile(summaryPath, "utf8")).toContain("# TrustMCP Report");
@@ -366,6 +407,9 @@ describe("runAction", () => {
       "gated-medium-count": "1",
       "gated-high-count": "1",
       "baseline-applied": "true",
+      "coverage-complete": "true",
+      "scanned-file-count": "1",
+      "skipped-file-count": "0",
       "summary-message": "3 finding(s) across 3 rule(s). Static heuristics only. 2 new finding(s) across 2 rule(s)."
     });
   });
@@ -424,6 +468,9 @@ describe("runAction", () => {
       "gated-medium-count": "1",
       "gated-high-count": "1",
       "baseline-applied": "true",
+      "coverage-complete": "true",
+      "scanned-file-count": "1",
+      "skipped-file-count": "0",
       "summary-message": "2 finding(s) across 2 rule(s). Static heuristics only. 2 new finding(s) across 2 rule(s)."
     });
   });
@@ -790,6 +837,12 @@ function createReport(sourceType: "local-directory" | "public-github-repo", seve
       input: sourceType === "local-directory" ? "./fixtures/local-risky" : "https://github.com/example/risky-mcp",
       displayName: sourceType === "local-directory" ? "./fixtures/local-risky" : "example/risky-mcp",
       sourceType
+    },
+    coverage: {
+      complete: true,
+      scannedFileCount: 1,
+      skippedFileCount: 0,
+      skippedFiles: []
     },
     limitations: [
       "Static heuristics only.",

@@ -1,6 +1,6 @@
 import { mkdtemp, readdir, rm } from "node:fs/promises";
 import https from "node:https";
-import { join } from "node:path";
+import { join, resolve, sep } from "node:path";
 import { tmpdir } from "node:os";
 
 import AdmZip from "adm-zip";
@@ -36,6 +36,26 @@ const REQUEST_TIMEOUT_MS = 45_000;
 const MAX_RESPONSE_BYTES = 25_000_000;
 const GITHUB_SHORTHAND_PREFIX = "gh:";
 const GITHUB_SHORTHAND_MESSAGE = "GitHub shorthand inputs must look like gh:<owner>/<repo>.";
+
+export interface GitHubArchiveLimits {
+  maxEntryCount: number;
+  maxEntryBytes: number;
+  maxTotalBytes: number;
+}
+
+export interface GitHubArchiveEntryMetadata {
+  entryName: string;
+  isDirectory: boolean;
+  header: {
+    size: number;
+  };
+}
+
+export const GITHUB_ARCHIVE_LIMITS: GitHubArchiveLimits = {
+  maxEntryCount: 20_000,
+  maxEntryBytes: 25_000_000,
+  maxTotalBytes: 250_000_000
+};
 
 export function parseGitHubRepositoryUrl(input: string): GitHubRepositoryReference | null {
   const analysis = analyzeGitHubRepositoryUrl(input);
@@ -172,22 +192,33 @@ export async function materializeGitHubRepository(input: string): Promise<Materi
 
   const metadata = await fetchRepositoryMetadata(reference);
   const archiveBuffer = await downloadRepositoryArchive(reference, metadata.headSha);
+  const materializedArchive = await materializeGitHubArchiveBuffer(archiveBuffer);
+
+  return {
+    rootDir: materializedArchive.rootDir,
+    target: {
+      input,
+      displayName: reference.displayName,
+      sourceType: "public-github-repo",
+      resolvedRef: `${metadata.resolvedRefName}@${metadata.headSha}`
+    },
+    cleanup: materializedArchive.cleanup
+  };
+}
+
+export async function materializeGitHubArchiveBuffer(
+  archiveBuffer: Buffer,
+  limits: GitHubArchiveLimits = GITHUB_ARCHIVE_LIMITS
+): Promise<{ rootDir: string; cleanup: () => Promise<void> }> {
   const tempRoot = await mkdtemp(join(tmpdir(), "trustmcp-"));
 
   try {
     const archive = new AdmZip(archiveBuffer);
+    validateGitHubArchiveEntries(archive.getEntries(), tempRoot, limits);
     archive.extractAllTo(tempRoot, true);
-
     const extractedRoot = await resolveExtractedRoot(tempRoot);
-
     return {
       rootDir: extractedRoot,
-      target: {
-        input,
-        displayName: reference.displayName,
-        sourceType: "public-github-repo",
-        resolvedRef: `${metadata.resolvedRefName}@${metadata.headSha}`
-      },
       cleanup: async () => {
         await rm(tempRoot, { recursive: true, force: true });
       }
@@ -195,6 +226,55 @@ export async function materializeGitHubRepository(input: string): Promise<Materi
   } catch (error) {
     await rm(tempRoot, { recursive: true, force: true });
     throw error;
+  }
+}
+
+export function validateGitHubArchiveEntries(
+  entries: readonly GitHubArchiveEntryMetadata[],
+  tempRoot: string,
+  limits: GitHubArchiveLimits = GITHUB_ARCHIVE_LIMITS
+): void {
+  if (entries.length > limits.maxEntryCount) {
+    throw new Error(`GitHub archive entry count ${entries.length} exceeds limit ${limits.maxEntryCount}.`);
+  }
+
+  let totalBytes = 0;
+  for (const entry of entries) {
+    validateArchiveEntryPath(entry.entryName, tempRoot);
+    if (entry.isDirectory) {
+      continue;
+    }
+    if (entry.header.size > limits.maxEntryBytes) {
+      throw new Error(
+        `GitHub archive entry ${entry.entryName} uncompressed size ${entry.header.size} bytes exceeds per-entry limit ${limits.maxEntryBytes} bytes.`
+      );
+    }
+    totalBytes += entry.header.size;
+    if (totalBytes > limits.maxTotalBytes) {
+      throw new Error(
+        `GitHub archive total uncompressed size ${totalBytes} bytes exceeds limit ${limits.maxTotalBytes} bytes.`
+      );
+    }
+  }
+}
+
+function validateArchiveEntryPath(entryName: string, tempRoot: string): void {
+  const normalizedName = entryName.replace(/\\/g, "/");
+  const segments = normalizedName.split("/");
+  if (
+    normalizedName.length === 0 ||
+    normalizedName.startsWith("/") ||
+    /^[A-Za-z]:/.test(normalizedName) ||
+    normalizedName.includes("\u0000") ||
+    segments.some((segment) => segment === "..")
+  ) {
+    throw new Error(`GitHub archive entry path is unsafe: ${entryName}`);
+  }
+
+  const canonicalRoot = resolve(tempRoot);
+  const destination = resolve(canonicalRoot, ...segments);
+  if (destination !== canonicalRoot && !destination.startsWith(`${canonicalRoot}${sep}`)) {
+    throw new Error(`GitHub archive entry path escapes the temporary root: ${entryName}`);
   }
 }
 

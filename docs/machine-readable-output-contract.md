@@ -41,13 +41,19 @@ The default full JSON report shape is:
 {
   "tool": {
     "name": "TrustMCP",
-    "version": "0.2.0-dev"
+    "version": "0.2.0"
   },
   "target": {
     "input": "gh:owner/repo",
     "displayName": "owner/repo",
     "sourceType": "public-github-repo",
     "resolvedRef": "main@abc123"
+  },
+  "coverage": {
+    "complete": true,
+    "scannedFileCount": 42,
+    "skippedFileCount": 0,
+    "skippedFiles": []
   },
   "limitations": [],
   "summary": {},
@@ -60,6 +66,7 @@ The default full JSON report shape is:
 
 - `tool`
 - `target`
+- `coverage`
 - `limitations`
 - `summary`
 - `findings`
@@ -134,6 +141,20 @@ Stable fields:
   - counts over the policy-gated finding set
 - `message`
   - human-readable one-line summary; stable enough to reuse, but downstream automation should prefer the numeric fields
+
+### `coverage`
+
+- `complete`
+  - `true` only when no relevant source file was excluded by a reportable safety/file-policy reason
+- `scannedFileCount`
+  - count of source files evaluated by the rule engine
+- `skippedFileCount`
+  - count of records in `skippedFiles`
+- `skippedFiles`
+  - deterministic path-sorted records with `relativePath`, `reason`, and `sizeBytes`
+  - current reasons are `file-too-large`, `binary-content`, and `symbolic-link`
+
+An incomplete no-match summary says that no rules matched in the scanned subset. Consumers must check `coverage.complete` before treating a no-match as a complete scan under the documented source policy.
 
 ## Finding contract
 
@@ -234,6 +255,9 @@ The reusable action emits these stable output keys:
 - `gated-medium-count`
 - `gated-high-count`
 - `baseline-applied`
+- `coverage-complete`
+- `scanned-file-count`
+- `skipped-file-count`
 - `summary-message`
 
 ## `list-rules --json` contract
@@ -361,6 +385,13 @@ Each scan result carries:
 - `baseline-applied`
   - `"true"` when baseline entries were supplied for the scan, including an empty baseline file
   - `"false"` otherwise
+- `coverage-complete`
+  - `"true"` when no relevant source files were skipped for a reportable reason
+  - `"false"` otherwise
+- `scanned-file-count`
+  - number of source files evaluated by the scanner
+- `skipped-file-count`
+  - number of relevant source files represented in `coverage.skippedFiles`
 - `summary-message`
   - the same one-line summary exposed in `summary.message`
 
@@ -406,6 +437,8 @@ If you want the smallest stable automation surface, prefer:
 SARIF is still a rendered projection of the core TrustMCP finding model, not the primary contract source of truth.
 
 Current stable SARIF expectations:
+
+- each SARIF run carries `properties.coverage` with the same coverage object as JSON output
 
 - each SARIF rule entry carries:
   - `properties.ruleId`

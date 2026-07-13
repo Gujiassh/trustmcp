@@ -52,10 +52,11 @@ node dist/cli/main.js ./fixtures/local-risky --summary-only
 Expected summary:
 
 ```text
-TrustMCP v0.2.0-dev
+TrustMCP v0.2.0
 Target: .../fixtures/local-risky
 Source: local-directory
-Summary: 23 finding(s) across 13 rule(s). Static heuristics only.
+Summary: 22 finding(s) across 13 rule(s). Static heuristics only.
+Coverage: complete (15 file(s) scanned)
 ```
 
 Run the clean fixture summary:
@@ -67,10 +68,11 @@ node dist/cli/main.js ./fixtures/local-clean --summary-only
 Expected summary:
 
 ```text
-TrustMCP v0.2.0-dev
+TrustMCP v0.2.0
 Target: .../fixtures/local-clean
 Source: local-directory
 Summary: No matching rules were triggered. Static heuristics only; this does not mean the target is safe.
+Coverage: complete (2 file(s) scanned)
 ```
 
 Use the full text report when you want to show concrete evidence lines and remediation text:
@@ -87,9 +89,9 @@ node dist/cli/main.js ./fixtures/local-risky --format json --summary-only
 
 The current risky fixture is expected to report:
 
-- 23 findings
+- 22 findings
 - 13 triggered rules
-- 14 high-severity findings
+- 13 high-severity findings
 - 9 medium-severity findings
 
 Those numbers come from the checked-in fixture corpus, so this demo should only change when the fixture corpus or shipped rule set changes.

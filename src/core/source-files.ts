@@ -1,23 +1,12 @@
-import { readdir, readFile, stat } from "node:fs/promises";
+import { lstat, readdir, readFile, stat } from "node:fs/promises";
 import { extname, join, relative } from "node:path";
 
-import type { ScanFile } from "./types.js";
+import type { ScanFile, SkippedSourceFile, SourceCollection } from "./types.js";
 
-const INCLUDED_EXTENSIONS = new Set([
-  ".js",
-  ".cjs",
-  ".mjs",
-  ".ts",
-  ".cts",
-  ".mts",
-  ".jsx",
-  ".tsx",
-  ".json"
-]);
-
+const INCLUDED_EXTENSIONS = new Set([".js", ".cjs", ".mjs", ".ts", ".cts", ".mts", ".jsx", ".tsx", ".json"]);
 const INCLUDED_FILENAMES = new Set(["package.json"]);
 
-const IGNORED_DIRECTORIES = new Set([
+export const IGNORED_SOURCE_DIRECTORIES = [
   ".git",
   "node_modules",
   "dist",
@@ -30,33 +19,46 @@ const IGNORED_DIRECTORIES = new Set([
   "__tests__",
   "fixtures",
   "__fixtures__"
-]);
+] as const;
 
-const MAX_FILE_BYTES = 256_000;
+const ignoredDirectorySet = new Set<string>(IGNORED_SOURCE_DIRECTORIES);
+export const MAX_SOURCE_FILE_BYTES = 256_000;
 
-export async function collectSourceFiles(rootDir: string): Promise<ScanFile[]> {
+export async function collectSourceFiles(rootDir: string): Promise<SourceCollection> {
   const files: ScanFile[] = [];
-  await walk(rootDir, rootDir, files);
-  return files.sort((left, right) => left.relativePath.localeCompare(right.relativePath));
+  const skippedFiles: SkippedSourceFile[] = [];
+  await walk(rootDir, rootDir, files, skippedFiles);
+  return {
+    files: files.sort((left, right) => left.relativePath.localeCompare(right.relativePath)),
+    skippedFiles: skippedFiles.sort((left, right) => left.relativePath.localeCompare(right.relativePath))
+  };
 }
 
-async function walk(rootDir: string, currentDir: string, files: ScanFile[]): Promise<void> {
+async function walk(
+  rootDir: string,
+  currentDir: string,
+  files: ScanFile[],
+  skippedFiles: SkippedSourceFile[]
+): Promise<void> {
   const entries = await readdir(currentDir, { withFileTypes: true });
   const sortedEntries = [...entries].sort((left, right) => left.name.localeCompare(right.name));
 
   for (const entry of sortedEntries) {
     const absolutePath = join(currentDir, entry.name);
+    const relativePath = relative(rootDir, absolutePath);
 
     if (entry.isSymbolicLink()) {
+      if (shouldInclude(entry.name)) {
+        const fileStats = await lstat(absolutePath);
+        skippedFiles.push({ relativePath, reason: "symbolic-link", sizeBytes: fileStats.size });
+      }
       continue;
     }
 
     if (entry.isDirectory()) {
-      if (IGNORED_DIRECTORIES.has(entry.name)) {
-        continue;
+      if (!ignoredDirectorySet.has(entry.name)) {
+        await walk(rootDir, absolutePath, files, skippedFiles);
       }
-
-      await walk(rootDir, absolutePath, files);
       continue;
     }
 
@@ -65,18 +67,20 @@ async function walk(rootDir: string, currentDir: string, files: ScanFile[]): Pro
     }
 
     const fileStats = await stat(absolutePath);
-    if (fileStats.size > MAX_FILE_BYTES) {
+    if (fileStats.size > MAX_SOURCE_FILE_BYTES) {
+      skippedFiles.push({ relativePath, reason: "file-too-large", sizeBytes: fileStats.size });
       continue;
     }
 
     const content = await readFile(absolutePath, "utf8");
     if (content.includes("\u0000")) {
+      skippedFiles.push({ relativePath, reason: "binary-content", sizeBytes: fileStats.size });
       continue;
     }
 
     files.push({
       absolutePath,
-      relativePath: relative(rootDir, absolutePath),
+      relativePath,
       content,
       lines: content.split(/\r?\n/)
     });
@@ -84,9 +88,5 @@ async function walk(rootDir: string, currentDir: string, files: ScanFile[]): Pro
 }
 
 function shouldInclude(fileName: string): boolean {
-  if (INCLUDED_FILENAMES.has(fileName)) {
-    return true;
-  }
-
-  return INCLUDED_EXTENSIONS.has(extname(fileName));
+  return INCLUDED_FILENAMES.has(fileName) || INCLUDED_EXTENSIONS.has(extname(fileName));
 }

@@ -12,7 +12,7 @@ describe("auditTarget", () => {
   it("reports the full risky fixture inventory across thirteen rules", async () => {
     const report = await auditTarget(localRiskyFixture);
 
-    expect(report.findings).toHaveLength(23);
+    expect(report.findings).toHaveLength(22);
     expect(report.findings.map((finding) => finding.ruleId)).toEqual([
       "mcp/broad-filesystem",
       "mcp/broad-filesystem",
@@ -25,7 +25,6 @@ describe("auditTarget", () => {
       "mcp/shell-exec",
       "mcp/shell-exec",
       "mcp/shell-exec",
-      "mcp/subprocess-network-exfil",
       "mcp/subprocess-network-exfil",
       "mcp/sensitive-local-data",
       "mcp/archive-extract",
@@ -71,7 +70,7 @@ describe("auditTarget", () => {
 
     expect(report.target.sourceType).toBe("public-github-repo");
     expect(report.target.resolvedRef).toBe("main@abc123def456");
-    expect(report.findings).toHaveLength(23);
+    expect(report.findings).toHaveLength(22);
     expect(new Set(report.findings.map((finding) => finding.ruleId))).toEqual(
       new Set([
         "mcp/shell-exec",
@@ -106,7 +105,7 @@ describe("auditTarget", () => {
 
     expect(report.target.sourceType).toBe("public-github-repo");
     expect(report.target.input).toBe("gh:example/risky-mcp");
-    expect(report.findings).toHaveLength(23);
+    expect(report.findings).toHaveLength(22);
   });
 
   it("preserves explicit requested refs through the GitHub scan pipeline", async () => {
@@ -131,7 +130,7 @@ describe("auditTarget", () => {
       ignoreRules: ["mcp/shell-exec"]
     });
 
-    expect(report.findings).toHaveLength(20);
+    expect(report.findings).toHaveLength(19);
     expect(report.findings.map((finding) => finding.ruleId).sort()).toEqual([
       "mcp/archive-extract",
       "mcp/archive-extract",
@@ -151,12 +150,11 @@ describe("auditTarget", () => {
       "mcp/script-runner-exec",
       "mcp/sensitive-local-data",
       "mcp/subprocess-network-exfil",
-      "mcp/subprocess-network-exfil",
       "mcp/tool-metadata-risk"
     ]);
-    expect(report.summary.findingCount).toBe(20);
+    expect(report.summary.findingCount).toBe(19);
     expect(report.summary.triggeredRuleCount).toBe(12);
-    expect(report.summary.message).toContain("20 finding(s) across 12 rule(s)");
+    expect(report.summary.message).toContain("19 finding(s) across 12 rule(s)");
   });
 
   it("ignores findings whose files match options.ignorePaths", async () => {
@@ -164,7 +162,7 @@ describe("auditTarget", () => {
       ignorePaths: ["src/network.ts"]
     });
 
-    expect(report.findings).toHaveLength(22);
+    expect(report.findings).toHaveLength(21);
     expect(new Set(report.findings.map((finding) => finding.ruleId))).toEqual(
       new Set([
         "mcp/broad-filesystem",
@@ -182,10 +180,10 @@ describe("auditTarget", () => {
         "mcp/tool-metadata-risk"
       ])
     );
-    expect(report.summary.findingCount).toBe(22);
+    expect(report.summary.findingCount).toBe(21);
     expect(report.summary.triggeredRuleCount).toBe(13);
     expect(report.summary.severityCounts.medium).toBe(8);
-    expect(report.summary.message).toContain("22 finding(s) across 13 rule(s)");
+    expect(report.summary.message).toContain("21 finding(s) across 13 rule(s)");
   });
 
   it("treats ignorePaths entries as literal directory prefixes", async () => {
@@ -205,11 +203,11 @@ describe("auditTarget", () => {
     });
 
     expect(report.summary.baselineApplied).toBe(true);
-    expect(report.summary.findingCount).toBe(23);
-    expect(report.summary.newFindingCount).toBe(23);
-    expect(report.summary.gatedFindingCount).toBe(23);
-    expect(report.summary.message).toContain("23 finding(s) across 13 rule(s)");
-    expect(report.summary.message).toContain("23 new finding(s) across 13 rule(s)");
+    expect(report.summary.findingCount).toBe(22);
+    expect(report.summary.newFindingCount).toBe(22);
+    expect(report.summary.gatedFindingCount).toBe(22);
+    expect(report.summary.message).toContain("22 finding(s) across 13 rule(s)");
+    expect(report.summary.message).toContain("22 new finding(s) across 13 rule(s)");
   });
 
   it("treats baseline entries as known findings without dropping the overall list", async () => {
@@ -224,9 +222,9 @@ describe("auditTarget", () => {
       ]
     });
 
-    expect(report.findings).toHaveLength(23);
-    expect(report.summary.findingCount).toBe(23);
-    expect(report.summary.newFindingCount).toBe(22);
+    expect(report.findings).toHaveLength(22);
+    expect(report.summary.findingCount).toBe(22);
+    expect(report.summary.newFindingCount).toBe(21);
     expect(report.newFindings.map((finding) => finding.ruleId).sort()).toEqual([
       "mcp/archive-extract",
       "mcp/archive-extract",
@@ -248,11 +246,10 @@ describe("auditTarget", () => {
       "mcp/shell-exec",
       "mcp/shell-exec",
       "mcp/subprocess-network-exfil",
-      "mcp/subprocess-network-exfil",
       "mcp/tool-metadata-risk"
     ]);
-    expect(report.summary.message).toContain("23 finding(s) across 13 rule(s)");
-    expect(report.summary.message).toContain("22 new finding(s) across 13 rule(s)");
+    expect(report.summary.message).toContain("22 finding(s) across 13 rule(s)");
+    expect(report.summary.message).toContain("21 new finding(s) across 13 rule(s)");
   });
 
   it("matches baseline entries by fingerprint even when the stored line drifts", async () => {
@@ -267,7 +264,7 @@ describe("auditTarget", () => {
       ]
     });
 
-    expect(report.findings).toHaveLength(23);
+    expect(report.findings).toHaveLength(22);
     expect(report.newFindings.map((finding) => finding.ruleId).sort()).toEqual([
       "mcp/archive-extract",
       "mcp/archive-extract",
@@ -288,7 +285,6 @@ describe("auditTarget", () => {
       "mcp/sensitive-local-data",
       "mcp/shell-exec",
       "mcp/shell-exec",
-      "mcp/subprocess-network-exfil",
       "mcp/subprocess-network-exfil",
       "mcp/tool-metadata-risk"
     ]);
@@ -305,7 +301,7 @@ describe("auditTarget", () => {
       ]
     });
 
-    expect(report.findings).toHaveLength(23);
+    expect(report.findings).toHaveLength(22);
     expect(report.newFindings.map((finding) => finding.ruleId).sort()).toEqual([
       "mcp/archive-extract",
       "mcp/archive-extract",
@@ -326,7 +322,6 @@ describe("auditTarget", () => {
       "mcp/sensitive-local-data",
       "mcp/shell-exec",
       "mcp/shell-exec",
-      "mcp/subprocess-network-exfil",
       "mcp/subprocess-network-exfil",
       "mcp/tool-metadata-risk"
     ]);

@@ -112,6 +112,9 @@ export async function writeActionOutputs(
     `gated-medium-count=${report.summary.gatedSeverityCounts.medium}`,
     `gated-high-count=${report.summary.gatedSeverityCounts.high}`,
     `baseline-applied=${baselineApplied ? "true" : "false"}`,
+    `coverage-complete=${report.coverage.complete ? "true" : "false"}`,
+    `scanned-file-count=${report.coverage.scannedFileCount}`,
+    `skipped-file-count=${report.coverage.skippedFileCount}`,
     `summary-message=${sanitizeGitHubOutputValue(report.summary.message)}`
   ];
 
