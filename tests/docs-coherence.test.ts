@@ -172,12 +172,14 @@ describe("docs coherence", () => {
     expect(installing).toContain("Those commands are source-checkout release-confidence gates, not install commands.");
   });
 
-  it("keeps release-version examples aligned with the current next public tag", async () => {
+  it("keeps release-version examples aligned with the current stable tag", async () => {
     const contributing = await readFile(contributingPath, "utf8");
     const readme = await readFile(readmePath, "utf8");
 
     expect(contributing).toContain("provide a tag like `v0.2.0`");
-    expect(readme).toContain("`0.2.0` release candidate");
-    expect(readme).toContain("Creating the `v0.2.0` GitHub release and publishing `trustmcp@0.2.0` to npm remain explicit maintainer actions.");
+    expect(readme).toContain("The latest npm release is `trustmcp@0.2.0`.");
+    expect(readme).toContain("The matching GitHub release and reusable Action tag are `v0.2.0`.");
+    expect(readme).not.toContain("`0.2.0` release candidate");
+    expect(readme).not.toContain("npm `latest` remains `0.1.0`");
   });
 });

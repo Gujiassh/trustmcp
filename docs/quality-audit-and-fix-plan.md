@@ -1,14 +1,14 @@
 # TrustMCP Quality Audit And Delegated Fix Plan
 
-Status: implemented locally; GitHub release and npm publication pending maintainer action
+Status: implemented and released as `v0.2.0`
 
-Reviewed revision: `5e55f83` (`origin/main` on 2026-07-13)
+Reviewed revision: `v0.2.0` release baseline on 2026-07-13
 
 Purpose: record the verified correctness, coverage, input-safety, and release gaps, their semantic oracles, and the implementation outcome.
 
 ## Implementation Result
 
-TM-QA-001 through TM-QA-006 and TM-QA-008 are implemented for the `0.2.0` release candidate:
+TM-QA-001 through TM-QA-008 are implemented and released in `0.2.0`:
 
 - filesystem import parity is parser-backed across `fs`, `node:fs`, `fs/promises`, and `node:fs/promises`
 - high-risk call rules ignore comments and unrelated strings
@@ -18,7 +18,7 @@ TM-QA-001 through TM-QA-006 and TM-QA-008 are implemented for the `0.2.0` releas
 - public GitHub archives are rejected before extraction when entry, uncompressed-size, or path budgets are exceeded
 - focused regression suites cover the verified positive and negative cases
 
-Repository metadata is prepared at `0.2.0`. TM-QA-007 remains externally incomplete until maintainers create the `v0.2.0` GitHub release and publish `trustmcp@0.2.0` to npm. This implementation does not perform either external publication action.
+Repository metadata, the npm package, the GitHub release, and the reusable Action tag are aligned at `0.2.0`. TM-QA-007 is complete.
 
 Verification completed on 2026-07-13:
 
@@ -399,21 +399,20 @@ Acceptance criteria:
 - errors distinguish network-size and uncompressed-size failures
 - normal reference targets remain scannable
 
-### TM-QA-007: the latest implemented scanner is not the npm `latest` version
+### TM-QA-007: publish the latest implemented scanner as npm `latest`
 
 Priority: P2
 
 Type: release and adoption gap
 
-Current state on 2026-07-13:
+Resolved state on 2026-07-13:
 
-- repository version: `0.2.0-dev`
-- npm `latest`: `0.1.0`
-- npm users therefore receive the older three-rule release instead of the current thirteen-rule surface
+- repository version: `0.2.0`
+- npm `latest`: `0.2.0`
+- GitHub release and reusable Action tag: `v0.2.0`
+- npm users receive the current thirteen-rule scanner surface
 
-Recommended fix:
-
-Do this only after TM-QA-001 through TM-QA-006 and their contract updates are accepted.
+Completed release procedure:
 
 1. Update `package.json`, `package-lock.json`, `src/core/version.ts`, changelog, README, and release docs to final `0.2.0` values.
 2. Run the full release gate below.
@@ -431,7 +430,7 @@ Release acceptance criteria:
 
 External-action note:
 
-GitHub release creation and npm publication require explicit maintainer authorization. A delegated worker may prepare and verify the release commit but must not publish automatically unless assigned that external action.
+GitHub release creation and npm publication were performed only after explicit maintainer authorization.
 
 ### TM-QA-008: regression coverage does not exercise source collection and adversarial boundaries directly
 

@@ -12,7 +12,7 @@ jobs:
 
     steps:
       - id: trustmcp
-        uses: Gujiassh/trustmcp@main
+        uses: Gujiassh/trustmcp@v0.2.0
         with:
           target: https://github.com/modelcontextprotocol/servers
           format: markdown

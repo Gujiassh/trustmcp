@@ -25,7 +25,7 @@ npm install -g trustmcp
 trustmcp ./path-to-mcp-server --format text
 ```
 
-The current repository tip is the `0.2.0` release candidate; npm `latest` remains `0.1.0` until the manual publish step. To evaluate the repository tip directly:
+The latest stable release is `0.2.0` on npm. To evaluate the repository tip directly:
 
 ```bash
 git clone https://github.com/Gujiassh/trustmcp.git
@@ -298,7 +298,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - id: trustmcp
-        uses: Gujiassh/trustmcp@main
+        uses: Gujiassh/trustmcp@v0.2.0
         with:
           target: ${{ github.workspace }}
           format: json
@@ -313,7 +313,7 @@ jobs:
           echo "summary=${{ steps.trustmcp.outputs.summary-message }}"
 ```
 
-The action builds TrustMCP from its own source tree on each run and then scans the checked-out target path or public GitHub URL you pass in. Relative local target paths are resolved from `${{ github.workspace }}`. It does not rely on a published npm package or marketplace wrapper. The examples in this repository track the current repo surface on `@main`; if you need stricter supply-chain pinning, replace `@main` with a commit SHA or a future release tag that includes the same Action inputs and outputs.
+The action builds TrustMCP from its own source tree on each run and then scans the checked-out target path or public GitHub URL you pass in. Relative local target paths are resolved from `${{ github.workspace }}`. It does not rely on a published npm package or marketplace wrapper. The official examples pin the supported `@v0.2.0` release; if you need immutable supply-chain pinning, replace the release tag with its commit SHA.
 
 The reusable action exposes `finding-count`, `rule-count`, `low-count`, `medium-count`, and `high-count` outputs for total visible findings, plus `new-finding-count`, `new-rule-count`, `new-low-count`, `new-medium-count`, and `new-high-count` for the baseline-filtered "new findings" subset when you use baseline gating. It also emits `gated-finding-count`, `gated-rule-count`, `gated-low-count`, `gated-medium-count`, and `gated-high-count` for the exact set currently used for policy failure, `baseline-applied` so later steps can tell whether baseline gating was active, `coverage-complete`, `scanned-file-count`, and `skipped-file-count` so workflows can detect incomplete scans, and `summary-message` so lightweight jobs can reuse the exact one-line summary without reparsing JSON output.
 
@@ -411,13 +411,13 @@ The current TrustMCP surface is designed for a fast first pass and practical CI/
 
 ## Project status
 
-- npm installation works today through `trustmcp@0.1.0`.
-- The repository is prepared as the `0.2.0` release candidate.
-- Source installation remains supported for contributors and release-candidate evaluation.
+- The latest npm release is `trustmcp@0.2.0`.
+- The matching GitHub release and reusable Action tag are `v0.2.0`.
+- Source installation remains supported for contributors and repository-tip evaluation.
 - GitHub Actions CI runs on Node.js 18 and 20.
-- GitHub release creation and npm publication remain manual maintainer actions.
+- Future GitHub releases and npm publications remain manual maintainer actions.
 
-The source, CLI, package metadata, tests, and release notes agree on `0.2.0`. Creating the `v0.2.0` GitHub release and publishing `trustmcp@0.2.0` to npm remain explicit maintainer actions.
+The npm package, GitHub release, reusable Action tag, source, CLI, package metadata, tests, and release notes agree on `0.2.0`.
 
 ### Maintainer release checks
 

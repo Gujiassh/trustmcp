@@ -140,7 +140,7 @@ jobs:
       - run: mkdir -p reports
 
       - id: trustmcp
-        uses: Gujiassh/trustmcp@main
+        uses: Gujiassh/trustmcp@v0.2.0
         with:
           target: ${{ github.workspace }}
           config-file: trustmcp.config.json

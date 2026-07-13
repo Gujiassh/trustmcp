@@ -17,12 +17,13 @@ const exampleFiles = [
 const repoRoot = fileURLToPath(new URL("..", import.meta.url));
 
 describe("action examples", () => {
-  it("do not pin the outdated v0.1.0 action tag", async () => {
+  it("pin the supported v0.2.0 action tag", async () => {
     for (const relativePath of exampleFiles) {
       const absolutePath = fileURLToPath(new URL(`../${relativePath}`, import.meta.url));
       const content = await readFile(absolutePath, "utf8");
 
-      expect(content, relativePath).not.toContain("Gujiassh/trustmcp@v0.1.0");
+      expect(content, relativePath).toContain("Gujiassh/trustmcp@v0.2.0");
+      expect(content, relativePath).not.toContain("Gujiassh/trustmcp@main");
     }
   });
 

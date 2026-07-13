@@ -41,7 +41,7 @@ The first `v0.2` foundation wave has already landed on `main`. Do not treat thes
 
 ### Completed: Quality Audit Remediation
 
-Status: implemented for the `0.2.0` release candidate.
+Status: shipped in the stable `0.2.0` release.
 
 Outcome:
 
@@ -56,7 +56,7 @@ Evidence:
 
 - `src/analysis/` contains the shared syntax and shallow-flow analysis.
 - `tests/rule-regressions.test.ts`, `tests/source-files.test.ts`, and `tests/github-archive.test.ts` guard the verified audit cases.
-- `docs/quality-audit-and-fix-plan.md` records the semantic oracles, implementation status, and remaining external release boundary.
+- `docs/quality-audit-and-fix-plan.md` records the semantic oracles, implementation status, and completed release verification boundary.
 
 ### Completed: Dynamic Code Execution And Adjacent Rule Expansion
 
@@ -195,7 +195,7 @@ Improve baseline, ignore, or config ergonomics only after a concrete workflow pa
 
 ## `v0.2` milestone
 
-Current status: implemented on `main` as the `0.2.0` release candidate; GitHub release creation and npm publication remain manual external steps.
+Current status: published as `trustmcp@0.2.0` on npm with the matching `v0.2.0` GitHub release and reusable Action tag.
 
 Already covered:
 
@@ -206,10 +206,10 @@ Already covered:
 - baseline/action output parity
 - release-confidence and package-readiness gates
 
-Remaining release-readiness work:
+Ongoing release maintenance:
 
 - keep roadmap docs aligned with the shipped surface
-- run the full release gate before cutting the final `v0.2.0` tag
+- run the full release gate before every future public tag
 
 Release intent:
 

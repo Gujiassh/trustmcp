@@ -1,6 +1,6 @@
 # TrustMCP Long-Term Development Spec
 
-This document describes the long-range product and engineering plan for evolving TrustMCP beyond the current `0.2.0` release-candidate baseline.
+This document describes the long-range product and engineering plan for evolving TrustMCP beyond the current stable `0.2.0` release baseline.
 
 It is intentionally product-shaped rather than issue-shaped: the point is to keep future work aligned with the core promise of the project instead of growing a pile of unrelated scanner features.
 

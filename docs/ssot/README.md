@@ -12,7 +12,7 @@ For the current verified quality findings and delegated remediation sequence, se
 
 Current public CLI surface includes text or JSON reports plus `--fail-on low|medium|high` for CI-oriented exit thresholds.
 
-The `0.2.0` release-candidate contract includes parser-backed high-risk rule analysis, explicit incomplete-scan coverage metadata, and bounded public GitHub archive extraction. GitHub release creation and npm publication remain separate maintainer actions.
+The stable `0.2.0` release contract includes parser-backed high-risk rule analysis, explicit incomplete-scan coverage metadata, and bounded public GitHub archive extraction. It is published as `trustmcp@0.2.0` on npm and `v0.2.0` on GitHub.
 
 Public output formats now include `text`, `json`, `markdown`, and deterministic `sarif` rendering for code-scanning workflows.
 
@@ -41,7 +41,7 @@ Public docs now also describe the current shipped scanner surface as a thirteen-
 
 Public docs now also include a compact troubleshooting guide for common TrustMCP setup and input errors.
 
-Public docs now also include a dedicated install-path guide covering npm usage, source checkout, direct CLI use, `npm link`, and pack/release readiness without confusing the published package with the unreleased repository tip.
+Public docs now also include a dedicated install-path guide covering npm usage, source checkout, direct CLI use, `npm link`, and pack/release readiness without confusing the stable package with the repository tip.
 
 Public docs now also include a dedicated demo walkthrough covering an npm-first live path and a no-network fixture path with the current 22-finding / 13-rule risky corpus expectation.
 
@@ -51,7 +51,7 @@ The package scripts now also include a narrow `bootstrap` command for source-bas
 
 Public docs now also include a short future install migration note so source-based install guidance can evolve cleanly if packaged distribution is added later.
 
-Public docs now also include a compact npm publish checklist for the final manual registry step when the project is ready.
+Public docs now also include a compact npm publish checklist for controlled manual registry releases.
 
 The repo now also ships static bash and zsh completion scripts for the stable CLI surface.
 
@@ -59,7 +59,7 @@ GitHub input ergonomics stay narrow: repository root inputs are accepted as full
 
 JSON output now includes deterministic summary severity counters for `low`, `medium`, and `high` findings.
 
-The public repo now also ships a reusable composite GitHub Action plus official example workflows for a checked-out repository target, an explicit public GitHub target, markdown artifact retention, JSON artifact retention, SARIF artifact retention, sticky PR comments, and GitHub code-scanning SARIF upload. Until a newer release tag is cut, those examples intentionally track the current repo surface rather than the older `v0.1.0` Action contract.
+The public repo now also ships a reusable composite GitHub Action plus official example workflows for a checked-out repository target, an explicit public GitHub target, markdown artifact retention, JSON artifact retention, SARIF artifact retention, sticky PR comments, and GitHub code-scanning SARIF upload. Official examples pin the supported `v0.2.0` Action contract; immutable consumers can pin the corresponding commit SHA.
 
 The repo now also ships a conservative manual GitHub release workflow triggered by `workflow_dispatch`, with explicit version validation and GitHub release creation only.
 

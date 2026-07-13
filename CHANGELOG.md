@@ -6,7 +6,7 @@ This changelog is the lightweight public release history for TrustMCP.
 - Keep entries short and human-readable.
 - Link deeper implementation detail from the repository when useful, but keep this file focused on shipped behavior.
 
-## v0.2.0 — release candidate (2026-07-13)
+## v0.2.0 — 2026-07-13
 
 - Expand the shipped rule set beyond the original shell/network/filesystem baseline with dynamic code execution, script-runner wrappers, environment secret exposure, archive extraction, download-write-exec chains, local listener binding, sensitive local data access, subprocess-network exfiltration, and risky tool metadata coverage.
 - Add richer risky fixture coverage, including destructive filesystem mutation paths, and keep the accepted risky baseline corpus aligned with the current finding inventory.
@@ -19,8 +19,9 @@ This changelog is the lightweight public release history for TrustMCP.
 - Replace raw call-text matching in high-risk rules with parser-backed executable syntax analysis, add `fs/promises` import parity, require connected function-scoped data flow for chain findings, and add shallow environment-secret source-to-sink tracking.
 - Add deterministic scan coverage metadata for oversized, binary, and symbolic-link source files across JSON, text, Markdown, summary-only, SARIF, and GitHub Action outputs.
 - Bound public GitHub archive extraction by entry count, per-entry uncompressed size, total uncompressed size, and canonical destination validation before writing files.
-- Add focused source collector, adversarial rule, and GitHub archive regression suites. The final GitHub release and npm publication remain manual maintainer steps.
+- Add focused source collector, adversarial rule, and GitHub archive regression suites.
 - Rework the README entry surface around MCP security search intent, runnable first-use commands, and concise capability coverage; move maintainer release operations below user-facing usage and align public repository/package descriptions.
+- Publish `trustmcp@0.2.0` to npm and cut the matching `v0.2.0` GitHub release and reusable Action tag.
 
 ## v0.1.0 — npm published
 
