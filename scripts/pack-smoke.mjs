@@ -57,8 +57,13 @@ try {
     }
   );
 
-  const cliEntrypoint = join(installDirectory, "node_modules", "trustmcp", "dist", "cli", "main.js");
-  const { stdout: versionStdout } = await execFileAsync(process.execPath, [cliEntrypoint, "--version"], {
+  const cliExecutable = join(
+    installDirectory,
+    "node_modules",
+    ".bin",
+    process.platform === "win32" ? "trustmcp.cmd" : "trustmcp"
+  );
+  const { stdout: versionStdout } = await execFileAsync(cliExecutable, ["--version"], {
     cwd: installDirectory,
     maxBuffer: 10 * 1024 * 1024
   });
@@ -67,7 +72,16 @@ try {
     throw new Error(`Installed tarball reported version '${versionStdout.trim()}', expected '${expectedVersion}'.`);
   }
 
-  process.stdout.write(`pack:smoke OK (${tarballName}, trustmcp@${expectedVersion})\n`);
+  const { stdout: ruleListStdout } = await execFileAsync(cliExecutable, ["list-rules", "--json"], {
+    cwd: installDirectory,
+    maxBuffer: 10 * 1024 * 1024
+  });
+  const ruleList = JSON.parse(ruleListStdout);
+  if (!Array.isArray(ruleList) || ruleList.length === 0 || ruleList.some((rule) => typeof rule?.id !== "string")) {
+    throw new Error("Installed tarball CLI did not return a non-empty JSON rule list.");
+  }
+
+  process.stdout.write(`pack:smoke OK (${tarballName}, trustmcp@${expectedVersion}, ${ruleList.length} rules)\n`);
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error);
   process.stderr.write(`pack:smoke failed: ${message}\n`);

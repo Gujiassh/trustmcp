@@ -25,7 +25,7 @@ npm install -g trustmcp
 trustmcp ./path-to-mcp-server --format text
 ```
 
-The latest stable release is `0.2.0` on npm. To evaluate the repository tip directly:
+The latest stable release is `0.2.1` on npm. To evaluate the repository tip directly:
 
 ```bash
 git clone https://github.com/Gujiassh/trustmcp.git
@@ -298,7 +298,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - id: trustmcp
-        uses: Gujiassh/trustmcp@v0.2.0
+        uses: Gujiassh/trustmcp@v0.2.1
         with:
           target: ${{ github.workspace }}
           format: json
@@ -313,7 +313,7 @@ jobs:
           echo "summary=${{ steps.trustmcp.outputs.summary-message }}"
 ```
 
-The action builds TrustMCP from its own source tree on each run and then scans the checked-out target path or public GitHub URL you pass in. Relative local target paths are resolved from `${{ github.workspace }}`. It does not rely on a published npm package or marketplace wrapper. The official examples pin the supported `@v0.2.0` release; if you need immutable supply-chain pinning, replace the release tag with its commit SHA.
+The action builds TrustMCP from its own source tree on each run and then scans the checked-out target path or public GitHub URL you pass in. Relative local target paths are resolved from `${{ github.workspace }}`. It does not rely on a published npm package or marketplace wrapper. The official examples pin the supported `@v0.2.1` release; if you need immutable supply-chain pinning, replace the release tag with its commit SHA.
 
 The reusable action exposes `finding-count`, `rule-count`, `low-count`, `medium-count`, and `high-count` outputs for total visible findings, plus `new-finding-count`, `new-rule-count`, `new-low-count`, `new-medium-count`, and `new-high-count` for the baseline-filtered "new findings" subset when you use baseline gating. It also emits `gated-finding-count`, `gated-rule-count`, `gated-low-count`, `gated-medium-count`, and `gated-high-count` for the exact set currently used for policy failure, `baseline-applied` so later steps can tell whether baseline gating was active, `coverage-complete`, `scanned-file-count`, and `skipped-file-count` so workflows can detect incomplete scans, and `summary-message` so lightweight jobs can reuse the exact one-line summary without reparsing JSON output.
 
@@ -371,7 +371,7 @@ npm run release:check:strict
 ## Example output
 
 ```text
-TrustMCP v0.2.0
+TrustMCP v0.2.1
 Target: /absolute/path/to/local-risky
 Source: local-directory
 Summary: 3 finding(s) across 3 rule(s). Static heuristics only.
@@ -411,18 +411,18 @@ The current TrustMCP surface is designed for a fast first pass and practical CI/
 
 ## Project status
 
-- The latest npm release is `trustmcp@0.2.0`.
-- The matching GitHub release and reusable Action tag are `v0.2.0`.
+- The latest npm release is `trustmcp@0.2.1`.
+- The matching GitHub release and reusable Action tag are `v0.2.1`.
 - Source installation remains supported for contributors and repository-tip evaluation.
 - GitHub Actions CI runs on Node.js 18 and 20.
 - Future GitHub releases and npm publications remain manual maintainer actions.
 
-The npm package, GitHub release, reusable Action tag, source, CLI, package metadata, tests, and release notes agree on `0.2.0`.
+The npm package, GitHub release, reusable Action tag, source, CLI, package metadata, tests, and release notes agree on `0.2.1`.
 
 ### Maintainer release checks
 
 - `npm run pack:check` validates tarball contents.
-- `npm run pack:smoke` installs and starts a local tarball.
+- `npm run pack:smoke` installs a local tarball, executes its npm binary, and verifies version and rule-list output.
 - `npm run publish:check` runs the packaging-oriented release preflight.
 - `npm run release:check` runs the local scanner and packaging gate.
 - `npm run release:check:strict` also requires live reference-target scans.

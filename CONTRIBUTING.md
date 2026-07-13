@@ -58,13 +58,13 @@ Please do not expand TrustMCP into a hosted platform, web UI, account system, or
 This repository ships a conservative manual release workflow at `.github/workflows/release.yml`.
 
 - run it with `workflow_dispatch`
-- provide a tag like `v0.2.0`
+- provide a tag like `v0.2.1`
 - run it from the default branch
 - make sure `package.json` already matches the same version without the leading `v`
-- if the repo is on a development suffix such as `0.2.0-dev`, bump it to the final release version before running the workflow
+- if the repo is on a development suffix such as `0.2.1-dev`, bump it to the final release version before running the workflow
 - add or update the matching entry in `CHANGELOG.md`
 - run `npm run release:check` before creating the release
-- run `npm run pack:smoke` if you want a higher-confidence local check that the packed tarball can be installed and the CLI can start
+- run `npm run pack:smoke` to verify the packed tarball's installed npm binary reports its version and JSON rule inventory
 - check [the npm publish checklist](./docs/npm-publish-checklist.md) before the final manual registry step
 
 The workflow validates the version, runs tests and build, and then creates the GitHub tag and release. It does not publish to npm.

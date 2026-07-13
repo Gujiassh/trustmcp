@@ -176,9 +176,9 @@ describe("docs coherence", () => {
     const contributing = await readFile(contributingPath, "utf8");
     const readme = await readFile(readmePath, "utf8");
 
-    expect(contributing).toContain("provide a tag like `v0.2.0`");
-    expect(readme).toContain("The latest npm release is `trustmcp@0.2.0`.");
-    expect(readme).toContain("The matching GitHub release and reusable Action tag are `v0.2.0`.");
+    expect(contributing).toContain("provide a tag like `v0.2.1`");
+    expect(readme).toContain("The latest npm release is `trustmcp@0.2.1`.");
+    expect(readme).toContain("The matching GitHub release and reusable Action tag are `v0.2.1`.");
     expect(readme).not.toContain("`0.2.0` release candidate");
     expect(readme).not.toContain("npm `latest` remains `0.1.0`");
   });

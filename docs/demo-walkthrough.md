@@ -52,7 +52,7 @@ node dist/cli/main.js ./fixtures/local-risky --summary-only
 Expected summary:
 
 ```text
-TrustMCP v0.2.0
+TrustMCP v0.2.1
 Target: .../fixtures/local-risky
 Source: local-directory
 Summary: 22 finding(s) across 13 rule(s). Static heuristics only.
@@ -68,7 +68,7 @@ node dist/cli/main.js ./fixtures/local-clean --summary-only
 Expected summary:
 
 ```text
-TrustMCP v0.2.0
+TrustMCP v0.2.1
 Target: .../fixtures/local-clean
 Source: local-directory
 Summary: No matching rules were triggered. Static heuristics only; this does not mean the target is safe.

@@ -41,7 +41,7 @@ The default full JSON report shape is:
 {
   "tool": {
     "name": "TrustMCP",
-    "version": "0.2.0"
+    "version": "0.2.1"
   },
   "target": {
     "input": "gh:owner/repo",

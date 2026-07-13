@@ -6,6 +6,11 @@ This changelog is the lightweight public release history for TrustMCP.
 - Keep entries short and human-readable.
 - Link deeper implementation detail from the repository when useful, but keep this file focused on shipped behavior.
 
+## v0.2.1 — 2026-07-13
+
+- Fix the npm-installed `trustmcp` command producing no output when invoked through npm's `.bin` symbolic link.
+- Strengthen the tarball smoke test so it executes the installed npm binary and verifies both `--version` and the JSON rule inventory.
+
 ## v0.2.0 — 2026-07-13
 
 - Expand the shipped rule set beyond the original shell/network/filesystem baseline with dynamic code execution, script-runner wrappers, environment secret exposure, archive extraction, download-write-exec chains, local listener binding, sensitive local data access, subprocess-network exfiltration, and risky tool metadata coverage.

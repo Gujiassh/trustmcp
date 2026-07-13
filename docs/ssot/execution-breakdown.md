@@ -195,7 +195,7 @@ Improve baseline, ignore, or config ergonomics only after a concrete workflow pa
 
 ## `v0.2` milestone
 
-Current status: published as `trustmcp@0.2.0` on npm with the matching `v0.2.0` GitHub release and reusable Action tag.
+Current status: the `v0.2` line is published as `trustmcp@0.2.1` on npm with the matching `v0.2.1` GitHub release and reusable Action tag. The patch release corrects npm `.bin` entrypoint execution and strengthens tarball smoke coverage.
 
 Already covered:
 

@@ -16,7 +16,7 @@ jobs:
       - run: mkdir -p reports
 
       - id: trustmcp
-        uses: Gujiassh/trustmcp@v0.2.0
+        uses: Gujiassh/trustmcp@v0.2.1
         with:
           target: ${{ github.workspace }}
           format: json

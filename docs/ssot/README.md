@@ -12,7 +12,7 @@ For the current verified quality findings and delegated remediation sequence, se
 
 Current public CLI surface includes text or JSON reports plus `--fail-on low|medium|high` for CI-oriented exit thresholds.
 
-The stable `0.2.0` release contract includes parser-backed high-risk rule analysis, explicit incomplete-scan coverage metadata, and bounded public GitHub archive extraction. It is published as `trustmcp@0.2.0` on npm and `v0.2.0` on GitHub.
+The stable `0.2.1` release contract includes parser-backed high-risk rule analysis, explicit incomplete-scan coverage metadata, bounded public GitHub archive extraction, and an npm binary entrypoint that works through generated `.bin` links. It is published as `trustmcp@0.2.1` on npm and `v0.2.1` on GitHub.
 
 Public output formats now include `text`, `json`, `markdown`, and deterministic `sarif` rendering for code-scanning workflows.
 
@@ -59,7 +59,7 @@ GitHub input ergonomics stay narrow: repository root inputs are accepted as full
 
 JSON output now includes deterministic summary severity counters for `low`, `medium`, and `high` findings.
 
-The public repo now also ships a reusable composite GitHub Action plus official example workflows for a checked-out repository target, an explicit public GitHub target, markdown artifact retention, JSON artifact retention, SARIF artifact retention, sticky PR comments, and GitHub code-scanning SARIF upload. Official examples pin the supported `v0.2.0` Action contract; immutable consumers can pin the corresponding commit SHA.
+The public repo now also ships a reusable composite GitHub Action plus official example workflows for a checked-out repository target, an explicit public GitHub target, markdown artifact retention, JSON artifact retention, SARIF artifact retention, sticky PR comments, and GitHub code-scanning SARIF upload. Official examples pin the supported `v0.2.1` Action contract; immutable consumers can pin the corresponding commit SHA.
 
 The repo now also ships a conservative manual GitHub release workflow triggered by `workflow_dispatch`, with explicit version validation and GitHub release creation only.
 
@@ -67,7 +67,7 @@ The public repo now also has a lightweight `CHANGELOG.md` as the release-history
 
 The repo now also ships an explicit npm pack validation path so future package distribution can be checked deliberately without publishing.
 
-The repo now also ships a local tarball install smoke check so future package distribution can be validated beyond dry-run pack contents alone.
+The repo now also ships a local tarball install smoke check that executes the installed npm binary and verifies its version and JSON rule inventory, so package distribution is validated beyond dry-run pack contents alone.
 The repo now also ships a checked-in reference-target manifest plus `npm run reference:check` so release-confidence target categories can be validated locally without relying on maintainer memory alone.
 The repo now also ships `npm run reference:scan` so maintainers can replay the current scans for those checked-in public reference targets from one documented command. Target-level scan failures are preserved in the output while later targets still run, and the command still exits non-zero when any target fails or violates its category expectation.
 The repo now also ships `npm run release:check` as the one-command local gate that combines reference-target validation with the existing packaging checks.

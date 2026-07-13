@@ -1,14 +1,14 @@
 # TrustMCP Quality Audit And Delegated Fix Plan
 
-Status: implemented and released as `v0.2.0`
+Status: implemented and released; current stable patch is `v0.2.1`
 
-Reviewed revision: `v0.2.0` release baseline on 2026-07-13
+Reviewed revision: `v0.2.1` release baseline on 2026-07-13
 
 Purpose: record the verified correctness, coverage, input-safety, and release gaps, their semantic oracles, and the implementation outcome.
 
 ## Implementation Result
 
-TM-QA-001 through TM-QA-008 are implemented and released in `0.2.0`:
+TM-QA-001 through TM-QA-008 are implemented and released in the stable `v0.2` line:
 
 - filesystem import parity is parser-backed across `fs`, `node:fs`, `fs/promises`, and `node:fs/promises`
 - high-risk call rules ignore comments and unrelated strings
@@ -18,7 +18,9 @@ TM-QA-001 through TM-QA-008 are implemented and released in `0.2.0`:
 - public GitHub archives are rejected before extraction when entry, uncompressed-size, or path budgets are exceeded
 - focused regression suites cover the verified positive and negative cases
 
-Repository metadata, the npm package, the GitHub release, and the reusable Action tag are aligned at `0.2.0`. TM-QA-007 is complete.
+Repository metadata, the npm package, the GitHub release, and the reusable Action tag are aligned at `0.2.1`. TM-QA-007 is complete.
+
+Post-release verification found that `trustmcp@0.2.0` exited without output when invoked through npm's generated `.bin` symbolic link, even though direct `node dist/cli/main.js` execution passed. `v0.2.1` resolves the invoked path before main-module comparison, and the tarball smoke gate now exercises the installed npm binary plus its JSON rule inventory.
 
 Verification completed on 2026-07-13:
 
@@ -26,7 +28,7 @@ Verification completed on 2026-07-13:
 - `npm run build`
 - `npm run smoke`
 - `npm run pack:check`: 95 packed files validated
-- `npm run pack:smoke`: local tarball install reported `trustmcp@0.2.0`
+- `npm run pack:smoke`: installed npm binary reported `trustmcp@0.2.1` and 13 rules
 - `npm run reference:check`
 - `npm run release:check`
 - `npm run release:check:strict`: all three live reference categories passed
@@ -407,24 +409,24 @@ Type: release and adoption gap
 
 Resolved state on 2026-07-13:
 
-- repository version: `0.2.0`
-- npm `latest`: `0.2.0`
-- GitHub release and reusable Action tag: `v0.2.0`
+- repository version: `0.2.1`
+- npm `latest`: `0.2.1`
+- GitHub release and reusable Action tag: `v0.2.1`
 - npm users receive the current thirteen-rule scanner surface
 
 Completed release procedure:
 
-1. Update `package.json`, `package-lock.json`, `src/core/version.ts`, changelog, README, and release docs to final `0.2.0` values.
+1. Update `package.json`, `package-lock.json`, `src/core/version.ts`, changelog, README, and release docs to final `0.2.1` values.
 2. Run the full release gate below.
-3. Create the `v0.2.0` GitHub release from the default branch.
-4. Publish `trustmcp@0.2.0` to npm manually.
+3. Create the `v0.2.1` GitHub release from the default branch.
+4. Publish `trustmcp@0.2.1` to npm manually.
 5. Replace `@main` in official Action examples with the supported release tag policy.
 6. Verify registry metadata and the installed CLI after publication.
 
 Release acceptance criteria:
 
-- `npm view trustmcp version --registry=https://registry.npmjs.org` prints `0.2.0`
-- `npx trustmcp@0.2.0 list-rules --json` exposes the expected rule set
+- `npm view trustmcp version --registry=https://registry.npmjs.org` prints `0.2.1`
+- an isolated install of `trustmcp@0.2.1` exposes 13 rules through the npm-generated `trustmcp list-rules --json` binary
 - the GitHub release tag and npm package point to the same source revision
 - the packed CLI, Action examples, README, and changelog describe the same behavior
 
@@ -491,7 +493,7 @@ This phase changes public report structure and needs dedicated contract review.
 - TM-QA-008: complete adversarial regression coverage
 - update public docs and changelog
 - run full verification
-- TM-QA-007: prepare and publish `0.2.0` only after approval
+- TM-QA-007: publish the approved stable version and verify the installed npm binary
 
 ## Suggested Ownership Lanes
 

@@ -103,8 +103,8 @@ npm run pack:check
 
 `npm run pack:check` does **not** mean:
 
-- you can install it today with `npm install trustmcp`
-- a release has been pushed to the registry
+- the repository version has already been published to npm
+- the npm-generated binary entrypoint works after installation
 
 It means the repository has a repeatable local check for package contents, independent of whether you are publishing a new version right now.
 
@@ -114,7 +114,7 @@ If you want a stronger local signal before any future publication work, run:
 npm run pack:smoke
 ```
 
-That command packs the repository, installs the tarball into a temporary directory, and verifies the installed CLI can print its version.
+That command packs the repository, installs the tarball into a temporary directory, executes the npm-generated binary, and verifies its version plus JSON rule inventory.
 
 If you are preparing for the eventual manual registry step, check out the [npm publish checklist for TrustMCP](./npm-publish-checklist.md).
 
@@ -135,7 +135,7 @@ Use:
 - direct `node dist/cli/main.js ...` when you want the most explicit local path
 - `npm link` when you want a convenient local command name
 - `npm run pack:check` when you want to verify future npm tarball readiness without publishing
-- `npm run pack:smoke` when you want a stronger tarball installability check before any future publication work
+- `npm run pack:smoke` when you want to verify the packed npm binary and rule inventory before publication
 - `npm run reference:check` when you want to validate the checked-in reference-target manifest
 - `npm run reference:scan` when you want to replay the checked-in public reference scans
 - `npm run release:check` when you want the full local release-confidence + packaging gate

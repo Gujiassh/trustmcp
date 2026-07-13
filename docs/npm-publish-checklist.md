@@ -2,7 +2,7 @@
 
 Use this checklist when TrustMCP is actually ready to cross from pack-ready to published on npm.
 
-This page is intentionally narrow. It does **not** publish anything for you, and it does **not** mean TrustMCP is already available on npm today.
+This page is intentionally narrow. It does **not** publish anything for you, and completing it does **not** mean the version under preparation is already available on npm.
 
 ## Run this checklist before the final manual publish step
 
@@ -40,7 +40,7 @@ That narrower command validates:
 - tests pass
 - the TypeScript build succeeds
 - `npm pack --dry-run` succeeds through the repo's pack validation path
-- `npm run pack:smoke` still installs and starts the tarball
+- `npm run pack:smoke` executes the installed npm binary and verifies its version plus JSON rule inventory
 
 If you want the strictest local pre-release gate, including current public reference-target scans, run:
 
@@ -52,7 +52,7 @@ npm run release:check:strict
 
 This checklist does **not** mean:
 
-- TrustMCP is already published
+- the version under preparation is already published
 - a GitHub release has already been created
 - npm publication is automatic
 

@@ -37,7 +37,7 @@ These commands are no longer placeholders for a hypothetical future package. The
 - `npm run pack:check`
   - validates the tarball file set
 - `npm run pack:smoke`
-  - validates that the packed tarball can be installed and started
+  - validates that the packed tarball's installed npm binary reports its version and JSON rule inventory
 - `npm run publish:check`
   - runs the packaging-oriented local release gate
 - `npm run release:check`

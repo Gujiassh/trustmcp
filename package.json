@@ -1,6 +1,6 @@
 {
   "name": "trustmcp",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Static security scanner for JavaScript/TypeScript MCP servers. Detect risky shell, secret, filesystem, and network behavior via CLI or GitHub Actions.",
   "type": "module",
   "bin": {

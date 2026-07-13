@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
+import { realpathSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 
 import { auditTarget as defaultAuditTarget } from "../core/audit.js";
 import { shouldFailForThreshold } from "../core/thresholds.js";
@@ -119,10 +120,19 @@ function resolveConfigRelativePath(filePath: string, baseDirectory: string): str
   return filePath.startsWith("/") ? filePath : resolve(baseDirectory, filePath);
 }
 
-const isMainModule =
-  process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
+export function isMainModule(moduleUrl: string, invokedPath: string | undefined): boolean {
+  if (invokedPath === undefined) {
+    return false;
+  }
 
-if (isMainModule) {
+  try {
+    return realpathSync(fileURLToPath(moduleUrl)) === realpathSync(invokedPath);
+  } catch {
+    return false;
+  }
+}
+
+if (isMainModule(import.meta.url, process.argv[1])) {
   void runCli(process.argv.slice(2)).then((exitCode) => {
     process.exitCode = exitCode;
   });
