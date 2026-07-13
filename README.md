@@ -1,40 +1,41 @@
-# TrustMCP — MCP server security scanner for JavaScript and TypeScript
+# TrustMCP: MCP Security Scanner for JavaScript and TypeScript
 
-> CLI and GitHub Action for static security scanning of Model Context Protocol (MCP) server repositories.
+[![CI](https://github.com/Gujiassh/trustmcp/actions/workflows/ci.yml/badge.svg)](https://github.com/Gujiassh/trustmcp/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/trustmcp.svg)](https://www.npmjs.com/package/trustmcp)
+[![license](https://img.shields.io/github/license/Gujiassh/trustmcp)](./LICENSE)
 
-TrustMCP is an MCP server security scanner for JavaScript and TypeScript repositories. It works as both a CLI and a GitHub Action, and it flags risky MCP server capabilities before you run unknown code locally or wire it into CI.
+TrustMCP is an open-source static security scanner for JavaScript and TypeScript Model Context Protocol (MCP) servers. It detects risky shell execution, secret exposure, filesystem access, internal network access, and exfiltration chains before you run unknown MCP server code or wire it into CI.
 
-If `npm audit` is the mental model that brought you here, keep the comparison specific: TrustMCP scans source code for risky MCP server capabilities, not dependency CVEs. Unlike a sandbox, it does **not** execute the server.
+Use TrustMCP from the CLI or GitHub Actions to review third-party MCP servers, gate your own repository, and export evidence as JSON, Markdown, or SARIF. It scans source code without executing the target.
 
-If you want the fuller comparison, check out [What TrustMCP scans, and how it differs from npm audit](./docs/what-trustmcp-scans.md).
+## Quick start
 
-Release history: [CHANGELOG.md](./CHANGELOG.md)
+Requires Node.js 18.18+.
 
-For a short repeatable demo, see [TrustMCP demo walkthrough](./docs/demo-walkthrough.md).
+Scan a public MCP server without a global install:
 
-## Current status
+```bash
+npx trustmcp https://github.com/modelcontextprotocol/servers --format text
+```
 
-- npm install works today (`npm install -g trustmcp`, `npx trustmcp --version`)
-- Source install still works for contributors (`npm install && npm run build`)
-- GitHub Actions CI runs on Node 18 and 20
-- Package readiness checks exist: `npm run pack:check`, `npm run pack:smoke`, and `npm run publish:check`
-- GitHub release flow exists and stays manual
-- npm publication is live, but npm `latest` remains `trustmcp@0.1.0` until the manual `0.2.0` publish step
-- the repository is prepared as the `0.2.0` release candidate
+Or install the CLI globally and scan a local repository:
 
-The source, CLI, package metadata, tests, and release notes now agree on `0.2.0`. Creating the `v0.2.0` GitHub release and publishing `trustmcp@0.2.0` to npm remain explicit maintainer actions.
+```bash
+npm install -g trustmcp
+trustmcp ./path-to-mcp-server --format text
+```
 
-## Install and release readiness
+The current repository tip is the `0.2.0` release candidate; npm `latest` remains `0.1.0` until the manual publish step. To evaluate the repository tip directly:
 
-TrustMCP is usable today from npm, `npx`, and source checkout/local build.
+```bash
+git clone https://github.com/Gujiassh/trustmcp.git
+cd trustmcp
+npm install
+npm run build
+node dist/cli/main.js gh:modelcontextprotocol/servers --format text
+```
 
-- Use [Installing TrustMCP today](./docs/installing-trustmcp.md) for the current supported install paths: npm, `npx`, direct `node dist/cli/main.js ...`, and optional `npm link`.
-- Use `npm run pack:check` to validate future npm tarball contents locally.
-- Use `npm run publish:check` when you only want the packaging-oriented local release preflight.
-- Use `npm run release:check` when you want the full local release-confidence + packaging gate in one command.
-- Use `npm run release:check:strict` when you also want to require real reference-target scans before release.
-- Use [TrustMCP release confidence and reference targets](./docs/release-confidence-and-reference-targets.md#release-gate-chooser) to choose between docs-only, packaging, scanner/output, reference-target, and final release gates.
-- Use [the npm publish checklist](./docs/npm-publish-checklist.md) and [CONTRIBUTING.md](./CONTRIBUTING.md) for future package updates and manual GitHub release steps.
+Documentation: [rules](./docs/trustmcp-rules.md) · [installation](./docs/installing-trustmcp.md) · [demo](./docs/demo-walkthrough.md) · [GitHub Action examples](./.github/examples) · [release history](./CHANGELOG.md)
 
 ## Why scan MCP servers
 
@@ -120,66 +121,6 @@ Every finding includes:
 - `remediation`
 
 Every report also includes a `coverage` block. It distinguishes a complete no-match from a scan where relevant source files were skipped by the documented file policy.
-
-## Quick start
-
-Requires Node.js 18.18+.
-
-TrustMCP is published on npm as `trustmcp`. If you want the lowest-friction path, use npm or `npx`. Source checkout is still the right path when you want to contribute or inspect the repository locally.
-
-Install globally:
-
-```bash
-npm install -g trustmcp
-```
-
-Or run it without installing globally:
-
-```bash
-npx trustmcp --version
-```
-
-If you want the install options explained in one place, check out [Installing TrustMCP today](./docs/installing-trustmcp.md). If you want a stable local fixture demo, use [TrustMCP demo walkthrough](./docs/demo-walkthrough.md).
-
-Install from source and build:
-
-```bash
-npm install
-npm run build
-```
-
-If you want the same source-based setup in one command, run:
-
-```bash
-npm run bootstrap
-```
-
-Validate the packaged tarball contents locally:
-
-```bash
-npm run pack:check
-```
-
-Run against a local folder:
-
-```bash
-node dist/cli/main.js ./fixtures/local-risky
-```
-
-For the fixture demo expectations, see [TrustMCP demo walkthrough](./docs/demo-walkthrough.md).
-
-Run against a public GitHub repository:
-
-```bash
-node dist/cli/main.js gh:modelcontextprotocol/servers --format text
-```
-
-Optional: link the local CLI command for repeated use:
-
-```bash
-npm link
-trustmcp ./fixtures/local-risky
-```
 
 ## CLI usage
 
@@ -467,6 +408,26 @@ TrustMCP is honest about scope:
 - no guarantee that a target is safe or complete coverage of all MCP risks
 
 The current TrustMCP surface is designed for a fast first pass and practical CI/review use, not a full security review.
+
+## Project status
+
+- npm installation works today through `trustmcp@0.1.0`.
+- The repository is prepared as the `0.2.0` release candidate.
+- Source installation remains supported for contributors and release-candidate evaluation.
+- GitHub Actions CI runs on Node.js 18 and 20.
+- GitHub release creation and npm publication remain manual maintainer actions.
+
+The source, CLI, package metadata, tests, and release notes agree on `0.2.0`. Creating the `v0.2.0` GitHub release and publishing `trustmcp@0.2.0` to npm remain explicit maintainer actions.
+
+### Maintainer release checks
+
+- `npm run pack:check` validates tarball contents.
+- `npm run pack:smoke` installs and starts a local tarball.
+- `npm run publish:check` runs the packaging-oriented release preflight.
+- `npm run release:check` runs the local scanner and packaging gate.
+- `npm run release:check:strict` also requires live reference-target scans.
+
+Use [the release gate chooser](./docs/release-confidence-and-reference-targets.md#release-gate-chooser), [npm publish checklist](./docs/npm-publish-checklist.md), and [CONTRIBUTING.md](./CONTRIBUTING.md) for maintainer release work.
 
 ## Contribution path
 

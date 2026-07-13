@@ -43,7 +43,9 @@ Public docs now also include a compact troubleshooting guide for common TrustMCP
 
 Public docs now also include a dedicated install-path guide covering npm usage, source checkout, direct CLI use, `npm link`, and pack/release readiness without confusing the published package with the unreleased repository tip.
 
-Public docs now also include a dedicated demo walkthrough covering an npm-first live path and a no-network fixture path with the current 23-finding / 13-rule risky corpus expectation.
+Public docs now also include a dedicated demo walkthrough covering an npm-first live path and a no-network fixture path with the current 22-finding / 13-rule risky corpus expectation.
+
+The public README entry surface leads with the exact MCP security scanner category, supported languages, risk coverage, and a runnable command. Maintainer release state and packaging gates stay in the later project-status section so first-time visitors reach product value and usage before internal release operations.
 
 The package scripts now also include a narrow `bootstrap` command for source-based local setup (`npm install && npm run build`).
 

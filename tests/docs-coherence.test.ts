@@ -17,8 +17,26 @@ const releaseConfidencePath = fileURLToPath(new URL("../docs/release-confidence-
 const demoWalkthroughPath = fileURLToPath(new URL("../docs/demo-walkthrough.md", import.meta.url));
 const changelogPath = fileURLToPath(new URL("../CHANGELOG.md", import.meta.url));
 const referenceTargetsPath = fileURLToPath(new URL("../fixtures/reference-targets.json", import.meta.url));
+const packageJsonPath = fileURLToPath(new URL("../package.json", import.meta.url));
 
 describe("docs coherence", () => {
+  it("keeps the README entry surface focused on discovery and first use", async () => {
+    const readme = await readFile(readmePath, "utf8");
+    const packageJson = JSON.parse(await readFile(packageJsonPath, "utf8")) as { description?: string };
+    const quickStartIndex = readme.indexOf("## Quick start");
+    const scannerDetailsIndex = readme.indexOf("## What TrustMCP scans");
+    const projectStatusIndex = readme.indexOf("## Project status");
+
+    expect(readme.startsWith("# TrustMCP: MCP Security Scanner for JavaScript and TypeScript")).toBe(true);
+    expect(readme.slice(0, quickStartIndex)).toContain("open-source static security scanner");
+    expect(readme.slice(0, quickStartIndex)).toContain("shell execution, secret exposure, filesystem access, internal network access, and exfiltration chains");
+    expect(readme).toContain("npx trustmcp https://github.com/modelcontextprotocol/servers --format text");
+    expect(quickStartIndex).toBeGreaterThan(0);
+    expect(quickStartIndex).toBeLessThan(scannerDetailsIndex);
+    expect(projectStatusIndex).toBeGreaterThan(scannerDetailsIndex);
+    expect(packageJson.description).toBe("Static security scanner for JavaScript/TypeScript MCP servers. Detect risky shell, secret, filesystem, and network behavior via CLI or GitHub Actions.");
+  });
+
   it("keeps the public scanner-surface docs aligned with the thirteen-rule baseline", async () => {
     const whatScans = await readFile(whatScansPath, "utf8");
     const troubleshooting = await readFile(troubleshootingPath, "utf8");

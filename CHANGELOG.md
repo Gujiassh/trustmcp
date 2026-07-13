@@ -20,6 +20,7 @@ This changelog is the lightweight public release history for TrustMCP.
 - Add deterministic scan coverage metadata for oversized, binary, and symbolic-link source files across JSON, text, Markdown, summary-only, SARIF, and GitHub Action outputs.
 - Bound public GitHub archive extraction by entry count, per-entry uncompressed size, total uncompressed size, and canonical destination validation before writing files.
 - Add focused source collector, adversarial rule, and GitHub archive regression suites. The final GitHub release and npm publication remain manual maintainer steps.
+- Rework the README entry surface around MCP security search intent, runnable first-use commands, and concise capability coverage; move maintainer release operations below user-facing usage and align public repository/package descriptions.
 
 ## v0.1.0 — npm published
 
