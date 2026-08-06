@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const workflowPath = fileURLToPath(new URL("../.github/workflows/release.yml", import.meta.url));
+const ciWorkflowPath = fileURLToPath(new URL("../.github/workflows/ci.yml", import.meta.url));
 
 describe("release workflow", () => {
   it("uses the full local release gate instead of the older publish-only check", async () => {
@@ -11,5 +12,11 @@ describe("release workflow", () => {
 
     expect(content).toContain("run: npm run release:check");
     expect(content).not.toContain("run: npm run publish:check");
+  });
+
+  it("tests every supported Node.js release line", async () => {
+    const content = await readFile(ciWorkflowPath, "utf8");
+
+    expect(content).toContain("node-version: [18, 20, 22, 24]");
   });
 });

@@ -14,6 +14,8 @@ Current public CLI surface includes text or JSON reports plus `--fail-on low|med
 
 The stable `0.2.1` release contract includes parser-backed high-risk rule analysis, explicit incomplete-scan coverage metadata, bounded public GitHub archive extraction, and an npm binary entrypoint that works through generated `.bin` links. It is published as `trustmcp@0.2.1` on npm and `v0.2.1` on GitHub.
 
+The CI compatibility matrix covers Node.js 18, 20, 22, and 24 while the published package contract remains Node.js `>=18.18`.
+
 Public output formats now include `text`, `json`, `markdown`, and deterministic `sarif` rendering for code-scanning workflows.
 
 CLI output ergonomics now also include `--output-file` for persisting the selected rendered format to disk without suppressing stdout.

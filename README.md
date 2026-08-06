@@ -414,7 +414,7 @@ The current TrustMCP surface is designed for a fast first pass and practical CI/
 - The latest npm release is `trustmcp@0.2.1`.
 - The matching GitHub release and reusable Action tag are `v0.2.1`.
 - Source installation remains supported for contributors and repository-tip evaluation.
-- GitHub Actions CI runs on Node.js 18 and 20.
+- GitHub Actions CI runs on Node.js 18, 20, 22, and 24.
 - Future GitHub releases and npm publications remain manual maintainer actions.
 
 The npm package, GitHub release, reusable Action tag, source, CLI, package metadata, tests, and release notes agree on `0.2.1`.
